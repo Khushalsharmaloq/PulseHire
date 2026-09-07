@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
- "scripts": {
+  "scripts": {
     "dev": "nodemon index.js",
     "start": "node index.js",
     "create-admin": "node scripts/createAdmin.js"
-},
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -21,7 +21,7 @@
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.9.4",
-    "multer": "^2.2.0"
+    "multer": "^2.3.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"

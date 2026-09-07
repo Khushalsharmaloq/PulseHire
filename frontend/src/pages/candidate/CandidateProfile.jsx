@@ -15,18 +15,19 @@ import {
 } from "lucide-react";
 
 import { Link, useNavigate } from "react-router-dom";
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
-import AuthContext from "../../context/AuthContext";
-
+import useAuth from "../../context/useAuth";
+import api from "../../services/api";
 
 const CandidateProfile = () => {
-  const { user, login, logout } = useContext(AuthContext);
+  const { user, login, logout } = useAuth();
   const navigate = useNavigate();
 
   const [profileUser, setProfileUser] = useState(user);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -43,18 +44,13 @@ const CandidateProfile = () => {
     const loadProfile = async () => {
       try {
         setLoadingProfile(true);
+        setError("");
 
-        const response = await fetch(
-          "http://localhost:8000/api/v1/user/me",
-          {
-            method: "GET",
-            credentials: "include",
-          }
-        );
+        const response = await api.get("/user/me");
 
-        const data = await response.json();
+        const data = response.data;
 
-        if (!response.ok || !data.success) {
+        if (!data.success) {
           throw new Error(data.message || "Unable to load profile.");
         }
 
@@ -69,7 +65,11 @@ const CandidateProfile = () => {
           skills: data.user?.profile?.skills?.join(", ") || "",
         });
       } catch (err) {
-        setError(err.message || "Unable to load profile.");
+        setError(
+          err.response?.data?.message ||
+            err.message ||
+            "Unable to load profile.",
+        );
       } finally {
         setLoadingProfile(false);
       }
@@ -90,37 +90,64 @@ const CandidateProfile = () => {
   const handleSaveProfile = async (event) => {
     event.preventDefault();
 
+    if (saving) {
+      return;
+    }
+
+    setError("");
+    setSuccess("");
+
+    const fullname = formData.fullname.trim();
+    const email = formData.email.trim().toLowerCase();
+    const phoneNumber = formData.phoneNumber.trim();
+
+    if (!fullname) {
+      setError("Full name is required.");
+      return;
+    }
+
+    if (fullname.length < 2) {
+      setError("Full name must contain at least 2 characters.");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!email || !emailRegex.test(email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    const phoneRegex = /^\d{10}$/;
+
+    if (!phoneRegex.test(phoneNumber)) {
+      setError("Phone number must contain exactly 10 digits.");
+      return;
+    }
+
+    const skills = [
+      ...new Set(
+        formData.skills
+          .split(",")
+          .map((skill) => skill.trim())
+          .filter(Boolean),
+      ),
+    ];
+
     try {
       setSaving(true);
-      setError("");
-      setSuccess("");
 
-      const skills = formData.skills
-        .split(",")
-        .map((skill) => skill.trim())
-        .filter(Boolean);
+      const response = await api.put("/user/profile", {
+        fullname,
+        email,
+        phoneNumber,
+        bio: formData.bio.trim(),
+        skills,
+      });
 
-      const response = await fetch(
-        "http://localhost:8000/api/v1/user/profile",
-        {
-          method: "PUT",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            fullname: formData.fullname,
-            email: formData.email,
-            phoneNumber: formData.phoneNumber,
-            bio: formData.bio,
-            skills,
-          }),
-        }
-      );
+      const data = response.data;
 
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
+      if (!data.success) {
         throw new Error(data.message || "Profile update failed.");
       }
 
@@ -138,141 +165,141 @@ const CandidateProfile = () => {
       setSuccess("Profile updated successfully.");
       setIsEditing(false);
     } catch (err) {
-      setError(err.message || "Unable to update profile.");
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Unable to update profile.",
+      );
     } finally {
       setSaving(false);
     }
   };
 
-  const handleLogout = async () => {
+  const handleProfilePhotoUpload = async (event) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    setError("");
+    setSuccess("");
+
+    if (!file.type.startsWith("image/")) {
+      setError("Please select a valid image file.");
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Profile photo must be smaller than 5 MB.");
+      event.target.value = "";
+      return;
+    }
+
+    const formData = new FormData();
+
+    formData.append("profilePhoto", file);
+
     try {
-      await fetch(
-        "http://localhost:8000/api/v1/user/logout",
-        {
-          method: "POST",
-          credentials: "include",
-        }
-      );
+      setUploadingPhoto(true);
+
+      const response = await api.put("/user/profile/photo", formData);
+
+      const data = response.data;
+
+      if (!data.success) {
+        throw new Error(data.message || "Profile photo upload failed.");
+      }
+
+      setProfileUser(data.user);
+      login(data.user);
+
+      setSuccess("Profile photo updated successfully.");
     } catch (err) {
-      console.error("Logout error:", err);
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Unable to upload profile photo.",
+      );
     } finally {
-      logout();
-      navigate("/");
+      setUploadingPhoto(false);
+      event.target.value = "";
     }
   };
 
-  const displayName = profileUser?.fullname || "Arjun Kumar";
-  const displayBio = profileUser?.profile?.bio || "Build an evidence-backed professional profile on PulseHire.";
+  const handleLogout = async () => {
+    await logout();
+    navigate("/");
+  };
+
+  const displayName = profileUser?.fullname || "Your Profile";
+  const displayBio =
+    profileUser?.profile?.bio ||
+    "Build an evidence-backed professional profile on PulseHire.";
   const displaySkills = profileUser?.profile?.skills || [];
   const skillCount = displaySkills.length;
 
   return (
     <div className="candidate-dashboard">
-
       {/* =====================================================
           SIDEBAR
       ===================================================== */}
 
       <aside className="candidate-sidebar">
-
         <div className="dashboard-brand">
-
-          <Link
-            to="/candidate/dashboard"
-            className="dashboard-brand"
-          >
+          <Link to="/candidate/dashboard" className="dashboard-brand">
             <div className="dashboard-brand-icon">
               <BriefcaseBusiness size={19} />
             </div>
 
-            <span>
-              PulseHire
-            </span>
+            <span>PulseHire</span>
           </Link>
-
         </div>
 
-
         <div className="sidebar-section">
-
-          <span className="sidebar-label">
-            CANDIDATE WORKSPACE
-          </span>
-
+          <span className="sidebar-label">CANDIDATE WORKSPACE</span>
 
           <nav className="sidebar-nav">
-
-            <Link
-              to="/candidate/dashboard"
-              className="sidebar-link"
-            >
+            <Link to="/candidate/dashboard" className="sidebar-link">
               <LayoutDashboard size={17} />
               Dashboard
             </Link>
 
-
-            <Link
-              to="/candidate/profile"
-              className="sidebar-link active"
-            >
+            <Link to="/candidate/profile" className="sidebar-link active">
               <User size={17} />
               My Profile
             </Link>
 
-
-            <Link
-              to="/candidate/skill-proof"
-              className="sidebar-link"
-            >
+            <Link to="/candidate/skill-proof" className="sidebar-link">
               <BadgeCheck size={17} />
               Skill Proof
             </Link>
 
-
-            <Link
-              to="/candidate/skill-gap"
-              className="sidebar-link"
-            >
+            <Link to="/candidate/skill-gap" className="sidebar-link">
               <Target size={17} />
               Skill Gap
             </Link>
 
-
-            <Link
-              to="/candidate/learning"
-              className="sidebar-link"
-            >
+            <Link to="/candidate/learning" className="sidebar-link">
               <BookOpen size={17} />
               Learning
             </Link>
 
-
-            <Link
-              to="/candidate/jobs"
-              className="sidebar-link"
-            >
+            <Link to="/candidate/jobs" className="sidebar-link">
               <BriefcaseBusiness size={17} />
               Find Jobs
             </Link>
 
-
-            <Link
-              to="/candidate/applications"
-              className="sidebar-link"
-            >
+            <Link to="/candidate/applications" className="sidebar-link">
               <FileCheck2 size={17} />
               Applications
             </Link>
-
           </nav>
-
         </div>
 
-
         <div className="sidebar-bottom">
-
           <div className="sidebar-user">
-
             <div className="user-avatar">
               {displayName
                 .split(" ")
@@ -282,89 +309,52 @@ const CandidateProfile = () => {
                 .toUpperCase()}
             </div>
 
-
             <div>
+              <strong>{displayName}</strong>
 
-              <strong>
-                {displayName}
-              </strong>
-
-              <span>
-                Candidate
-              </span>
-
+              <span>Candidate</span>
             </div>
-
           </div>
-
 
           <button
             className="logout-button"
             type="button"
             onClick={handleLogout}
           >
-
             <LogOut size={17} />
-
             Logout
-
           </button>
-
         </div>
-
       </aside>
-
 
       {/* =====================================================
           MAIN
       ===================================================== */}
 
       <main className="candidate-main">
-
-
         {/* ===================================================
             TOPBAR
         =================================================== */}
 
         <header className="candidate-topbar">
-
           <div>
+            <span className="dashboard-eyebrow">CANDIDATE WORKSPACE</span>
 
-            <span className="dashboard-eyebrow">
-              CANDIDATE WORKSPACE
-            </span>
-
-            <h1>
-              Your skills are your strongest signal.
-            </h1>
-
+            <h1>Your skills are your strongest signal.</h1>
           </div>
 
-
           <div className="topbar-actions">
-
-            <Link
-              to="/candidate/jobs"
-              className="topbar-search"
-            >
+            <Link to="/candidate/jobs" className="topbar-search">
               <Search size={17} />
               Search
             </Link>
 
-
-            <button
-              className="notification-button"
-              type="button"
-            >
+            <button className="notification-button" type="button">
               <Bell size={17} />
               <span className="notification-dot"></span>
             </button>
 
-
-            <Link
-              to="/candidate/profile"
-              className="topbar-avatar"
-            >
+            <Link to="/candidate/profile" className="topbar-avatar">
               {displayName
                 .split(" ")
                 .map((part) => part[0])
@@ -372,57 +362,60 @@ const CandidateProfile = () => {
                 .slice(0, 2)
                 .toUpperCase()}
             </Link>
-
           </div>
-
         </header>
-
 
         {/* ===================================================
             PROFILE HERO
         =================================================== */}
 
         <section className="candidate-profile-hero">
-
           <div className="candidate-profile-identity">
-
             <div className="candidate-profile-avatar">
-              {displayName
-                .split(" ")
-                .map((part) => part[0])
-                .join("")
-                .slice(0, 2)
-                .toUpperCase()}
-            </div>
+              {profileUser?.profile?.profilePhoto ? (
+                <img
+                  src={profileUser.profile.profilePhoto}
+                  alt={`${displayName} profile`}
+                  className="candidate-profile-photo"
+                />
+              ) : (
+                displayName
+                  .split(" ")
+                  .map((part) => part[0])
+                  .join("")
+                  .slice(0, 2)
+                  .toUpperCase()
+              )}
 
+              <label
+                className="profile-photo-upload"
+                title="Change profile photo"
+              >
+                {uploadingPhoto ? "..." : "+"}
+
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleProfilePhotoUpload}
+                  disabled={uploadingPhoto}
+                  hidden
+                />
+              </label>
+            </div>
 
             <div>
+              <span className="panel-label">YOUR PULSEHIRE PROFILE</span>
 
-              <span className="panel-label">
-                YOUR PULSEHIRE PROFILE
-              </span>
+              <h2>{displayName}</h2>
 
-              <h2>
-                {displayName}
-              </h2>
-
-              <p>
-                {displayBio}
-              </p>
-
+              <p>{displayBio}</p>
 
               <div className="profile-verification-status">
-
                 <BadgeCheck size={13} />
-
                 Evidence-backed profile
-
               </div>
-
             </div>
-
           </div>
-
 
           <button
             type="button"
@@ -433,146 +426,74 @@ const CandidateProfile = () => {
               setIsEditing(true);
             }}
           >
-
             <User size={13} />
-
             Edit Profile
-
           </button>
-
         </section>
-
 
         {/* ===================================================
             PROFILE METRICS
         =================================================== */}
 
         <section className="candidate-overview">
-
-
-          <Link
-            to="/candidate/profile"
-            className="candidate-overview-card"
-          >
-
+          <Link to="/candidate/profile" className="candidate-overview-card">
             <div className="candidate-overview-top">
-
-              <span>
-                PROFILE STRENGTH
-              </span>
+              <span>PROFILE STRENGTH</span>
 
               <TrendingUp size={16} />
-
             </div>
 
-
-            <strong>
-              82%
-            </strong>
-
+            <strong>82%</strong>
 
             <div className="candidate-progress">
-
               <div
                 className="candidate-progress-fill"
                 style={{ width: "82%" }}
               ></div>
-
             </div>
 
-
-            <small>
-              Strong profile · 18% to improve
-            </small>
-
+            <small>Strong profile · 18% to improve</small>
           </Link>
 
-
-          <Link
-            to="/candidate/skill-proof"
-            className="candidate-overview-card"
-          >
-
+          <Link to="/candidate/skill-proof" className="candidate-overview-card">
             <div className="candidate-overview-top">
-
-              <span>
-                VERIFIED SKILLS
-              </span>
+              <span>VERIFIED SKILLS</span>
 
               <BadgeCheck size={16} />
-
             </div>
 
+            <strong>{skillCount} / 5</strong>
 
-            <strong>
-              {skillCount} / 5
-            </strong>
-
-
-            <small>
-              {skillCount} skills in your profile
-            </small>
-
+            <small>{skillCount} skills in your profile</small>
           </Link>
 
-
-          <Link
-            to="/candidate/skill-gap"
-            className="candidate-overview-card"
-          >
-
+          <Link to="/candidate/skill-gap" className="candidate-overview-card">
             <div className="candidate-overview-top">
-
-              <span>
-                SKILL GAP
-              </span>
+              <span>SKILL GAP</span>
 
               <Target size={16} />
-
             </div>
 
+            <strong>20%</strong>
 
-            <strong>
-              20%
-            </strong>
-
-
-            <small>
-              2 skills need improvement
-            </small>
-
+            <small>2 skills need improvement</small>
           </Link>
-
 
           <Link
             to="/candidate/applications"
             className="candidate-overview-card"
           >
-
             <div className="candidate-overview-top">
-
-              <span>
-                APPLICATIONS
-              </span>
+              <span>APPLICATIONS</span>
 
               <FileCheck2 size={16} />
-
             </div>
 
+            <strong>7</strong>
 
-            <strong>
-              7
-            </strong>
-
-
-            <small>
-              2 currently shortlisted
-            </small>
-
+            <small>2 currently shortlisted</small>
           </Link>
-
         </section>
-
 
         {success && (
           <div
@@ -680,70 +601,156 @@ const CandidateProfile = () => {
                   }}
                 >
                   <label style={{ display: "grid", gap: "7px" }}>
-                    <span style={{ color: "#8faabd", fontSize: "12px", fontWeight: 700 }}>Full name</span>
+                    <span
+                      style={{
+                        color: "#8faabd",
+                        fontSize: "12px",
+                        fontWeight: 700,
+                      }}
+                    >
+                      Full name
+                    </span>
                     <input
                       name="fullname"
                       value={formData.fullname}
                       onChange={handleChange}
                       required
-                      style={{ padding: "11px 12px", border: "1px solid #17384a", borderRadius: "7px", background: "#07131d", color: "#fff" }}
+                      style={{
+                        padding: "11px 12px",
+                        border: "1px solid #17384a",
+                        borderRadius: "7px",
+                        background: "#07131d",
+                        color: "#fff",
+                      }}
                     />
                   </label>
 
                   <label style={{ display: "grid", gap: "7px" }}>
-                    <span style={{ color: "#8faabd", fontSize: "12px", fontWeight: 700 }}>Email</span>
+                    <span
+                      style={{
+                        color: "#8faabd",
+                        fontSize: "12px",
+                        fontWeight: 700,
+                      }}
+                    >
+                      Email
+                    </span>
                     <input
                       name="email"
                       type="email"
                       value={formData.email}
                       onChange={handleChange}
                       required
-                      style={{ padding: "11px 12px", border: "1px solid #17384a", borderRadius: "7px", background: "#07131d", color: "#fff" }}
+                      style={{
+                        padding: "11px 12px",
+                        border: "1px solid #17384a",
+                        borderRadius: "7px",
+                        background: "#07131d",
+                        color: "#fff",
+                      }}
                     />
                   </label>
 
                   <label style={{ display: "grid", gap: "7px" }}>
-                    <span style={{ color: "#8faabd", fontSize: "12px", fontWeight: 700 }}>Phone number</span>
+                    <span
+                      style={{
+                        color: "#8faabd",
+                        fontSize: "12px",
+                        fontWeight: 700,
+                      }}
+                    >
+                      Phone number
+                    </span>
                     <input
                       name="phoneNumber"
                       type="tel"
                       value={formData.phoneNumber}
                       onChange={handleChange}
                       required
-                      style={{ padding: "11px 12px", border: "1px solid #17384a", borderRadius: "7px", background: "#07131d", color: "#fff" }}
+                      style={{
+                        padding: "11px 12px",
+                        border: "1px solid #17384a",
+                        borderRadius: "7px",
+                        background: "#07131d",
+                        color: "#fff",
+                      }}
                     />
                   </label>
 
                   <label style={{ display: "grid", gap: "7px" }}>
-                    <span style={{ color: "#8faabd", fontSize: "12px", fontWeight: 700 }}>Skills</span>
+                    <span
+                      style={{
+                        color: "#8faabd",
+                        fontSize: "12px",
+                        fontWeight: 700,
+                      }}
+                    >
+                      Skills
+                    </span>
                     <input
                       name="skills"
                       value={formData.skills}
                       onChange={handleChange}
                       placeholder="React, Node.js, MongoDB"
-                      style={{ padding: "11px 12px", border: "1px solid #17384a", borderRadius: "7px", background: "#07131d", color: "#fff" }}
+                      style={{
+                        padding: "11px 12px",
+                        border: "1px solid #17384a",
+                        borderRadius: "7px",
+                        background: "#07131d",
+                        color: "#fff",
+                      }}
                     />
                   </label>
 
-                  <label style={{ display: "grid", gap: "7px", gridColumn: "1 / -1" }}>
-                    <span style={{ color: "#8faabd", fontSize: "12px", fontWeight: 700 }}>Bio</span>
+                  <label
+                    style={{
+                      display: "grid",
+                      gap: "7px",
+                      gridColumn: "1 / -1",
+                    }}
+                  >
+                    <span
+                      style={{
+                        color: "#8faabd",
+                        fontSize: "12px",
+                        fontWeight: 700,
+                      }}
+                    >
+                      Bio
+                    </span>
                     <textarea
                       name="bio"
                       value={formData.bio}
                       onChange={handleChange}
                       rows="4"
                       placeholder="Tell recruiters about yourself"
-                      style={{ padding: "11px 12px", border: "1px solid #17384a", borderRadius: "7px", background: "#07131d", color: "#fff", resize: "vertical" }}
+                      style={{
+                        padding: "11px 12px",
+                        border: "1px solid #17384a",
+                        borderRadius: "7px",
+                        background: "#07131d",
+                        color: "#fff",
+                        resize: "vertical",
+                      }}
                     />
                   </label>
                 </div>
 
-                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "16px" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    marginTop: "16px",
+                  }}
+                >
                   <button
                     type="submit"
                     disabled={saving}
                     className="profile-edit-button"
-                    style={{ cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1 }}
+                    style={{
+                      cursor: saving ? "not-allowed" : "pointer",
+                      opacity: saving ? 0.7 : 1,
+                    }}
                   >
                     {saving ? "Saving..." : "Save Profile"}
                     <ArrowRight size={13} />
@@ -759,69 +766,39 @@ const CandidateProfile = () => {
         =================================================== */}
 
         <section className="candidate-dashboard-grid">
-
-
           {/* =================================================
               VERIFIED SKILLS
           ================================================= */}
 
           <div className="candidate-panel skills-panel">
-
             <div className="candidate-panel-header">
-
               <div>
+                <span className="panel-label">VERIFIED CAPABILITY</span>
 
-                <span className="panel-label">
-                  VERIFIED CAPABILITY
-                </span>
-
-                <h2>
-                  Skills recruiters can trust.
-                </h2>
-
+                <h2>Skills recruiters can trust.</h2>
               </div>
 
-
               <Link to="/candidate/skill-proof">
-
                 Manage
-
                 <ArrowRight size={12} />
-
               </Link>
-
             </div>
 
-
             <div className="candidate-skills-list">
-
               {displaySkills.length > 0 ? (
                 displaySkills.slice(0, 5).map((skill) => (
-                  <div
-                    className="candidate-skill-row"
-                    key={skill}
-                  >
-
+                  <div className="candidate-skill-row" key={skill}>
                     <div className="candidate-skill-icon">
                       <BadgeCheck size={15} />
                     </div>
 
                     <div>
+                      <strong>{skill}</strong>
 
-                      <strong>
-                        {skill}
-                      </strong>
-
-                      <span>
-                        Added to your PulseHire profile
-                      </span>
-
+                      <span>Added to your PulseHire profile</span>
                     </div>
 
-                    <span className="skill-verified">
-                      Added
-                    </span>
-
+                    <span className="skill-verified">Added</span>
                   </div>
                 ))
               ) : (
@@ -835,406 +812,220 @@ const CandidateProfile = () => {
                   </div>
                 </div>
               )}
-
             </div>
-
           </div>
-
 
           {/* =================================================
               NEXT ACTION
           ================================================= */}
 
           <div className="candidate-panel action-panel">
-
             <div className="candidate-panel-header">
-
               <div>
+                <span className="panel-label">RECOMMENDED NEXT STEP</span>
 
-                <span className="panel-label">
-                  RECOMMENDED NEXT STEP
-                </span>
-
-                <h2>
-                  Strengthen your profile.
-                </h2>
-
+                <h2>Strengthen your profile.</h2>
               </div>
-
             </div>
 
-
             <div className="candidate-action-card">
-
               <div className="candidate-action-icon">
                 <Target size={20} />
               </div>
 
-
               <div>
-
-                <strong>
-                  Improve TypeScript
-                </strong>
+                <strong>Improve TypeScript</strong>
 
                 <p>
-                  TypeScript is currently your biggest
-                  skill gap for your target roles.
+                  TypeScript is currently your biggest skill gap for your target
+                  roles.
                 </p>
 
-
                 <Link to="/candidate/learning">
-
                   View learning resources
-
                   <ArrowRight size={12} />
-
                 </Link>
-
               </div>
-
             </div>
 
-
             <div className="candidate-action-card secondary">
-
               <div className="candidate-action-icon">
                 <FileCheck2 size={20} />
               </div>
 
-
               <div>
-
-                <strong>
-                  Complete your proof
-                </strong>
+                <strong>Complete your proof</strong>
 
                 <p>
-                  One submitted skill is still waiting
-                  for recruiter verification.
+                  One submitted skill is still waiting for recruiter
+                  verification.
                 </p>
 
-
                 <Link to="/candidate/skill-proof">
-
                   View proof status
-
                   <ArrowRight size={12} />
-
                 </Link>
-
               </div>
-
             </div>
-
           </div>
-
 
           {/* =================================================
               SKILL GAP
           ================================================= */}
 
           <div className="candidate-panel gap-panel">
-
             <div className="candidate-panel-header">
-
               <div>
+                <span className="panel-label">SKILL GAP INTELLIGENCE</span>
 
-                <span className="panel-label">
-                  SKILL GAP INTELLIGENCE
-                </span>
-
-                <h2>
-                  What could make you more hireable?
-                </h2>
-
+                <h2>What could make you more hireable?</h2>
               </div>
-
 
               <Link to="/candidate/skill-gap">
-
                 Explore
-
                 <ArrowRight size={12} />
-
               </Link>
-
             </div>
 
-
             <div className="gap-main">
-
               <div className="gap-score">
+                <strong>20%</strong>
 
-                <strong>
-                  20%
-                </strong>
-
-                <span>
-                  current gap
-                </span>
-
+                <span>current gap</span>
               </div>
 
-
               <div className="gap-description">
+                <strong>TypeScript</strong>
 
-                <strong>
-                  TypeScript
-                </strong>
-
-                <p>
-                  Frequently requested in the roles
-                  you're targeting.
-                </p>
-
+                <p>Frequently requested in the roles you're targeting.</p>
 
                 <div className="gap-progress">
-
                   <div
                     className="gap-progress-fill"
                     style={{ width: "64%" }}
                   ></div>
-
                 </div>
 
-
-                <small>
-                  64% skill readiness
-                </small>
-
+                <small>64% skill readiness</small>
               </div>
-
             </div>
-
 
             <div className="gap-secondary-list">
-
               <div>
+                <span>Docker</span>
 
-                <span>
-                  Docker
-                </span>
-
-                <strong>
-                  72%
-                </strong>
-
+                <strong>72%</strong>
               </div>
 
-
               <div>
+                <span>AWS</span>
 
-                <span>
-                  AWS
-                </span>
-
-                <strong>
-                  61%
-                </strong>
-
+                <strong>61%</strong>
               </div>
 
-
               <div>
+                <span>Testing</span>
 
-                <span>
-                  Testing
-                </span>
-
-                <strong>
-                  78%
-                </strong>
-
+                <strong>78%</strong>
               </div>
-
             </div>
-
           </div>
-
 
           {/* =================================================
               JOB MATCHES
           ================================================= */}
 
           <div className="candidate-panel jobs-panel">
-
             <div className="candidate-panel-header">
-
               <div>
+                <span className="panel-label">JOB MATCHES</span>
 
-                <span className="panel-label">
-                  JOB MATCHES
-                </span>
-
-                <h2>
-                  Roles matching your verified skills.
-                </h2>
-
+                <h2>Roles matching your verified skills.</h2>
               </div>
-
 
               <Link to="/candidate/jobs">
-
                 Find more
-
                 <ArrowRight size={12} />
-
               </Link>
-
             </div>
-
 
             <div className="candidate-job-list">
-
-
               <div className="candidate-job-row">
-
-                <div className="job-company-icon">
-                  TN
-                </div>
-
+                <div className="job-company-icon">TN</div>
 
                 <div>
+                  <strong>Senior Full Stack Developer</strong>
 
-                  <strong>
-                    Senior Full Stack Developer
-                  </strong>
-
-                  <span>
-                    TechNova Systems · Bengaluru
-                  </span>
-
+                  <span>TechNova Systems · Bengaluru</span>
                 </div>
 
-
-                <div className="job-match-score">
-                  94%
-                </div>
-
+                <div className="job-match-score">94%</div>
 
                 <Link to="/candidate/jobs">
-
                   <ArrowRight size={13} />
-
                 </Link>
-
               </div>
-
 
               <div className="candidate-job-row">
-
-                <div className="job-company-icon">
-                  PS
-                </div>
-
+                <div className="job-company-icon">PS</div>
 
                 <div>
+                  <strong>Full Stack Engineer</strong>
 
-                  <strong>
-                    Full Stack Engineer
-                  </strong>
-
-                  <span>
-                    PixelStack · Remote
-                  </span>
-
+                  <span>PixelStack · Remote</span>
                 </div>
 
-
-                <div className="job-match-score">
-                  89%
-                </div>
-
+                <div className="job-match-score">89%</div>
 
                 <Link to="/candidate/jobs">
-
                   <ArrowRight size={13} />
-
                 </Link>
-
               </div>
-
 
               <div className="candidate-job-row">
-
-                <div className="job-company-icon">
-                  AC
-                </div>
-
+                <div className="job-company-icon">AC</div>
 
                 <div>
+                  <strong>MERN Developer</strong>
 
-                  <strong>
-                    MERN Developer
-                  </strong>
-
-                  <span>
-                    AppCore · Hyderabad
-                  </span>
-
+                  <span>AppCore · Hyderabad</span>
                 </div>
 
-
-                <div className="job-match-score">
-                  84%
-                </div>
-
+                <div className="job-match-score">84%</div>
 
                 <Link to="/candidate/jobs">
-
                   <ArrowRight size={13} />
-
                 </Link>
-
               </div>
-
             </div>
-
           </div>
-
         </section>
-
 
         {/* ===================================================
             INSIGHT
         =================================================== */}
 
         <section className="candidate-insight">
-
           <div className="candidate-insight-icon">
             <Lightbulb size={20} />
           </div>
 
-
           <div>
+            <span className="panel-label">PULSEHIRE INSIGHT</span>
 
-            <span className="panel-label">
-              PULSEHIRE INSIGHT
-            </span>
-
-            <h2>
-              Your profile is more than a resume.
-            </h2>
+            <h2>Your profile is more than a resume.</h2>
 
             <p>
-              Verified skills increase trust, skill-gap
-              intelligence shows where to improve, and
-              targeted learning helps you close those gaps.
-              Every improvement makes your profile more useful
-              to the right recruiter.
+              Verified skills increase trust, skill-gap intelligence shows where
+              to improve, and targeted learning helps you close those gaps.
+              Every improvement makes your profile more useful to the right
+              recruiter.
             </p>
-
           </div>
-
         </section>
-
-
       </main>
-
     </div>
   );
 };
-
 
 export default CandidateProfile;

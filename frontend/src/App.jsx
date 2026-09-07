@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 import React from "react";
 import AuthProvider from "./context/AuthProvider";
 
@@ -46,109 +47,136 @@ const LandingPage = () => {
 
 function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <Routes>
+   <BrowserRouter>
+  <AuthProvider>
+    <Routes>
 
-          {/* LANDING */}
-          <Route path="/" element={<LandingPage />} />
+      {/* PUBLIC */}
+      <Route path="/" element={<LandingPage />} />
 
-          {/* CANDIDATE AUTH */}
-          <Route path="/candidate/login" element={<Login />} />
-          <Route path="/candidate/register" element={<Register />} />
+      <Route
+        path="/candidate/login"
+        element={<Login />}
+      />
 
-          {/* RECRUITER AUTH */}
-          <Route path="/recruiter/login" element={<Login />} />
-          <Route path="/recruiter/register" element={<Register />} />
+      <Route
+        path="/candidate/register"
+        element={<Register />}
+      />
 
-          {/* CANDIDATE */}
-          <Route
-            path="/candidate/dashboard"
-            element={<CandidateDashboard />}
-          />
+      <Route
+        path="/recruiter/login"
+        element={<Login />}
+      />
 
-          <Route
-            path="/candidate/profile"
-            element={<CandidateProfile />}
-          />
+      <Route
+        path="/recruiter/register"
+        element={<Register />}
+      />
 
-          <Route
-            path="/candidate/skill-proof"
-            element={<SkillProof />}
-          />
+      {/* CANDIDATE PROTECTED */}
+      <Route
+        element={
+          <ProtectedRoute allowedRoles={["candidate"]} />
+        }
+      >
+        <Route
+          path="/candidate/dashboard"
+          element={<CandidateDashboard />}
+        />
 
-          <Route
-            path="/candidate/skill-gap"
-            element={<SkillGap />}
-          />
+        <Route
+          path="/candidate/profile"
+          element={<CandidateProfile />}
+        />
 
-          <Route
-            path="/candidate/learning"
-            element={<Learning />}
-          />
+        <Route
+          path="/candidate/skill-proof"
+          element={<SkillProof />}
+        />
 
-          <Route
-            path="/candidate/jobs"
-            element={<Jobs />}
-          />
+        <Route
+          path="/candidate/skill-gap"
+          element={<SkillGap />}
+        />
 
-          <Route
-            path="/candidate/jobs/:jobId"
-            element={<JobDetails />}
-          />
+        <Route
+          path="/candidate/learning"
+          element={<Learning />}
+        />
 
-          <Route
-            path="/candidate/applications"
-            element={<CandidateApplications />}
-          />
+        <Route
+          path="/candidate/jobs"
+          element={<Jobs />}
+        />
 
-          {/* RECRUITER */}
-          <Route
-            path="/recruiter/dashboard"
-            element={<RecruiterDashboard />}
-          />
+        <Route
+          path="/candidate/jobs/:jobId"
+          element={<JobDetails />}
+        />
 
-          <Route
-            path="/recruiter/jobs"
-            element={<RecruiterJobs />}
-          />
+        <Route
+          path="/candidate/applications"
+          element={<CandidateApplications />}
+        />
+      </Route>
 
-          <Route
-            path="/recruiter/jobs/create"
-            element={<CreateJob />}
-          />
+      {/* RECRUITER PROTECTED */}
+      <Route
+        element={
+          <ProtectedRoute allowedRoles={["recruiter"]} />
+        }
+      >
+        <Route
+          path="/recruiter/dashboard"
+          element={<RecruiterDashboard />}
+        />
 
-          <Route
-            path="/recruiter/candidates"
-            element={<Candidates />}
-          />
+        <Route
+          path="/recruiter/jobs"
+          element={<RecruiterJobs />}
+        />
 
-          <Route
-            path="/recruiter/candidates/:candidateId"
-            element={<CandidateDetail />}
-          />
+        <Route
+          path="/recruiter/jobs/create"
+          element={<CreateJob />}
+        />
 
-          <Route
-            path="/recruiter/verification"
-            element={<Verification />}
-          />
+        <Route
+          path="/recruiter/candidates"
+          element={<Candidates />}
+        />
 
-          <Route
-            path="/recruiter/applications"
-            element={<RecruiterApplications />}
-          />
+        <Route
+          path="/recruiter/candidates/:candidateId"
+          element={<CandidateDetail />}
+        />
 
-          <Route
-            path="/recruiter/analytics"
-            element={<Analytics />}
-          />
+        <Route
+          path="/recruiter/verification"
+          element={<Verification />}
+        />
 
-          {/* FALLBACK */}
-          <Route path="*" element={<LandingPage />} />
+        <Route
+          path="/recruiter/applications"
+          element={<RecruiterApplications />}
+        />
 
-        </Routes>
-      </AuthProvider>
-    </BrowserRouter>
+        <Route
+          path="/recruiter/analytics"
+          element={<Analytics />}
+        />
+      </Route>
+
+      {/* FALLBACK */}
+      <Route
+        path="*"
+        element={<LandingPage />}
+      />
+
+    </Routes>
+  </AuthProvider>
+</BrowserRouter>
   );
 }
 

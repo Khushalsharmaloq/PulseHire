@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-
+import cloudinary from "../config/cloudinary.js";
+import { uploadToCloudinary } from "../utils/cloudinary.util.js";
 import { User } from "../models/user.model.js";
 
 /* =====================================================
@@ -187,6 +188,8 @@ export const logout = async (req, res) => {
       .cookie("token", "", {
         httpOnly: true,
         expires: new Date(0),
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
       })
       .json({
         message: "Logged out successfully.",
@@ -248,6 +251,41 @@ export const updateProfile = async (req, res) => {
       profilePhoto,
     } = req.body;
 
+    const normalizedFullname = fullname?.trim();
+    const normalizedEmail = email?.trim().toLowerCase();
+    const normalizedPhoneNumber = phoneNumber?.trim();
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^\d{10}$/;
+
+    if (!normalizedFullname) {
+      return res.status(400).json({
+        message: "Full name is required.",
+        success: false,
+      });
+    }
+
+    if (normalizedFullname.length < 2) {
+      return res.status(400).json({
+        message: "Full name must contain at least 2 characters.",
+        success: false,
+      });
+    }
+
+    if (!normalizedEmail || !emailRegex.test(normalizedEmail)) {
+      return res.status(400).json({
+        message: "Please provide a valid email address.",
+        success: false,
+      });
+    }
+
+    if (!normalizedPhoneNumber || !phoneRegex.test(normalizedPhoneNumber)) {
+      return res.status(400).json({
+        message: "Phone number must contain exactly 10 digits.",
+        success: false,
+      });
+    }
+
     const user = await User.findById(req.userId);
 
     if (!user) {
@@ -261,8 +299,8 @@ export const updateProfile = async (req, res) => {
        BASIC USER INFORMATION
     =============================================== */
 
-    if (fullname !== undefined && fullname.trim() !== "") {
-      user.fullname = fullname.trim();
+    if (fullname !== undefined) {
+      user.fullname = normalizedFullname;
     }
 
     if (email !== undefined && email.trim() !== "") {
@@ -287,8 +325,8 @@ export const updateProfile = async (req, res) => {
       }
     }
 
-    if (phoneNumber !== undefined && phoneNumber.trim() !== "") {
-      user.phoneNumber = phoneNumber.trim();
+    if (phoneNumber !== undefined) {
+      user.phoneNumber = normalizedPhoneNumber;
     }
 
     /* ===============================================
@@ -307,9 +345,9 @@ export const updateProfile = async (req, res) => {
         });
       }
 
-      user.profile.skills = skills
-        .map((skill) => String(skill).trim())
-        .filter(Boolean);
+      user.profile.skills = [
+        ...new Set(skills.map((skill) => String(skill).trim()).filter(Boolean)),
+      ];
     }
 
     if (resume !== undefined) {
@@ -371,4 +409,100 @@ export const candidateTest = async (req, res) => {
     userId: req.userId,
     role: req.userRole,
   });
+};
+
+/* =====================================================
+   UPLOAD PROFILE PHOTO
+===================================================== */
+
+export const uploadProfilePhoto = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "Please select an image.",
+      });
+    }
+
+    const user = await User.findById(req.userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
+
+    const result = await uploadToCloudinary(
+      req.file.buffer,
+      "pulsehire/profile-photos"
+    );
+
+    user.profile.profilePhoto = result.secure_url;
+
+    await user.save();
+
+    const updatedUser = await User.findById(user._id).select("-password");
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile photo uploaded successfully.",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Profile photo upload error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to upload profile photo.",
+    });
+  }
+};
+
+ /* =====================================================
+    UPLOAD RESUME   
+===================================================== */
+export const uploadResume = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "Please select a PDF resume.",
+      });
+    }
+
+    const user = await User.findById(req.userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
+
+    const result = await uploadToCloudinary(
+      req.file.buffer,
+      "pulsehire/resumes"
+    );
+
+    user.profile.resume = result.secure_url;
+    user.profile.resumeOriginalName = req.file.originalname;
+
+    await user.save();
+
+    const updatedUser = await User.findById(user._id).select("-password");
+
+    return res.status(200).json({
+      success: true,
+      message: "Resume uploaded successfully.",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Resume upload error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to upload resume.",
+    });
+  }
 };

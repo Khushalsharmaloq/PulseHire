@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import AuthContext from "./AuthContext";
 import api from "../services/api";
@@ -35,20 +35,19 @@ const AuthProvider = ({ children }) => {
     };
   }, []);
 
-  const login = (userData) => {
+  const login = useCallback((userData) => {
     setUser(userData);
-  };
+  }, []);
 
-  const logout = async () => {
-    try {
-      await api.post("/user/logout");
-    } catch (error) {
-      console.error("PulseHire logout error:", error);
-    } finally {
-      setUser(null);
-    }
-  };
-
+  const logout = useCallback(async () => {
+  try {
+    await api.post("/user/logout");
+  } catch (error) {
+    console.error("PulseHire logout error:", error);
+  } finally {
+    setUser(null);
+  }
+}, []);
   return (
     <AuthContext.Provider
       value={{
