@@ -100,6 +100,8 @@ export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    const normalizedEmail = email?.trim().toLowerCase();
+
     if (!email || !password) {
       return res.status(400).json({
         message: "Email and password are required.",
@@ -108,7 +110,7 @@ export const login = async (req, res) => {
     }
 
     const user = await User.findOne({
-      email,
+      email: normalizedEmail,
     });
 
     if (!user) {
@@ -123,6 +125,15 @@ export const login = async (req, res) => {
     if (!isPasswordCorrect) {
       return res.status(401).json({
         message: "Invalid email or password.",
+        success: false,
+      });
+    }
+
+    if (!process.env.JWT_SECRET) {
+      console.error("JWT_SECRET is not configured.");
+
+      return res.status(500).json({
+        message: "Authentication service is not configured.",
         success: false,
       });
     }

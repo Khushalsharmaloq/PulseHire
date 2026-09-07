@@ -1,73 +1,59 @@
-import { useCallback, useState } from "react";
+import { useEffect, useState } from "react";
 
 import AuthContext from "./AuthContext";
-
-
-const getStoredUser = () => {
-  try {
-    const storedUser =
-      localStorage.getItem("pulsehireUser");
-
-    if (!storedUser) {
-      return null;
-    }
-
-    return JSON.parse(storedUser);
-
-  } catch (error) {
-
-    console.error(
-      "Unable to restore PulseHire user:",
-      error
-    );
-
-    localStorage.removeItem("pulsehireUser");
-
-    return null;
-  }
-};
-
+import api from "../services/api";
 
 const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const [user, setUser] = useState(getStoredUser);
+  useEffect(() => {
+    let cancelled = false;
 
+    const checkAuthentication = async () => {
+      try {
+        const response = await api.get("/user/me");
 
-  /* =====================================================
-     LOGIN
-  ===================================================== */
+        if (!cancelled && response.data?.success) {
+          setUser(response.data.user);
+        }
+      } catch {
+        if (!cancelled) {
+          setUser(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
 
-  const login = useCallback((userData) => {
+    checkAuthentication();
 
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const login = (userData) => {
     setUser(userData);
+  };
 
-    localStorage.setItem(
-      "pulsehireUser",
-      JSON.stringify(userData)
-    );
-
-  }, []);
-
-
-  /* =====================================================
-     LOGOUT
-  ===================================================== */
-
-  const logout = useCallback(() => {
-
-    setUser(null);
-
-    localStorage.removeItem(
-      "pulsehireUser"
-    );
-
-  }, []);
-
+  const logout = async () => {
+    try {
+      await api.post("/user/logout");
+    } catch (error) {
+      console.error("PulseHire logout error:", error);
+    } finally {
+      setUser(null);
+    }
+  };
 
   return (
     <AuthContext.Provider
       value={{
         user,
+        loading,
         login,
         logout,
       }}
@@ -76,6 +62,5 @@ const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
-
 
 export default AuthProvider;
