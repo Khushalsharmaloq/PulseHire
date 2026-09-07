@@ -960,7 +960,7 @@
     #38bdf8
   );
 
-  color: white;
+  color: #ffffff !important;
 
   font-weight: 700;
 
@@ -970,6 +970,11 @@
   transition:
     transform 0.25s ease,
     box-shadow 0.25s ease;
+}
+
+.primary-button:hover,
+.nav-cta:hover {
+  color: #ffffff !important;
 }
 
 .nav-cta {
@@ -1128,24 +1133,35 @@
 .secondary-button {
   padding: 14px 20px;
 
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  border: 1px solid rgba(148, 163, 184, 0.35);
   border-radius: 16px;
 
-  color: inherit;
+  color: #ffffff;
 
   text-decoration: none;
 
   font-size: 14px;
   font-weight: 700;
 
+  background: rgba(255, 255, 255, 0.04);
+
   transition:
     transform 0.2s ease,
-    background 0.2s ease;
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
 }
 
 .secondary-button:hover {
   transform: translateY(-2px);
-  background: rgba(255, 255, 255, 0.05);
+
+  color: #ffffff;
+
+  background: rgba(56, 189, 248, 0.12);
+
+  border-color: rgba(56, 189, 248, 0.45);
+
+  box-shadow: 0 10px 30px rgba(37, 99, 235, 0.15);
 }
 
 .hero-trust {
