@@ -23134,3 +23134,502 @@ user-select: none;
   display: none;
 }
 }
+
+.profile-resume-panel {
+  margin-bottom: 20px;
+}
+
+.profile-resume-content {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.profile-resume-icon {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid #164a63;
+  border-radius: 9px;
+
+  background: #07131d;
+  color: #16b9e8;
+}
+
+.profile-resume-info {
+  min-width: 0;
+  flex: 1;
+
+  display: grid;
+  gap: 5px;
+}
+
+.profile-resume-info strong {
+  color: #ffffff;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-resume-info span {
+  color: #8faabd;
+  font-size: 12px;
+}
+
+.profile-resume-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.resume-view-button,
+.resume-upload-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 9px 13px;
+
+  border: 1px solid #17384a;
+  border-radius: 7px;
+
+  background: #0b1720;
+  color: #dcecf4;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.resume-upload-button {
+  border-color: #16b9e8;
+  background: #16b9e8;
+  color: #06111b;
+}
+
+.resume-view-button:hover,
+.resume-upload-button:hover {
+  transform: translateY(-1px);
+}
+
+@media (max-width: 700px) {
+  .profile-resume-content {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .profile-resume-actions {
+    width: 100%;
+  }
+
+  .resume-view-button,
+  .resume-upload-button {
+    flex: 1;
+  }
+}
+
+/* =========================================================
+   CANDIDATE PROFILE - SKILLS EDITOR
+========================================================= */
+
+.profile-skills-editor {
+  display: grid;
+  gap: 10px;
+}
+
+.profile-form-label {
+  color: #8faabd;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.profile-skill-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 42px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid #17384a;
+  border-radius: 8px;
+  background: #07131d;
+}
+
+.profile-skill-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 10px;
+  border: 1px solid #20536c;
+  border-radius: 999px;
+  background: #0b202d;
+  color: #d8edf7;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.profile-skill-tag button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #8faabd;
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.profile-skill-tag button:hover {
+  color: #ffffff;
+}
+
+.profile-skills-empty {
+  color: #617b8b;
+  font-size: 13px;
+}
+
+.profile-add-skill {
+  display: flex;
+  gap: 8px;
+}
+
+.profile-add-skill input {
+  flex: 1;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid #17384a;
+  border-radius: 7px;
+  outline: none;
+  background: #07131d;
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.profile-add-skill input::placeholder {
+  color: #60798a;
+}
+
+.profile-add-skill input:focus {
+  border-color: #287ea4;
+}
+
+.profile-add-skill button {
+  flex-shrink: 0;
+  padding: 11px 15px;
+  border: 1px solid #20536c;
+  border-radius: 7px;
+  background: #0d2b3b;
+  color: #d8edf7;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.profile-add-skill button:hover {
+  background: #12394c;
+}
+
+.profile-skill-hint {
+  color: #617b8b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* =========================================================
+   CLAIMED SKILL STATUS
+========================================================= */
+
+.skill-claimed {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 9px;
+  border: 1px solid #25495a;
+  border-radius: 999px;
+  background: #0b202d;
+  color: #8fb7c8;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* =========================================================
+   SKILL PROOF FORM
+   ========================================================= */
+
+.skill-proof-form {
+  margin-top: 28px;
+  padding: 28px;
+  border: 1px solid rgba(96, 165, 250, 0.18);
+  border-radius: 16px;
+  background: rgba(8, 15, 30, 0.72);
+}
+
+.skill-proof-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.skill-proof-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skill-proof-field.full-width {
+  grid-column: 1 / -1;
+}
+
+.skill-proof-field label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #dbeafe;
+}
+
+.skill-proof-field input,
+.skill-proof-field select,
+.skill-proof-field textarea {
+  width: 100%;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.9);
+  color: #f8fafc;
+  padding: 13px 14px;
+  font-size: 15px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+}
+
+.skill-proof-field textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.skill-proof-field input::placeholder,
+.skill-proof-field textarea::placeholder {
+  color: #64748b;
+}
+
+.skill-proof-field input:focus,
+.skill-proof-field select:focus,
+.skill-proof-field textarea:focus {
+  border-color: rgba(56, 189, 248, 0.65);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.08);
+}
+
+.skill-proof-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.skill-proof-cancel {
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: transparent;
+  color: #cbd5e1;
+  padding: 11px 18px;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.skill-proof-cancel:hover {
+  background: rgba(148, 163, 184, 0.06);
+}
+
+.skill-proof-message {
+  margin-top: 18px;
+  padding: 13px 15px;
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.skill-proof-message.error {
+  border: 1px solid rgba(248, 113, 113, 0.25);
+  background: rgba(127, 29, 29, 0.15);
+  color: #fca5a5;
+}
+
+.skill-proof-message.success {
+  border: 1px solid rgba(74, 222, 128, 0.25);
+  background: rgba(20, 83, 45, 0.15);
+  color: #86efac;
+}
+
+.add-proof-button:disabled,
+.submit-proof-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 760px) {
+  .skill-proof-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .skill-proof-field.full-width {
+    grid-column: auto;
+  }
+
+  .skill-proof-form {
+    padding: 20px;
+  }
+
+  .skill-proof-form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .skill-proof-form-actions button {
+    width: 100%;
+  }
+}
+
+/* =========================================================
+   SKILL PROOF EMPTY STATE
+   ========================================================= */
+
+.proof-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 240px;
+  padding: 40px 24px;
+  border: 1px dashed rgba(96, 165, 250, 0.2);
+  border-radius: 16px;
+  background: rgba(8, 15, 30, 0.45);
+}
+
+.proof-empty-state h3 {
+  margin: 16px 0 8px;
+  font-size: 18px;
+  color: #f8fafc;
+}
+
+.proof-empty-state p {
+  max-width: 520px;
+  margin: 0 0 20px;
+  color: #94a3b8;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.proof-description {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.55);
+  color: #94a3b8;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.proof-evidence a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  text-decoration: none;
+}
+
+/* =========================================================
+   RECRUITER SKILL VERIFICATION - DYNAMIC STATES
+   ========================================================= */
+
+.verification-skill-tab {
+  border: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.verification-skill-tab button {
+  font: inherit;
+}
+
+.verification-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 260px;
+  text-align: center;
+  padding: 40px 24px;
+  border: 1px dashed rgba(96, 165, 250, 0.2);
+  border-radius: 16px;
+  background: rgba(8, 15, 30, 0.45);
+}
+
+.verification-empty-state h3 {
+  margin: 16px 0 8px;
+  color: #f8fafc;
+  font-size: 18px;
+}
+
+.verification-empty-state p {
+  max-width: 480px;
+  margin: 0;
+  color: #94a3b8;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.verification-message {
+  margin: 16px 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.verification-message.error {
+  border: 1px solid rgba(248, 113, 113, 0.25);
+  background: rgba(127, 29, 29, 0.15);
+  color: #fca5a5;
+}
+
+.verification-message.success {
+  border: 1px solid rgba(74, 222, 128, 0.25);
+  background: rgba(20, 83, 45, 0.15);
+  color: #86efac;
+}
+
+.approve-verification-button:disabled,
+.reject-verification-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.evidence-external-link {
+  text-decoration: none;
+}
+
+@media (max-width: 760px) {
+  .verification-skill-selector {
+    overflow-x: auto;
+  }
+
+  .verification-skill-tab {
+    min-width: 180px;
+  }
+}

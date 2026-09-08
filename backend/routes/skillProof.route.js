@@ -1,66 +1,43 @@
 import express from "express";
 
 import {
-    addSkillProof,
-    getMySkillProofs,
-    getSkillProof,
-    verifySkillProof,
-    requestReverification
+  submitSkillProof,
+  getMySkillProofs,
+  getRecruiterSkillProofs,
+  reviewSkillProof,
 } from "../controllers/skillProof.controller.js";
 
-import {
-    isAuthenticated
-} from "../middlewares/auth.middleware.js";
-
-import {
-    authorizeRoles
-} from "../middlewares/role.middleware.js";
+import { isAuthenticated } from "../middlewares/auth.middleware.js";
+import { authorizeRoles } from "../middlewares/role.middleware.js";
 
 const router = express.Router();
 
-
-/* ==================== CANDIDATE ==================== */
-
 router.post(
-    "/add",
-    isAuthenticated,
-    authorizeRoles("candidate"),
-    addSkillProof
+  "/",
+  isAuthenticated,
+  authorizeRoles("candidate"),
+  submitSkillProof,
 );
-
 
 router.get(
-    "/my",
-    isAuthenticated,
-    authorizeRoles("candidate"),
-    getMySkillProofs
+  "/my",
+  isAuthenticated,
+  authorizeRoles("candidate"),
+  getMySkillProofs,
 );
-
 
 router.get(
-    "/:skillProofId",
-    isAuthenticated,
-    authorizeRoles("candidate"),
-    getSkillProof
+  "/recruiter",
+  isAuthenticated,
+  authorizeRoles("recruiter"),
+  getRecruiterSkillProofs,
 );
-
 
 router.patch(
-    "/:skillProofId/reverify",
-    isAuthenticated,
-    authorizeRoles("candidate"),
-    requestReverification
+  "/:proofId/review",
+  isAuthenticated,
+  authorizeRoles("recruiter"),
+  reviewSkillProof,
 );
-
-
-/* ==================== RECRUITER ==================== */
-
-router.patch(
-    "/:skillProofId/verify",
-    isAuthenticated,
-    authorizeRoles("recruiter"),
-    verifySkillProof
-);
-
 
 export default router;

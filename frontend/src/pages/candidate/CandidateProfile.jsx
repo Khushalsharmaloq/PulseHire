@@ -1,6 +1,7 @@
 import {
   ArrowRight,
   BadgeCheck,
+  CircleCheck,
   Bell,
   BookOpen,
   BriefcaseBusiness,
@@ -28,9 +29,15 @@ const CandidateProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [uploadingResume, setUploadingResume] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  const [newSkill, setNewSkill] = useState("");
+  const [editingSkills, setEditingSkills] = useState(
+    user?.profile?.skills || [],
+  );
 
   const [formData, setFormData] = useState({
     fullname: user?.fullname || "",
@@ -87,6 +94,47 @@ const CandidateProfile = () => {
     }));
   };
 
+  const normalizeSkill = (skill) => {
+    return skill.trim().replace(/\s+/g, " ");
+  };
+
+  const handleAddSkill = () => {
+    const skill = normalizeSkill(newSkill);
+
+    if (!skill) {
+      return;
+    }
+
+    const alreadyExists = editingSkills.some(
+      (existingSkill) => existingSkill.toLowerCase() === skill.toLowerCase(),
+    );
+
+    if (alreadyExists) {
+      setError("This skill has already been added.");
+      return;
+    }
+
+    setEditingSkills((previousSkills) => [...previousSkills, skill]);
+
+    setNewSkill("");
+    setError("");
+  };
+
+  const handleRemoveSkill = (skillToRemove) => {
+    setEditingSkills((previousSkills) =>
+      previousSkills.filter(
+        (skill) => skill.toLowerCase() !== skillToRemove.toLowerCase(),
+      ),
+    );
+  };
+
+  const handleSkillKeyDown = (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      handleAddSkill();
+    }
+  };
+
   const handleSaveProfile = async (event) => {
     event.preventDefault();
 
@@ -125,15 +173,6 @@ const CandidateProfile = () => {
       return;
     }
 
-    const skills = [
-      ...new Set(
-        formData.skills
-          .split(",")
-          .map((skill) => skill.trim())
-          .filter(Boolean),
-      ),
-    ];
-
     try {
       setSaving(true);
 
@@ -142,7 +181,7 @@ const CandidateProfile = () => {
         email,
         phoneNumber,
         bio: formData.bio.trim(),
-        skills,
+        skills: editingSkills,
       });
 
       const data = response.data;
@@ -153,6 +192,7 @@ const CandidateProfile = () => {
 
       setProfileUser(data.user);
       login(data.user);
+      setEditingSkills(data.user?.profile?.skills || []);
 
       setFormData({
         fullname: data.user?.fullname || "",
@@ -224,6 +264,58 @@ const CandidateProfile = () => {
       );
     } finally {
       setUploadingPhoto(false);
+      event.target.value = "";
+    }
+  };
+
+  /* =====================================================
+      LOGOUT    
+  ===================================================== */
+  const handleResumeUpload = async (event) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    setError("");
+    setSuccess("");
+
+    // Maximum 5 MB
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Resume must be smaller than 5 MB.");
+      event.target.value = "";
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("resume", file);
+
+    try {
+      setUploadingResume(true);
+
+      const response = await api.put("/user/profile/resume", formData);
+
+      const data = response.data;
+
+      if (!data.success) {
+        throw new Error(data.message || "Resume upload failed.");
+      }
+
+      setProfileUser(data.user);
+      login(data.user);
+
+      setSuccess("Resume replaced successfully.");
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Unable to upload resume.",
+      );
+    } finally {
+      setUploadingResume(false);
+
+      // Reset file input so the same file can be selected again
       event.target.value = "";
     }
   };
@@ -423,6 +515,8 @@ const CandidateProfile = () => {
             onClick={() => {
               setError("");
               setSuccess("");
+              setNewSkill("");
+              setEditingSkills(profileUser?.profile?.skills || []);
               setIsEditing(true);
             }}
           >
@@ -457,14 +551,18 @@ const CandidateProfile = () => {
 
           <Link to="/candidate/skill-proof" className="candidate-overview-card">
             <div className="candidate-overview-top">
-              <span>VERIFIED SKILLS</span>
+              <span>CLAIMED SKILLS</span>
 
               <BadgeCheck size={16} />
             </div>
 
-            <strong>{skillCount} / 5</strong>
+            <strong>{skillCount}</strong>
 
-            <small>{skillCount} skills in your profile</small>
+            <small>
+              {skillCount === 1
+                ? "1 skill in your profile"
+                : `${skillCount} skills in your profile`}
+            </small>
           </Link>
 
           <Link to="/candidate/skill-gap" className="candidate-overview-card">
@@ -493,6 +591,76 @@ const CandidateProfile = () => {
 
             <small>2 currently shortlisted</small>
           </Link>
+        </section>
+
+        <section className="candidate-panel profile-resume-panel">
+          <div className="candidate-panel-header">
+            <div>
+              <span className="panel-label">PROFESSIONAL DOCUMENT</span>
+
+              <h2>Your resume.</h2>
+            </div>
+          </div>
+
+          <div className="profile-resume-content">
+            <div className="profile-resume-icon">
+              <FileCheck2 size={22} />
+            </div>
+
+            <div className="profile-resume-info">
+              {profileUser?.profile?.resume ? (
+                <>
+                  <strong>
+                    {profileUser?.profile?.resumeOriginalName ||
+                      "Resume uploaded"}
+                  </strong>
+
+                  <span>Your resume is available to recruiters.</span>
+                </>
+              ) : (
+                <>
+                  <strong>No resume uploaded</strong>
+
+                  <span>Add your resume to strengthen your profile.</span>
+                </>
+              )}
+            </div>
+
+            <div className="profile-resume-actions">
+              {profileUser?.profile?.resume && (
+                <a
+                  href={profileUser.profile.resume}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="resume-view-button"
+                >
+                  View
+                </a>
+              )}
+
+              <label
+                className="resume-upload-button"
+                style={{
+                  opacity: uploadingResume ? 0.7 : 1,
+                  cursor: uploadingResume ? "not-allowed" : "pointer",
+                }}
+              >
+                {uploadingResume
+                  ? "Uploading..."
+                  : profileUser?.profile?.resume
+                    ? "Replace"
+                    : "Upload Resume"}
+
+                <input
+                  type="file"
+                  accept="application/pdf,.pdf"
+                  onChange={handleResumeUpload}
+                  disabled={uploadingResume}
+                  hidden
+                />
+              </label>
+            </div>
+          </div>
         </section>
 
         {success && (
@@ -559,6 +727,8 @@ const CandidateProfile = () => {
                   setIsEditing(false);
                   setError("");
                   setSuccess("");
+                  setNewSkill("");
+                  setEditingSkills(profileUser?.profile?.skills || []);
                 }}
                 style={{
                   padding: "8px 12px",
@@ -600,30 +770,51 @@ const CandidateProfile = () => {
                     gap: "14px",
                   }}
                 >
-                  <label style={{ display: "grid", gap: "7px" }}>
-                    <span
-                      style={{
-                        color: "#8faabd",
-                        fontSize: "12px",
-                        fontWeight: 700,
-                      }}
-                    >
-                      Full name
-                    </span>
-                    <input
-                      name="fullname"
-                      value={formData.fullname}
-                      onChange={handleChange}
-                      required
-                      style={{
-                        padding: "11px 12px",
-                        border: "1px solid #17384a",
-                        borderRadius: "7px",
-                        background: "#07131d",
-                        color: "#fff",
-                      }}
-                    />
-                  </label>
+                  <div className="profile-skills-editor">
+                    <span className="profile-form-label">Skills</span>
+
+                    <div className="profile-skill-tags">
+                      {editingSkills.length > 0 ? (
+                        editingSkills.map((skill) => (
+                          <div className="profile-skill-tag" key={skill}>
+                            <span>{skill}</span>
+
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveSkill(skill)}
+                              aria-label={`Remove ${skill}`}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))
+                      ) : (
+                        <span className="profile-skills-empty">
+                          No skills added yet.
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="profile-add-skill">
+                      <input
+                        type="text"
+                        value={newSkill}
+                        onChange={(event) => setNewSkill(event.target.value)}
+                        onKeyDown={handleSkillKeyDown}
+                        placeholder="Enter a skill, e.g. React"
+                        maxLength={50}
+                      />
+
+                      <button type="button" onClick={handleAddSkill}>
+                        Add Skill
+                      </button>
+                    </div>
+
+                    <small className="profile-skill-hint">
+                      Add the skills you can confidently claim. Verification
+                      happens through Skill Proof.
+                    </small>
+                  </div>
 
                   <label style={{ display: "grid", gap: "7px" }}>
                     <span
@@ -773,13 +964,13 @@ const CandidateProfile = () => {
           <div className="candidate-panel skills-panel">
             <div className="candidate-panel-header">
               <div>
-                <span className="panel-label">VERIFIED CAPABILITY</span>
+                <span className="panel-label">CLAIMED SKILLS</span>
 
-                <h2>Skills recruiters can trust.</h2>
+                <h2>Skills you can confidently claim.</h2>
               </div>
 
               <Link to="/candidate/skill-proof">
-                Manage
+                Prove skills
                 <ArrowRight size={12} />
               </Link>
             </div>
@@ -789,16 +980,15 @@ const CandidateProfile = () => {
                 displaySkills.slice(0, 5).map((skill) => (
                   <div className="candidate-skill-row" key={skill}>
                     <div className="candidate-skill-icon">
-                      <BadgeCheck size={15} />
+                      <CircleCheck size={15} />
                     </div>
 
                     <div>
                       <strong>{skill}</strong>
-
-                      <span>Added to your PulseHire profile</span>
+                      <span>Claimed on your PulseHire profile</span>{" "}
                     </div>
 
-                    <span className="skill-verified">Added</span>
+                    <span className="skill-claimed">Claimed</span>
                   </div>
                 ))
               ) : (

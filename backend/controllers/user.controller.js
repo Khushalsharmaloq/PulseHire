@@ -464,10 +464,14 @@ export const uploadProfilePhoto = async (req, res) => {
 ===================================================== */
 export const uploadResume = async (req, res) => {
   try {
+    console.log("========== RESUME UPLOAD ==========");
+    console.log("req.file:", req.file);
+    console.log("req.body:", req.body);
+
     if (!req.file) {
       return res.status(400).json({
         success: false,
-        message: "Please select a PDF resume.",
+        message: "Backend did not receive the resume file.",
       });
     }
 
@@ -485,7 +489,9 @@ export const uploadResume = async (req, res) => {
       "pulsehire/resumes"
     );
 
-    user.profile.resume = result.secure_url;
+    user.profile.resume = result.secure_url.endsWith(".pdf")
+  ? result.secure_url
+  : `${result.secure_url}.pdf`;
     user.profile.resumeOriginalName = req.file.originalname;
 
     await user.save();
