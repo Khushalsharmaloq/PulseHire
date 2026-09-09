@@ -1,4 +1,10 @@
 import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import {
   ArrowRight,
   BadgeCheck,
   BookOpen,
@@ -13,44 +19,418 @@ import {
   PlayCircle,
   Target,
   TrendingUp,
-  User,
 } from "lucide-react";
-
 import { Link } from "react-router-dom";
 
+import api from "../../services/api";
+import useAuth from "../../context/useAuth";
 
 const Learning = () => {
+  const { user, logout } = useAuth();
+
+  const [resources, setResources] = useState([]);
+  const [progressRecords, setProgressRecords] = useState([]);
+  const [skillGapData, setSkillGapData] = useState(null);
+
+  const [loading, setLoading] = useState(true);
+  const [updatingResourceId, setUpdatingResourceId] = useState(null);
+  const [error, setError] = useState("");
+
+  /*
+   * =========================================================
+   * LOAD LEARNING DATA
+   * =========================================================
+   */
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadLearningData = async () => {
+      setLoading(true);
+      setError("");
+
+      try {
+        const [resourcesResponse, progressResponse, skillGapResponse] =
+          await Promise.all([
+            api.get("/learning/resources"),
+            api.get("/learning/progress"),
+            api.get("/skill-gap").catch(() => null),
+          ]);
+
+        if (cancelled) return;
+
+        setResources(resourcesResponse.data?.resources || []);
+        setProgressRecords(progressResponse.data?.progress || []);
+
+        if (skillGapResponse?.data?.success) {
+          setSkillGapData(skillGapResponse.data);
+        }
+      } catch (requestError) {
+        console.error("Learning page load error:", requestError);
+
+        if (!cancelled) {
+          setError(
+            requestError.response?.data?.message ||
+              "Unable to load your learning data."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadLearningData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  /*
+   * =========================================================
+   * HELPERS
+   * =========================================================
+   */
+
+  const getResourceProgress = useCallback(
+  (resourceId) => {
+    const record = progressRecords.find(
+      (item) =>
+        item.resource?._id === resourceId ||
+        item.resource === resourceId
+    );
+
+    return record?.progressPercent || 0;
+  },
+  [progressRecords]
+);
+
+const getResourceStatus = useCallback(
+  (resourceId) => {
+    const record = progressRecords.find(
+      (item) =>
+        item.resource?._id === resourceId ||
+        item.resource === resourceId
+    );
+
+    if (!record) {
+      return "not_started";
+    }
+
+    return record.status || "not_started";
+  },
+  [progressRecords]
+);
+
+  const formatDuration = (minutes) => {
+    const totalMinutes = Number(minutes) || 0;
+
+    if (totalMinutes < 60) {
+      return `${totalMinutes}m`;
+    }
+
+    const hours = Math.floor(totalMinutes / 60);
+    const remainingMinutes = totalMinutes % 60;
+
+    if (remainingMinutes === 0) {
+      return `${hours}h`;
+    }
+
+    return `${hours}h ${remainingMinutes}m`;
+  };
+
+  const getResourceIcon = (resourceType) => {
+    switch (resourceType) {
+      case "documentation":
+        return BookOpen;
+
+      case "project":
+        return BriefcaseBusiness;
+
+      case "practice":
+        return Target;
+
+      case "video":
+        return PlayCircle;
+
+      case "tutorial":
+        return Code2;
+
+      default:
+        return BookOpen;
+    }
+  };
+
+  const getResourceAction = (resourceId) => {
+    const progress = getResourceProgress(resourceId);
+    const status = getResourceStatus(resourceId);
+
+    if (status === "completed" || progress === 100) {
+      return "Completed";
+    }
+
+    if (progress > 0) {
+      return "Continue Learning";
+    }
+
+    return "Start Learning";
+  };
+
+  /*
+   * =========================================================
+   * SKILL GAP INFORMATION
+   * =========================================================
+   */
+
+  const priorityGaps = useMemo(() => {
+    const gaps =
+      skillGapData?.priorityGaps ||
+      skillGapData?.prioritySkillGaps ||
+      skillGapData?.gaps ||
+      [];
+
+    if (!Array.isArray(gaps)) {
+      return [];
+    }
+
+    return gaps
+      .map((gap) => {
+        if (typeof gap === "string") {
+          return gap;
+        }
+
+        return (
+          gap?.skill ||
+          gap?.skillName ||
+          gap?.name ||
+          gap?.title ||
+          ""
+        );
+      })
+      .filter(Boolean);
+  }, [skillGapData]);
+
+  /*
+   * =========================================================
+   * RECOMMENDED RESOURCES
+   * =========================================================
+   */
+
+  const recommendedResources = useMemo(() => {
+    if (!resources.length) {
+      return [];
+    }
+
+    if (!priorityGaps.length) {
+      return resources;
+    }
+
+    const normalizedGaps = priorityGaps.map((skill) =>
+      skill.toLowerCase().trim()
+    );
+
+    const matching = resources.filter((resource) =>
+      normalizedGaps.includes(String(resource.skill || "").toLowerCase().trim())
+    );
+
+    /*
+     * If the skill-gap endpoint doesn't return matching
+     * resources, don't show an empty learning page.
+     *
+     * Fall back to all active resources.
+     */
+    return matching.length ? matching : resources;
+  }, [resources, priorityGaps]);
+
+  /*
+   * =========================================================
+   * PROGRESS CALCULATIONS
+   * =========================================================
+   */
+
+  const completedCount = useMemo(() => {
+    return resources.filter((resource) => {
+      return getResourceProgress(resource._id) === 100;
+    }).length;
+  }, [resources, progressRecords]);
+
+  const overallProgress = useMemo(() => {
+    if (!resources.length) {
+      return 0;
+    }
+
+    const totalProgress = resources.reduce((total, resource) => {
+      return total + getResourceProgress(resource._id);
+    }, 0);
+
+    return Math.round(totalProgress / resources.length);
+  }, [resources, progressRecords]);
+
+  const inProgressCount = useMemo(() => {
+    return resources.filter((resource) => {
+      const progress = getResourceProgress(resource._id);
+
+      return progress > 0 && progress < 100;
+    }).length;
+  }, [resources, progressRecords]);
+
+  /*
+   * =========================================================
+   * CURRENT LEARNING PATH
+   * =========================================================
+   */
+
+  const currentResource = useMemo(() => {
+    const inProgressResource = resources.find((resource) => {
+      const progress = getResourceProgress(resource._id);
+
+      return progress > 0 && progress < 100;
+    });
+
+    if (inProgressResource) {
+      return inProgressResource;
+    }
+
+    return recommendedResources.find(
+      (resource) => getResourceProgress(resource._id) < 100
+    );
+  }, [resources, recommendedResources, progressRecords]);
+
+  /*
+   * =========================================================
+   * UPDATE PROGRESS
+   * =========================================================
+   */
+
+  const updateProgress = async (resource, newProgress) => {
+    if (!resource?._id) {
+      return;
+    }
+
+    try {
+      setUpdatingResourceId(resource._id);
+      setError("");
+
+      const response = await api.put("/learning/progress", {
+        resourceId: resource._id,
+        progressPercent: newProgress,
+      });
+
+      const updatedProgress = response.data?.progress;
+
+      if (updatedProgress) {
+        setProgressRecords((previousRecords) => {
+          const existingIndex = previousRecords.findIndex(
+            (item) =>
+              item.resource?._id === resource._id ||
+              item.resource === resource._id
+          );
+
+          if (existingIndex === -1) {
+            return [updatedProgress, ...previousRecords];
+          }
+
+          const updatedRecords = [...previousRecords];
+          updatedRecords[existingIndex] = updatedProgress;
+
+          return updatedRecords;
+        });
+      }
+    } catch (requestError) {
+      console.error("Learning progress update error:", requestError);
+
+      setError(
+        requestError.response?.data?.message ||
+          "Unable to update learning progress."
+      );
+    } finally {
+      setUpdatingResourceId(null);
+    }
+  };
+
+  const handleCompleteLearning = async (resource) => {
+    await updateProgress(resource, 100);
+  };
+
+  const handleOpenResource = async (resource) => {
+    const currentProgress = getResourceProgress(resource._id);
+
+    /*
+     * Opening a resource does not automatically mark it
+     * completed. We only record that learning has started.
+     */
+    if (currentProgress === 0) {
+      await updateProgress(resource, 1);
+    }
+
+    if (resource.url) {
+      window.open(resource.url, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  /*
+   * =========================================================
+   * USER DISPLAY
+   * =========================================================
+   */
+
+  const userName = user?.fullname || "Candidate";
+
+  const userInitials = userName
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((name) => name[0]?.toUpperCase())
+    .join("");
+
+  /*
+   * =========================================================
+   * LOADING STATE
+   * =========================================================
+   */
+
+  if (loading) {
+    return (
+      <div className="candidate-dashboard">
+        <main className="candidate-main">
+          <div className="auth-loading-screen">
+            <p>Loading your learning path...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  /*
+   * =========================================================
+   * UI
+   * =========================================================
+   */
+
   return (
     <div className="candidate-dashboard">
 
-      {/* ================= SIDEBAR ================= */}
+      {/* =====================================================
+          SIDEBAR
+      ===================================================== */}
 
       <aside className="candidate-sidebar">
 
         <div className="dashboard-brand">
+          <div className="dashboard-brand-icon">
+            <BriefcaseBusiness size={19} />
+          </div>
 
-          <Link
-            to="/candidate/dashboard"
-            className="dashboard-brand"
-          >
-            <div className="dashboard-brand-icon">
-              <BriefcaseBusiness size={19} />
-            </div>
-
-            <span>
-              PulseHire
-            </span>
-          </Link>
-
+          <span>PulseHire</span>
         </div>
-
 
         <div className="sidebar-section">
 
           <span className="sidebar-label">
             CANDIDATE WORKSPACE
           </span>
-
 
           <nav className="sidebar-nav">
 
@@ -62,43 +442,6 @@ const Learning = () => {
               Dashboard
             </Link>
 
-
-            <Link
-              to="/candidate/profile"
-              className="sidebar-link"
-            >
-              <User size={17} />
-              My Profile
-            </Link>
-
-
-            <Link
-              to="/candidate/skill-proof"
-              className="sidebar-link"
-            >
-              <BadgeCheck size={17} />
-              Skill Proof
-            </Link>
-
-
-            <Link
-              to="/candidate/skill-gap"
-              className="sidebar-link"
-            >
-              <Target size={17} />
-              Skill Gap
-            </Link>
-
-
-            <Link
-              to="/candidate/learning"
-              className="sidebar-link active"
-            >
-              <BookOpen size={17} />
-              Learning
-            </Link>
-
-
             <Link
               to="/candidate/jobs"
               className="sidebar-link"
@@ -106,7 +449,6 @@ const Learning = () => {
               <BriefcaseBusiness size={17} />
               Find Jobs
             </Link>
-
 
             <Link
               to="/candidate/applications"
@@ -116,57 +458,74 @@ const Learning = () => {
               Applications
             </Link>
 
+            <Link
+              to="/candidate/skill-proof"
+              className="sidebar-link"
+            >
+              <BadgeCheck size={17} />
+              Skill Proof
+            </Link>
+
+            <Link
+              to="/candidate/skill-gap"
+              className="sidebar-link"
+            >
+              <Target size={17} />
+              Skill Gap
+            </Link>
+
+            <Link
+              to="/candidate/learning"
+              className="sidebar-link active"
+            >
+              <BookOpen size={17} />
+              Learning
+            </Link>
+
           </nav>
 
         </div>
-
 
         <div className="sidebar-bottom">
 
           <div className="sidebar-user">
 
             <div className="user-avatar">
-              AK
+              {userInitials || "C"}
             </div>
 
-
             <div>
-
-              <strong>
-                Arjun Kumar
-              </strong>
+              <strong>{userName}</strong>
 
               <span>
                 Candidate
               </span>
-
             </div>
 
           </div>
 
-
           <button
             className="logout-button"
             type="button"
+            onClick={logout}
           >
-
             <LogOut size={17} />
-
             Logout
-
           </button>
 
         </div>
 
       </aside>
 
-
-      {/* ================= MAIN ================= */}
+      {/* =====================================================
+          MAIN
+      ===================================================== */}
 
       <main className="candidate-main">
 
-
-        {/* ================= HEADER ================= */}
+        {/* ===================================================
+            HEADER
+        =================================================== */}
 
         <header className="candidate-topbar">
 
@@ -184,8 +543,19 @@ const Learning = () => {
 
         </header>
 
+        {/* ===================================================
+            ERROR
+        =================================================== */}
 
-        {/* ================= LEARNING HERO ================= */}
+        {error && (
+          <div className="profile-error">
+            {error}
+          </div>
+        )}
+
+        {/* ===================================================
+            LEARNING HERO
+        =================================================== */}
 
         <section className="learning-hero">
 
@@ -207,7 +577,6 @@ const Learning = () => {
               you're targeting.
             </p>
 
-
             <div className="learning-progress">
 
               <div className="learning-progress-heading">
@@ -217,38 +586,34 @@ const Learning = () => {
                 </span>
 
                 <strong>
-                  35%
+                  {overallProgress}%
                 </strong>
 
               </div>
-
 
               <div className="learning-progress-bar">
 
                 <div
                   className="learning-progress-fill"
-                  style={{ width: "35%" }}
+                  style={{
+                    width: `${overallProgress}%`,
+                  }}
                 ></div>
 
               </div>
 
-
               <span className="learning-progress-note">
-                2 of 6 recommended learning milestones completed
+                {completedCount} of {resources.length} learning
+                resources completed
               </span>
 
             </div>
 
           </div>
 
-
           <div className="learning-hero-stats">
 
-            <Link
-              to="/candidate/skill-gap"
-              className="learning-hero-stat"
-            >
-
+            <div>
               <Target size={17} />
 
               <span>
@@ -256,14 +621,11 @@ const Learning = () => {
               </span>
 
               <strong>
-                2
+                {priorityGaps.length}
               </strong>
-
-            </Link>
-
+            </div>
 
             <div>
-
               <BookOpen size={17} />
 
               <span>
@@ -271,35 +633,29 @@ const Learning = () => {
               </span>
 
               <strong>
-                8
+                {resources.length}
               </strong>
-
             </div>
 
-
-            <Link
-              to="/candidate/skill-gap"
-              className="learning-hero-stat"
-            >
-
+            <div>
               <TrendingUp size={17} />
 
               <span>
-                Potential gain
+                In progress
               </span>
 
               <strong>
-                +14%
+                {inProgressCount}
               </strong>
-
-            </Link>
+            </div>
 
           </div>
 
         </section>
 
-
-        {/* ================= CURRENT PATH ================= */}
+        {/* ===================================================
+            CURRENT PATH
+        =================================================== */}
 
         <section className="learning-section">
 
@@ -319,115 +675,66 @@ const Learning = () => {
 
           </div>
 
+          {currentResource ? (
 
-          <div className="learning-path">
-
-
-            {/* ================= STEP 1 ================= */}
-
-            <article className="learning-path-card completed">
+            <article className="learning-path-card active">
 
               <div className="learning-step-number">
                 01
               </div>
 
-
               <div className="learning-path-icon">
-                <CheckCircle2 size={18} />
-              </div>
 
+                {(() => {
+                  const Icon = getResourceIcon(
+                    currentResource.resourceType
+                  );
+
+                  return <Icon size={18} />;
+                })()}
+
+              </div>
 
               <div className="learning-path-content">
 
                 <div className="learning-path-title">
 
                   <h3>
-                    React fundamentals
-                  </h3>
-
-                  <span className="learning-complete">
-                    Completed
-                  </span>
-
-                </div>
-
-
-                <p>
-                  Strengthen the foundation behind your
-                  existing React projects.
-                </p>
-
-
-                <div className="learning-meta">
-
-                  <span>
-                    <PlayCircle size={11} />
-                    2h 15m
-                  </span>
-
-                  <span>
-                    Beginner → Intermediate
-                  </span>
-
-                </div>
-
-              </div>
-
-            </article>
-
-
-            {/* ================= STEP 2 ================= */}
-
-            <article className="learning-path-card active">
-
-              <div className="learning-step-number">
-                02
-              </div>
-
-
-              <div className="learning-path-icon">
-                <Code2 size={18} />
-              </div>
-
-
-              <div className="learning-path-content">
-
-                <div className="learning-path-title">
-
-                  <h3>
-                    TypeScript for React
+                    {currentResource.title}
                   </h3>
 
                   <span className="learning-current">
-                    Recommended
+                    {getResourceProgress(currentResource._id) > 0
+                      ? "In Progress"
+                      : "Recommended"}
                   </span>
 
                 </div>
 
-
                 <p>
-                  Close your TypeScript gap with practical
-                  React-focused learning.
+                  {currentResource.description ||
+                    `Improve your ${currentResource.skill} skills with this focused learning resource.`}
                 </p>
-
 
                 <div className="learning-meta">
 
                   <span>
-                    <PlayCircle size={11} />
-                    3h 40m
+                    <Clock3 size={11} />
+
+                    {formatDuration(
+                      currentResource.durationMinutes
+                    )}
                   </span>
 
                   <span>
-                    Intermediate
+                    {currentResource.difficulty || "Intermediate"}
                   </span>
 
                   <span>
-                    High impact
+                    {currentResource.skill}
                   </span>
 
                 </div>
-
 
                 <div className="learning-card-progress">
 
@@ -438,81 +745,65 @@ const Learning = () => {
                     </span>
 
                     <strong>
-                      40%
+                      {getResourceProgress(currentResource._id)}%
                     </strong>
 
                   </div>
 
-
                   <div className="small-progress">
 
                     <div
-                      style={{ width: "40%" }}
+                      style={{
+                        width: `${getResourceProgress(
+                          currentResource._id
+                        )}%`,
+                      }}
                     ></div>
 
                   </div>
 
                 </div>
 
+                <div className="learning-actions">
 
-                <Link
-                  to="/candidate/learning"
-                  className="learning-action"
-                >
-                  Continue Learning
-                  <ArrowRight size={13} />
-                </Link>
+                  <button
+                    type="button"
+                    className="learning-action-button"
+                    disabled={
+                      updatingResourceId === currentResource._id
+                    }
+                    onClick={() =>
+                      handleOpenResource(currentResource)
+                    }
+                  >
+                    {getResourceAction(currentResource._id)}
 
-              </div>
+                    <ArrowRight size={13} />
+                  </button>
 
-            </article>
+                  {getResourceProgress(
+                    currentResource._id
+                  ) < 100 && (
 
+                    <button
+                      type="button"
+                      className="learning-action-button secondary"
+                      disabled={
+                        updatingResourceId ===
+                        currentResource._id
+                      }
+                      onClick={() =>
+                        handleCompleteLearning(
+                          currentResource
+                        )
+                      }
+                    >
+                      <CheckCircle2 size={13} />
 
-            {/* ================= STEP 3 ================= */}
+                      Mark Complete
+                    </button>
 
-            <article className="learning-path-card">
-
-              <div className="learning-step-number">
-                03
-              </div>
-
-
-              <div className="learning-path-icon">
-                <Code2 size={18} />
-              </div>
-
-
-              <div className="learning-path-content">
-
-                <div className="learning-path-title">
-
-                  <h3>
-                    Docker for Full Stack Apps
-                  </h3>
-
-                  <span className="learning-upcoming">
-                    Next
-                  </span>
-
-                </div>
-
-
-                <p>
-                  Learn how to containerize and deploy
-                  a real full-stack application.
-                </p>
-
-
-                <div className="learning-meta">
-
-                  <span>
-                    <PlayCircle size={11} />
-                    4h 10m
-                  </span>
-
-                  <span>
-                    Intermediate
-                  </span>
+                  )}
 
                 </div>
 
@@ -520,74 +811,30 @@ const Learning = () => {
 
             </article>
 
+          ) : (
 
-            {/* ================= STEP 4 ================= */}
+            <div className="learning-empty-state">
 
-            <article className="learning-path-card">
+              <BookOpen size={25} />
 
-              <div className="learning-step-number">
-                04
-              </div>
+              <h3>
+                Your learning path is ready to grow.
+              </h3>
 
+              <p>
+                No learning resource is currently available.
+                Add resources from the backend to begin.
+              </p>
 
-              <div className="learning-path-icon">
-                <BadgeCheck size={18} />
-              </div>
+            </div>
 
-
-              <div className="learning-path-content">
-
-                <div className="learning-path-title">
-
-                  <h3>
-                    Submit new skill evidence
-                  </h3>
-
-                  <span className="learning-upcoming">
-                    Final step
-                  </span>
-
-                </div>
-
-
-                <p>
-                  Demonstrate your improved capabilities
-                  and submit evidence for validation.
-                </p>
-
-
-                <div className="learning-meta">
-
-                  <span>
-                    <FileCheck2 size={11} />
-                    Skill Proof
-                  </span>
-
-                  <span>
-                    Recruiter validation
-                  </span>
-
-                </div>
-
-
-                <Link
-                  to="/candidate/skill-proof"
-                  className="learning-action secondary"
-                >
-                  View Skill Proof
-                  <ArrowRight size={13} />
-                </Link>
-
-              </div>
-
-            </article>
-
-          </div>
+          )}
 
         </section>
 
-
-        {/* ================= RECOMMENDED RESOURCES ================= */}
+        {/* ===================================================
+            RECOMMENDED RESOURCES
+        =================================================== */}
 
         <section className="resources-section">
 
@@ -605,225 +852,142 @@ const Learning = () => {
 
             </div>
 
-
             <span className="resource-count">
-              8 resources found
+              {recommendedResources.length} resources found
             </span>
 
           </div>
 
-
           <div className="resource-grid">
 
+            {recommendedResources.map((resource) => {
 
-            {/* RESOURCE 1 */}
+              const Icon = getResourceIcon(
+                resource.resourceType
+              );
 
-            <article className="resource-card">
+              const progress = getResourceProgress(
+                resource._id
+              );
 
-              <div className="resource-top">
+              const status = getResourceStatus(
+                resource._id
+              );
 
-                <div className="resource-icon">
-                  <Code2 size={17} />
-                </div>
+              return (
 
-                <span>
-                  TYPESCRIPT
-                </span>
+                <article
+                  className="resource-card"
+                  key={resource._id}
+                >
 
-              </div>
+                  <div className="resource-top">
 
+                    <div className="resource-icon">
+                      <Icon size={17} />
+                    </div>
 
-              <h3>
-                TypeScript Essentials for React
-              </h3>
+                    <span>
+                      {String(
+                        resource.skill || "LEARNING"
+                      ).toUpperCase()}
+                    </span>
 
+                  </div>
 
-              <p>
-                Build confidence with types, interfaces,
-                props and practical React patterns.
-              </p>
+                  <h3>
+                    {resource.title}
+                  </h3>
 
+                  <p>
+                    {resource.description ||
+                      `Build practical ${resource.skill} knowledge.`}
+                  </p>
 
-              <div className="resource-bottom">
+                  <div className="learning-card-progress">
 
-                <span>
-                  <Clock3 size={11} />
-                  3h 40m
-                </span>
+                    <div>
 
+                      <span>
+                        Progress
+                      </span>
 
-                <Link to="/candidate/learning">
+                      <strong>
+                        {progress}%
+                      </strong>
 
-                  Open
+                    </div>
 
-                  <ArrowRight size={11} />
+                    <div className="small-progress">
 
-                </Link>
+                      <div
+                        style={{
+                          width: `${progress}%`,
+                        }}
+                      ></div>
 
-              </div>
+                    </div>
 
-            </article>
+                  </div>
 
+                  <div className="resource-bottom">
 
-            {/* RESOURCE 2 */}
+                    <span>
+                      <Clock3 size={11} />
 
-            <article className="resource-card">
+                      {formatDuration(
+                        resource.durationMinutes
+                      )}
+                    </span>
 
-              <div className="resource-top">
+                    {status === "completed" ? (
 
-                <div className="resource-icon">
-                  <BriefcaseBusiness size={17} />
-                </div>
+                      <span className="learning-resource-completed">
+                        <CheckCircle2 size={12} />
+                        Completed
+                      </span>
 
-                <span>
-                  PRACTICAL
-                </span>
+                    ) : (
 
-              </div>
+                      <button
+                        type="button"
+                        className="resource-open-button"
+                        disabled={
+                          updatingResourceId === resource._id
+                        }
+                        onClick={() =>
+                          handleOpenResource(resource)
+                        }
+                      >
+                        {progress > 0
+                          ? "Continue"
+                          : "Open"}
 
+                        <ArrowRight size={11} />
+                      </button>
 
-              <h3>
-                Build a TypeScript Dashboard
-              </h3>
+                    )}
 
+                  </div>
 
-              <p>
-                Apply TypeScript concepts by building
-                a realistic dashboard project.
-              </p>
+                </article>
 
-
-              <div className="resource-bottom">
-
-                <span>
-                  <Clock3 size={11} />
-                  5h 20m
-                </span>
-
-
-                <Link to="/candidate/learning">
-
-                  Open
-
-                  <ArrowRight size={11} />
-
-                </Link>
-
-              </div>
-
-            </article>
-
-
-            {/* RESOURCE 3 */}
-
-            <article className="resource-card">
-
-              <div className="resource-top">
-
-                <div className="resource-icon">
-                  <Code2 size={17} />
-                </div>
-
-                <span>
-                  DOCKER
-                </span>
-
-              </div>
-
-
-              <h3>
-                Docker Fundamentals
-              </h3>
-
-
-              <p>
-                Learn images, containers, networking and
-                the workflow behind modern deployments.
-              </p>
-
-
-              <div className="resource-bottom">
-
-                <span>
-                  <Clock3 size={11} />
-                  2h 50m
-                </span>
-
-
-                <Link to="/candidate/learning">
-
-                  Open
-
-                  <ArrowRight size={11} />
-
-                </Link>
-
-              </div>
-
-            </article>
-
-
-            {/* RESOURCE 4 */}
-
-            <article className="resource-card">
-
-              <div className="resource-top">
-
-                <div className="resource-icon">
-                  <Target size={17} />
-                </div>
-
-                <span>
-                  PROJECT
-                </span>
-
-              </div>
-
-
-              <h3>
-                Containerize a MERN Application
-              </h3>
-
-
-              <p>
-                Put Docker knowledge into practice using
-                a complete MERN application.
-              </p>
-
-
-              <div className="resource-bottom">
-
-                <span>
-                  <Clock3 size={11} />
-                  6h 15m
-                </span>
-
-
-                <Link to="/candidate/learning">
-
-                  Open
-
-                  <ArrowRight size={11} />
-
-                </Link>
-
-              </div>
-
-            </article>
+              );
+            })}
 
           </div>
 
         </section>
 
-
-        {/* ================= LEARNING PRINCIPLE ================= */}
+        {/* ===================================================
+            LEARNING PRINCIPLE
+        =================================================== */}
 
         <section className="learning-principle">
 
           <div className="learning-principle-icon">
             <Lightbulb size={21} />
           </div>
-
 
           <div>
 
@@ -846,12 +1010,10 @@ const Learning = () => {
 
         </section>
 
-
       </main>
 
     </div>
   );
 };
-
 
 export default Learning;

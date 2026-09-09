@@ -1,8 +1,7 @@
 import express from "express";
 
 import {
-  getSkillGapForJob,
-  getSkillGapForApplication,
+  getSkillGapIntelligence,
 } from "../controllers/skillGap.controller.js";
 
 import {
@@ -18,26 +17,14 @@ const router = express.Router();
 
 
 // =====================================================
-// GET SKILL GAP FOR A JOB
+// CANDIDATE SKILL GAP INTELLIGENCE
 // =====================================================
 
 router.get(
-  "/job/:jobId",
+  "/",
   isAuthenticated,
   authorizeRoles("candidate"),
-  getSkillGapForJob
-);
-
-
-// =====================================================
-// GET SKILL GAP FOR A REJECTED APPLICATION
-// =====================================================
-
-router.get(
-  "/application/:applicationId",
-  isAuthenticated,
-  authorizeRoles("candidate"),
-  getSkillGapForApplication
+  getSkillGapIntelligence
 );
 
 

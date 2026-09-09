@@ -23633,3 +23633,66 @@ user-select: none;
     min-width: 180px;
   }
 }
+
+/* =========================================================
+   SKILL GAP API STATES
+   ========================================================= */
+
+.skill-gap-loading,
+.skill-gap-error {
+  min-height: 420px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-direction: column;
+
+  gap: 10px;
+
+  padding: 40px;
+
+  text-align: center;
+
+  border: 1px solid #17384d;
+  border-radius: 10px;
+
+  background: #081522;
+}
+
+.skill-gap-loading h2,
+.skill-gap-error h2 {
+  margin: 4px 0;
+
+  color: #c2d0d9;
+
+  font-size: 20px;
+}
+
+.skill-gap-loading p,
+.skill-gap-error p {
+  max-width: 520px;
+
+  margin: 0;
+
+  color: #60798b;
+
+  font-size: 13px;
+
+  line-height: 1.6;
+}
+
+.skill-gap-loading svg,
+.skill-gap-error svg {
+  color: #2bb9fb;
+}
+
+.skill-gap-spinner {
+  animation: skill-gap-spin 1s linear infinite;
+}
+
+@keyframes skill-gap-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
