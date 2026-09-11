@@ -1,69 +1,97 @@
-export const normalizeSkillName = (skillName) => {
-    return skillName
-        .trim()
-        .toLowerCase();
+import {
+    normalizeSkill,
+    uniqueSkills,
+    calculateJobMatch
+} from "./match.util.js";
+
+
+/*
+|--------------------------------------------------------------------------
+| NORMALIZE SKILL NAME
+|--------------------------------------------------------------------------
+|
+| Kept as normalizeSkillName because the Skill Gap controller
+| already uses this name.
+|
+|--------------------------------------------------------------------------
+*/
+
+export const normalizeSkillName = (
+    skillName
+) => {
+    return normalizeSkill(skillName);
 };
 
 
+/*
+|--------------------------------------------------------------------------
+| UNIQUE SKILLS
+|--------------------------------------------------------------------------
+*/
+
+export {
+    uniqueSkills
+};
+
+
+/*
+|--------------------------------------------------------------------------
+| CALCULATE SKILL GAP
+|--------------------------------------------------------------------------
+|
+| A skill is considered verified only when its SkillProof
+| has status === "approved".
+|
+|--------------------------------------------------------------------------
+*/
+
 export const calculateSkillGap = (
-    requiredSkills,
-    skillProofs
+    requiredSkills = [],
+    skillProofs = []
 ) => {
 
-    const normalizedRequiredSkills =
-        requiredSkills.map((skill) =>
-            normalizeSkillName(skill)
+    const approvedSkills =
+        uniqueSkills(
+            skillProofs
+                .filter(
+                    (proof) =>
+                        proof?.status ===
+                        "approved"
+                )
+                .map(
+                    (proof) =>
+                        proof?.skill
+                )
         );
 
 
-    const verifiedSkills =
-        skillProofs
-            .filter(
-                (proof) =>
-                    proof.status === "verified" &&
-                    proof.verifiedAt
-            )
-            .map(
-                (proof) =>
-                    normalizeSkillName(
-                        proof.skillName
-                    )
-            );
-
-
-    const matchedSkills =
-        normalizedRequiredSkills.filter(
-            (skill) =>
-                verifiedSkills.includes(skill)
+    const match =
+        calculateJobMatch(
+            requiredSkills,
+            approvedSkills
         );
-
-
-    const missingSkills =
-        normalizedRequiredSkills.filter(
-            (skill) =>
-                !verifiedSkills.includes(skill)
-        );
-
-
-    const totalRequiredSkills =
-        normalizedRequiredSkills.length;
-
-
-    const matchPercentage =
-        totalRequiredSkills === 0
-            ? 0
-            : Math.round(
-                (
-                    matchedSkills.length /
-                    totalRequiredSkills
-                ) * 100
-            );
 
 
     return {
-        totalRequiredSkills,
-        matchedSkills,
-        missingSkills,
-        matchPercentage
+        totalRequiredSkills:
+            match.totalRequiredSkills,
+
+        matchedSkills:
+            match.matchedSkills,
+
+        missingSkills:
+            match.missingSkills,
+
+        verifiedSkills:
+            approvedSkills,
+
+        matchPercentage:
+            match.matchPercentage,
+
+        score:
+            match.score,
+
+        strength:
+            match.strength
     };
 };

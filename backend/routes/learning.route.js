@@ -1,50 +1,83 @@
 import express from "express";
 
 import {
-  getLearningResources,
-  getMyLearningProgress,
-  updateLearningProgress,
+    getLearningResources,
+    getLearningResourceById,
+    getMyLearningProgress,
+    getResourceProgress,
+    updateLearningProgress
 } from "../controllers/learning.controller.js";
 
-import { isAuthenticated } from "../middlewares/auth.middleware.js";
-import { authorizeRoles } from "../middlewares/role.middleware.js";
+import {
+    isAuthenticated
+} from "../middlewares/auth.middleware.js";
+
+import {
+    authorizeRoles
+} from "../middlewares/role.middleware.js";
+
 
 const router = express.Router();
 
 
-// =====================================================
-// LEARNING RESOURCES
-// =====================================================
+/* =====================================================
+   LEARNING RESOURCES
+===================================================== */
 
 router.get(
-  "/resources",
-  isAuthenticated,
-  authorizeRoles("candidate"),
-  getLearningResources
+    "/resources",
+    isAuthenticated,
+    authorizeRoles("candidate"),
+    getLearningResources
 );
 
 
-// =====================================================
-// MY PROGRESS
-// =====================================================
+/* =====================================================
+   SINGLE RESOURCE
+===================================================== */
 
 router.get(
-  "/progress",
-  isAuthenticated,
-  authorizeRoles("candidate"),
-  getMyLearningProgress
+    "/resources/:resourceId",
+    isAuthenticated,
+    authorizeRoles("candidate"),
+    getLearningResourceById
 );
 
 
-// =====================================================
-// UPDATE PROGRESS
-// =====================================================
+/* =====================================================
+   MY PROGRESS
+===================================================== */
+
+router.get(
+    "/progress",
+    isAuthenticated,
+    authorizeRoles("candidate"),
+    getMyLearningProgress
+);
+
+
+/* =====================================================
+   ONE RESOURCE PROGRESS
+===================================================== */
+
+router.get(
+    "/progress/:resourceId",
+    isAuthenticated,
+    authorizeRoles("candidate"),
+    getResourceProgress
+);
+
+
+/* =====================================================
+   UPDATE PROGRESS
+===================================================== */
 
 router.put(
-  "/progress",
-  isAuthenticated,
-  authorizeRoles("candidate"),
-  updateLearningProgress
+    "/progress",
+    isAuthenticated,
+    authorizeRoles("candidate"),
+    updateLearningProgress
 );
+
 
 export default router;

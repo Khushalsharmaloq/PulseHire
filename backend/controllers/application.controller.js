@@ -1,8 +1,20 @@
+import mongoose from "mongoose";
+
 import { Application } from "../models/application.model.js";
 import { Job } from "../models/job.model.js";
+import { User } from "../models/user.model.js";
 
 import { getJobFreshness } from "../utils/freshness.util.js";
 import { calculateResponseDebt } from "../utils/responseDebt.util.js";
+
+
+/* =====================================================
+   HELPER
+===================================================== */
+
+const isValidObjectId = (id) => {
+    return mongoose.Types.ObjectId.isValid(id);
+};
 
 
 /* =====================================================
@@ -17,31 +29,75 @@ export const applyToJob = async (req, res) => {
         } = req.body;
 
 
+        /* ==================== VALIDATION ==================== */
+
         if (!jobId || !intentResponse) {
             return res.status(400).json({
-                message: "Job ID and intent response are required.",
+                message:
+                    "Job ID and intent response are required.",
                 success: false
             });
         }
 
 
-        if (intentResponse.trim().length < 20) {
+        if (!isValidObjectId(jobId)) {
             return res.status(400).json({
-                message: "Intent response must be at least 20 characters.",
+                message: "Invalid job ID.",
                 success: false
             });
         }
 
 
-        if (intentResponse.trim().length > 1000) {
+        const normalizedIntent =
+            String(intentResponse).trim();
+
+
+        if (normalizedIntent.length < 20) {
             return res.status(400).json({
-                message: "Intent response cannot exceed 1000 characters.",
+                message:
+                    "Intent response must be at least 20 characters.",
                 success: false
             });
         }
 
+
+        if (normalizedIntent.length > 1000) {
+            return res.status(400).json({
+                message:
+                    "Intent response cannot exceed 1000 characters.",
+                success: false
+            });
+        }
+
+
+        /* ==================== CHECK CANDIDATE ==================== */
+
+        const candidate = await User.findById(
+            req.userId
+        ).select("_id role");
+
+
+        if (!candidate) {
+            return res.status(404).json({
+                message: "Candidate account not found.",
+                success: false
+            });
+        }
+
+
+        if (candidate.role !== "candidate") {
+            return res.status(403).json({
+                message:
+                    "Only candidates can apply for jobs.",
+                success: false
+            });
+        }
+
+
+        /* ==================== FIND JOB ==================== */
 
         const job = await Job.findById(jobId);
+
 
         if (!job) {
             return res.status(404).json({
@@ -53,44 +109,95 @@ export const applyToJob = async (req, res) => {
 
         if (job.status !== "active") {
             return res.status(400).json({
-                message: "This job is no longer accepting applications.",
+                message:
+                    "This job is no longer accepting applications.",
                 success: false
             });
         }
 
 
-        const existingApplication = await Application.findOne({
-            job: jobId,
-            candidate: req.userId
-        });
+        /* ==================== DUPLICATE CHECK ==================== */
+
+        const existingApplication =
+            await Application.findOne({
+                job: job._id,
+                candidate: req.userId
+            });
+
 
         if (existingApplication) {
-            return res.status(400).json({
-                message: "You have already applied to this job.",
+            return res.status(409).json({
+                message:
+                    "You have already applied to this job.",
                 success: false
             });
         }
 
 
-        const application = await Application.create({
-            job: job._id,
-            candidate: req.userId,
-            recruiter: job.recruiter,
-            intentResponse: intentResponse.trim(),
-            status: "applied",
-            appliedAt: new Date(),
-            lastStatusChangedAt: new Date()
-        });
+        /* ==================== CREATE APPLICATION ==================== */
+
+        const application =
+            await Application.create({
+                job: job._id,
+                candidate: req.userId,
+                recruiter: job.recruiter,
+                intentResponse: normalizedIntent,
+                status: "applied",
+                appliedAt: new Date(),
+                lastStatusChangedAt: new Date()
+            });
+
+
+        /* ==================== RESPONSE ==================== */
+
+        const populatedApplication =
+            await Application.findById(
+                application._id
+            )
+                .populate(
+                    "job",
+                    "title location jobType status company"
+                )
+                .populate(
+                    "candidate",
+                    "fullname email phoneNumber"
+                )
+                .populate(
+                    "recruiter",
+                    "fullname email"
+                );
 
 
         return res.status(201).json({
-            message: "Application submitted successfully.",
+            message:
+                "Application submitted successfully.",
             success: true,
-            application
+            application:
+                populatedApplication
         });
 
     } catch (error) {
-        console.error("Apply to job error:", error);
+
+        /*
+        MongoDB unique-index protection.
+        This also protects against two requests arriving
+        at almost exactly the same time.
+        */
+
+        if (error?.code === 11000) {
+            return res.status(409).json({
+                message:
+                    "You have already applied to this job.",
+                success: false
+            });
+        }
+
+
+        console.error(
+            "Apply to job error:",
+            error
+        );
+
 
         return res.status(500).json({
             message: "Internal server error.",
@@ -104,65 +211,85 @@ export const applyToJob = async (req, res) => {
    GET MY APPLICATIONS
 ===================================================== */
 
-export const getMyApplications = async (req, res) => {
+export const getMyApplications = async (
+    req,
+    res
+) => {
     try {
-        const applications = await Application.find({
-            candidate: req.userId
-        })
-            .populate(
-                "job",
-                "title location jobType status lastRecruiterActivity"
-            )
-            .populate(
-                "recruiter",
-                "fullname email"
-            )
-            .sort({
-                appliedAt: -1
-            });
+
+        const applications =
+            await Application.find({
+                candidate: req.userId
+            })
+                .populate(
+                    "job",
+                    [
+                        "title",
+                        "location",
+                        "jobType",
+                        "status",
+                        "company",
+                        "lastRecruiterActivity"
+                    ]
+                )
+                .populate(
+                    "recruiter",
+                    "fullname email"
+                )
+                .sort({
+                    appliedAt: -1
+                });
 
 
-        const applicationsWithMetrics = applications.map(
-            (application) => {
+        const applicationsWithMetrics =
+            applications.map(
+                (application) => {
 
-                const responseDebt =
-                    application.recruiterRespondedAt
-                        ? null
-                        : calculateResponseDebt(
-                            application.appliedAt
-                        );
-
-
-                const jobFreshness =
-                    application.job
-                        ? getJobFreshness(
-                            application.job.lastRecruiterActivity
-                        )
-                        : null;
+                    const responseDebt =
+                        application.recruiterRespondedAt
+                            ? null
+                            : calculateResponseDebt(
+                                application.appliedAt
+                            );
 
 
-                return {
-                    ...application.toObject(),
-                    responseDebt,
-                    jobFreshness
-                };
-            }
-        );
+                    const jobFreshness =
+                        application.job
+                            ? getJobFreshness(
+                                application.job
+                                    .lastRecruiterActivity
+                            )
+                            : null;
+
+
+                    return {
+                        ...application.toObject(),
+
+                        responseDebt,
+
+                        jobFreshness
+                    };
+                }
+            );
 
 
         return res.status(200).json({
             success: true,
-            applications: applicationsWithMetrics
+            applications:
+                applicationsWithMetrics
         });
 
     } catch (error) {
+
         console.error(
             "Get my applications error:",
             error
         );
 
+
         return res.status(500).json({
-            message: "Internal server error.",
+            message:
+                "Unable to fetch your applications.",
             success: false
         });
     }
@@ -170,74 +297,163 @@ export const getMyApplications = async (req, res) => {
 
 
 /* =====================================================
-   GET JOB APPLICATIONS FOR RECRUITER
+   GET APPLICATIONS FOR ONE RECRUITER JOB
 ===================================================== */
 
-export const getJobApplications = async (req, res) => {
+export const getJobApplications = async (
+    req,
+    res
+) => {
     try {
+
         const {
             jobId
         } = req.params;
 
 
-        const job = await Job.findOne({
-            _id: jobId,
-            recruiter: req.userId
-        });
-
-
-        if (!job) {
-            return res.status(404).json({
-                message: "Job not found or you do not own this job.",
+        if (!isValidObjectId(jobId)) {
+            return res.status(400).json({
+                message: "Invalid job ID.",
                 success: false
             });
         }
 
 
-        const applications = await Application.find({
-            job: jobId
+        /* ==================== OWNERSHIP ==================== */
+
+        const job = await Job.findOne({
+            _id: jobId,
+            recruiter: req.userId
         })
             .populate(
-                "candidate",
-                "fullname email phoneNumber profile"
-            )
-            .sort({
-                appliedAt: -1
+                "company",
+                "name logo location"
+            );
+
+
+        if (!job) {
+            return res.status(404).json({
+                message:
+                    "Job not found or you do not own this job.",
+                success: false
             });
+        }
 
 
-        const applicationsWithMetrics = applications.map(
-            (application) => {
+        /* ==================== APPLICATIONS ==================== */
 
-                const responseDebt =
-                    application.recruiterRespondedAt
-                        ? null
-                        : calculateResponseDebt(
-                            application.appliedAt
-                        );
+        const applications =
+            await Application.find({
+                job: jobId,
+                recruiter: req.userId
+            })
+                .populate(
+                    "candidate",
+                    [
+                        "fullname",
+                        "email",
+                        "phoneNumber",
+                        "profile"
+                    ]
+                )
+                .sort({
+                    appliedAt: -1
+                });
 
 
-                return {
-                    ...application.toObject(),
-                    responseDebt
-                };
-            }
-        );
+        const applicationsWithMetrics =
+            applications.map(
+                (application) => {
+
+                    const responseDebt =
+                        application.recruiterRespondedAt
+                            ? null
+                            : calculateResponseDebt(
+                                application.appliedAt
+                            );
+
+
+                    return {
+                        ...application.toObject(),
+
+                        responseDebt
+                    };
+                }
+            );
+
+
+        /* ==================== SUMMARY ==================== */
+
+        const summary = {
+            total:
+                applications.length,
+
+            applied:
+                applications.filter(
+                    (application) =>
+                        application.status ===
+                        "applied"
+                ).length,
+
+            reviewing:
+                applications.filter(
+                    (application) =>
+                        application.status ===
+                        "reviewing"
+                ).length,
+
+            shortlisted:
+                applications.filter(
+                    (application) =>
+                        application.status ===
+                        "shortlisted"
+                ).length,
+
+            interview:
+                applications.filter(
+                    (application) =>
+                        application.status ===
+                        "interview"
+                ).length,
+
+            rejected:
+                applications.filter(
+                    (application) =>
+                        application.status ===
+                        "rejected"
+                ).length,
+
+            hired:
+                applications.filter(
+                    (application) =>
+                        application.status ===
+                        "hired"
+                ).length
+        };
 
 
         return res.status(200).json({
             success: true,
-            applications: applicationsWithMetrics
+
+            job,
+
+            applications:
+                applicationsWithMetrics,
+
+            summary
         });
 
     } catch (error) {
+
         console.error(
             "Get job applications error:",
             error
         );
 
+
         return res.status(500).json({
-            message: "Internal server error.",
+            message:
+                "Unable to fetch job applications.",
             success: false
         });
     }
@@ -248,16 +464,32 @@ export const getJobApplications = async (req, res) => {
    UPDATE APPLICATION STATUS
 ===================================================== */
 
-export const updateApplicationStatus = async (req, res) => {
+export const updateApplicationStatus = async (
+    req,
+    res
+) => {
     try {
+
         const {
             applicationId
         } = req.params;
+
 
         const {
             status
         } = req.body;
 
+
+        if (!isValidObjectId(applicationId)) {
+            return res.status(400).json({
+                message:
+                    "Invalid application ID.",
+                success: false
+            });
+        }
+
+
+        /* ==================== ALLOWED STATUS ==================== */
 
         const allowedStatuses = [
             "reviewing",
@@ -268,26 +500,36 @@ export const updateApplicationStatus = async (req, res) => {
         ];
 
 
-        if (!status || !allowedStatuses.includes(status)) {
+        if (
+            !status ||
+            !allowedStatuses.includes(status)
+        ) {
             return res.status(400).json({
-                message: "Invalid application status.",
+                message:
+                    "Invalid application status.",
                 success: false
             });
         }
 
 
-        const application = await Application.findById(
-            applicationId
-        );
+        /* ==================== GET APPLICATION ==================== */
+
+        const application =
+            await Application.findById(
+                applicationId
+            );
 
 
         if (!application) {
             return res.status(404).json({
-                message: "Application not found.",
+                message:
+                    "Application not found.",
                 success: false
             });
         }
 
+
+        /* ==================== CHECK JOB OWNERSHIP ==================== */
 
         const job = await Job.findOne({
             _id: application.job,
@@ -297,57 +539,151 @@ export const updateApplicationStatus = async (req, res) => {
 
         if (!job) {
             return res.status(403).json({
-                message: "You are not authorized to update this application.",
+                message:
+                    "You are not authorized to update this application.",
                 success: false
             });
         }
 
+
+        /* ==================== TERMINAL STATUS ==================== */
+
+        const terminalStatuses = [
+            "rejected",
+            "hired"
+        ];
+
+
+        if (
+            terminalStatuses.includes(
+                application.status
+            )
+        ) {
+            return res.status(409).json({
+                message:
+                    `This application is already ${application.status}.`,
+                success: false
+            });
+        }
+
+
+        /* ==================== STATE TRANSITIONS ==================== */
+
+        const allowedTransitions = {
+            applied: [
+                "reviewing",
+                "rejected"
+            ],
+
+            reviewing: [
+                "shortlisted",
+                "rejected"
+            ],
+
+            shortlisted: [
+                "interview",
+                "rejected"
+            ],
+
+            interview: [
+                "hired",
+                "rejected"
+            ]
+        };
+
+
+        const currentStatus =
+            application.status;
+
+
+        if (
+            !allowedTransitions[
+                currentStatus
+            ]?.includes(status)
+        ) {
+            return res.status(409).json({
+                message:
+                    `Cannot change application from ${currentStatus} to ${status}.`,
+                success: false
+            });
+        }
+
+
+        /* ==================== UPDATE ==================== */
 
         const now = new Date();
 
 
         application.status = status;
 
-        application.lastStatusChangedAt = now;
+        application.lastStatusChangedAt =
+            now;
 
 
         /*
-        The first meaningful recruiter action counts
-        as a recruiter response.
+        The first recruiter status change
+        counts as recruiter response.
         */
 
-        if (!application.recruiterRespondedAt) {
-            application.recruiterRespondedAt = now;
+        if (
+            !application.recruiterRespondedAt
+        ) {
+            application.recruiterRespondedAt =
+                now;
         }
 
 
         await application.save();
 
 
-        /*
-        Updating an application is meaningful recruiter
-        activity, so refresh the job's activity timestamp.
-        */
+        /* ==================== UPDATE JOB ACTIVITY ==================== */
 
-        job.lastRecruiterActivity = now;
+        job.lastRecruiterActivity =
+            now;
+
 
         await job.save();
 
 
+        /* ==================== RETURN ==================== */
+
+        const updatedApplication =
+            await Application.findById(
+                application._id
+            )
+                .populate(
+                    "candidate",
+                    "fullname email phoneNumber profile"
+                )
+                .populate(
+                    "job",
+                    "title location jobType status"
+                )
+                .populate(
+                    "recruiter",
+                    "fullname email"
+                );
+
+
         return res.status(200).json({
-            message: "Application status updated successfully.",
+            message:
+                "Application status updated successfully.",
             success: true,
-            application
+            application:
+                updatedApplication
         });
 
     } catch (error) {
+
         console.error(
             "Update application status error:",
             error
         );
 
+
         return res.status(500).json({
-            message: "Internal server error.",
+            message:
+                "Unable to update application status.",
             success: false
         });
     }

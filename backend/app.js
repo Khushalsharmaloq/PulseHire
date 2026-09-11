@@ -9,7 +9,13 @@ import applicationRoute from "./routes/application.route.js";
 import skillProofRoute from "./routes/skillProof.route.js";
 import skillGapRoute from "./routes/skillGap.route.js";
 import skillGapAdminRoute from "./routes/skillGapAdmin.route.js";
+import candidateRoute from "./routes/candidate.route.js";
+import analyticsRoute from "./routes/analytics.route.js";
 
+import {
+  notFoundHandler,
+  errorHandler,
+} from "./middlewares/error.middleware.js";
 const app = express();
 
 /* ==================== MIDDLEWARE ==================== */
@@ -57,5 +63,19 @@ app.use("/api/v1/skill-gap", skillGapRoute);
 app.use("/api/v1/skill-gap-admin", skillGapAdminRoute);
 
 app.use("/api/v1/learning", learningRoute);
+
+/*
+|--------------------------------------------------------------------------
+| 404 + GLOBAL ERROR HANDLING
+|--------------------------------------------------------------------------
+*/
+
+app.use(notFoundHandler);
+
+app.use(errorHandler);
+
+app.use("/api/v1/candidate", candidateRoute);
+
+app.use("/api/v1/analytics", analyticsRoute);
 
 export default app;

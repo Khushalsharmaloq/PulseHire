@@ -1,57 +1,29 @@
 import { Job } from "../models/job.model.js";
 import { User } from "../models/user.model.js";
 import { SkillProof } from "../models/skillProof.model.js";
+import { LearningResource } from "../models/learningResource.model.js";
 
+import {
+  normalizeSkillName,
+  uniqueSkills,
+  calculateSkillGap,
+} from "../utils/skillGap.util.js";
 
-// =====================================================
-// HELPER — NORMALIZE SKILL
-// =====================================================
-
-const normalizeSkill = (skill) => {
-  return String(skill || "")
-    .trim()
-    .toLowerCase();
-};
-
-
-// =====================================================
-// HELPER — UNIQUE SKILLS
-// =====================================================
-
-const uniqueSkills = (skills = []) => {
-  const map = new Map();
-
-  skills.forEach((skill) => {
-    const original = String(skill || "").trim();
-
-    if (!original) {
-      return;
-    }
-
-    const normalized = normalizeSkill(original);
-
-    if (!map.has(normalized)) {
-      map.set(normalized, original);
-    }
-  });
-
-  return [...map.values()];
-};
-
-
-// =====================================================
-// GET CANDIDATE SKILL GAP INTELLIGENCE
-// =====================================================
+/*
+|--------------------------------------------------------------------------
+| GET CANDIDATE SKILL GAP INTELLIGENCE
+|--------------------------------------------------------------------------
+*/
 
 export const getSkillGapIntelligence = async (req, res) => {
   try {
-    // -------------------------------------------------
-    // 1. GET CURRENT CANDIDATE
-    // -------------------------------------------------
+    /* =================================================
+           1. FIND CANDIDATE
+        ================================================= */
 
-    const candidate = await User.findById(req.userId).select(
-      "fullname role profile.skills"
-    );
+    const candidate = await User.findById(req.userId)
+      .select("fullname role profile.skills")
+      .lean();
 
     if (!candidate) {
       return res.status(404).json({
@@ -60,218 +32,261 @@ export const getSkillGapIntelligence = async (req, res) => {
       });
     }
 
+    if (candidate.role !== "candidate") {
+      return res.status(403).json({
+        success: false,
+        message: "Only candidates can access skill gap intelligence.",
+      });
+    }
 
-    // -------------------------------------------------
-    // 2. GET CLAIMED SKILLS
-    // -------------------------------------------------
+    /* =================================================
+           2. CLAIMED SKILLS
+        ================================================= */
 
-    const claimedSkills = uniqueSkills(
-      candidate.profile?.skills || []
-    );
+    const claimedSkills = uniqueSkills(candidate.profile?.skills || []);
 
+    const claimedSkillSet = new Set(claimedSkills.map(normalizeSkillName));
 
-    // -------------------------------------------------
-    // 3. GET VERIFIED SKILLS
-    // -------------------------------------------------
+    /* =================================================
+           3. APPROVED SKILL PROOFS
+        ================================================= */
 
-    const verifiedProofs = await SkillProof.find({
+    const approvedProofs = await SkillProof.find({
       candidate: req.userId,
       status: "approved",
-    }).select("skill");
-
+    })
+      .select("skill title proofType proofUrl reviewedAt status")
+      .sort({ reviewedAt: -1 })
+      .lean();
 
     const verifiedSkills = uniqueSkills(
-      verifiedProofs.map((proof) => proof.skill)
+      approvedProofs.map((proof) => proof.skill),
     );
 
+    /*
+     * Only skills that are both:
+     *
+     * 1. claimed by candidate
+     * 2. approved by recruiter
+     *
+     * count as verified capabilities.
+     */
 
-    // -------------------------------------------------
-    // 4. GET ACTIVE JOBS
-    // -------------------------------------------------
+    const verifiedSkillsFromClaims = uniqueSkills(
+      verifiedSkills.filter((skill) =>
+        claimedSkillSet.has(normalizeSkillName(skill)),
+      ),
+    );
+
+    const verifiedSkillSet = new Set(
+      verifiedSkillsFromClaims.map(normalizeSkillName),
+    );
+
+    /* =================================================
+           4. UNVERIFIED CLAIMS
+        ================================================= */
+
+    const unverifiedClaimedSkills = claimedSkills.filter(
+      (skill) => !verifiedSkillSet.has(normalizeSkillName(skill)),
+    );
+
+    /* =================================================
+           5. VERIFIED COVERAGE
+        ================================================= */
+
+    const verifiedCoverage =
+      claimedSkills.length === 0
+        ? 0
+        : Math.round(
+            (verifiedSkillsFromClaims.length / claimedSkills.length) * 100,
+          );
+
+    /* =================================================
+           6. ACTIVE JOBS
+        ================================================= */
 
     const jobs = await Job.find({
       status: "active",
     })
       .select(
-        "title description skills location jobType company recruiter"
+        "title description skills requirements location jobType company recruiter",
       )
-      .populate("company", "name logo");
+      .populate("company", "name logo location")
+      .sort({
+        createdAt: -1,
+      })
+      .lean();
 
-
-    // -------------------------------------------------
-    // 5. NO ACTIVE JOBS
-    // -------------------------------------------------
+    /* =================================================
+           7. NO ACTIVE JOBS
+        ================================================= */
 
     if (jobs.length === 0) {
       return res.status(200).json({
         success: true,
 
-        readiness: 0,
-        currentGap: 0,
+        readiness: verifiedSkillsFromClaims.length > 0 ? 100 : 0,
+
+        currentGap: verifiedSkillsFromClaims.length > 0 ? 0 : 100,
+
         potential: 0,
 
         claimedSkills,
-        verifiedSkills,
+
+        verifiedSkills: verifiedSkillsFromClaims,
+
+        unverifiedClaimedSkills,
+
+        verifiedCoverage,
 
         priorityGaps: [],
+
         roleAnalysis: [],
+
+        learningRecommendations: [],
+
         rolesAnalysed: 0,
 
-        message:
-          "No active roles are available for skill gap analysis yet.",
+        message: "No active roles are available for skill gap analysis yet.",
       });
     }
 
-
-    // -------------------------------------------------
-    // 6. PREPARE VERIFIED SKILL LOOKUP
-    // -------------------------------------------------
-
-    const verifiedSkillSet = new Set(
-      verifiedSkills.map(normalizeSkill)
-    );
-
-
-    // -------------------------------------------------
-    // 7. ROLE ANALYSIS
-    // -------------------------------------------------
+    /* =================================================
+           8. ROLE ANALYSIS
+        ================================================= */
 
     const roleAnalysis = jobs
       .map((job) => {
-        const requiredSkills = uniqueSkills(
-          job.skills || []
-        );
+        const combinedRequirements = [
+          ...(Array.isArray(job.requirements) ? job.requirements : []),
 
-        const matchedSkills = requiredSkills.filter(
-          (skill) =>
-            verifiedSkillSet.has(normalizeSkill(skill))
-        );
+          ...(Array.isArray(job.skills) ? job.skills : []),
+        ];
 
-        const skillGaps = requiredSkills.filter(
-          (skill) =>
-            !verifiedSkillSet.has(normalizeSkill(skill))
-        );
+        const requiredSkills = uniqueSkills(combinedRequirements);
 
-        const matchPercentage =
-          requiredSkills.length === 0
-            ? 0
-            : Math.round(
-                (matchedSkills.length /
-                  requiredSkills.length) *
-                  100
-              );
+        /*
+         * IMPORTANT:
+         *
+         * calculateSkillGap works from approved
+         * SkillProof records and therefore remains
+         * our single matching source of truth.
+         */
+
+        const skillGap = calculateSkillGap(requiredSkills, approvedProofs);
 
         return {
           jobId: job._id,
+
           title: job.title,
+
+          description: job.description,
+
+          location: job.location,
+
+          jobType: job.jobType,
 
           company: job.company
             ? {
                 id: job.company._id,
                 name: job.company.name,
                 logo: job.company.logo || "",
+                location: job.company.location || "",
               }
             : null,
 
           requiredSkills,
 
-          verifiedSkills: matchedSkills,
+          /*
+           * These are the skills actually matched
+           * against recruiter-approved proofs.
+           */
+          verifiedSkills: skillGap.matchedSkills,
 
-          matchedSkills,
+          matchedSkills: skillGap.matchedSkills,
 
-          skillGaps,
+          skillGaps: skillGap.missingSkills,
 
-          matchPercentage,
+          totalRequiredSkills: skillGap.totalRequiredSkills,
+
+          matchPercentage: skillGap.matchPercentage,
         };
       })
-      .filter(
-        (role) => role.requiredSkills.length > 0
-      );
+      .filter((role) => role.requiredSkills.length > 0);
 
-
-    // -------------------------------------------------
-    // 8. CALCULATE OVERALL READINESS
-    // -------------------------------------------------
+    /* =================================================
+           9. OVERALL READINESS
+        ================================================= */
 
     let totalRequiredSkills = 0;
+
     let totalMatchedSkills = 0;
 
-    roleAnalysis.forEach((role) => {
-      totalRequiredSkills += role.requiredSkills.length;
-      totalMatchedSkills += role.matchedSkills.length;
-    });
+    for (const role of roleAnalysis) {
+      totalRequiredSkills += role.totalRequiredSkills;
 
+      totalMatchedSkills += role.matchedSkills.length;
+    }
 
     const readiness =
       totalRequiredSkills === 0
         ? 0
-        : Math.round(
-            (totalMatchedSkills /
-              totalRequiredSkills) *
-              100
-          );
+        : Math.round((totalMatchedSkills / totalRequiredSkills) * 100);
 
+    const currentGap = Math.max(0, 100 - readiness);
 
-    const currentGap = Math.max(
-      0,
-      100 - readiness
-    );
-
-
-    // -------------------------------------------------
-    // 9. CALCULATE PRIORITY GAPS
-    // -------------------------------------------------
+    /* =================================================
+           10. GAP FREQUENCY
+        ================================================= */
 
     const gapMap = new Map();
 
-    roleAnalysis.forEach((role) => {
-      role.skillGaps.forEach((skill) => {
-        const normalized = normalizeSkill(skill);
+    for (const role of roleAnalysis) {
+      for (const skill of role.skillGaps) {
+        const normalized = normalizeSkillName(skill);
+
+        /*
+         * Safety check:
+         *
+         * A verified skill can never be a gap.
+         */
+
+        if (verifiedSkillSet.has(normalized)) {
+          continue;
+        }
 
         if (!gapMap.has(normalized)) {
           gapMap.set(normalized, {
             skill,
-            occurrences: 0,
             roleCount: 0,
+            occurrences: 0,
           });
         }
 
         const gap = gapMap.get(normalized);
 
-        gap.occurrences += 1;
         gap.roleCount += 1;
-      });
-    });
 
+        gap.occurrences += 1;
+      }
+    }
 
-    // -------------------------------------------------
-    // 10. BUILD PRIORITY GAP LIST
-    // -------------------------------------------------
+    /* =================================================
+           11. PRIORITY GAPS
+        ================================================= */
 
     const priorityGaps = [...gapMap.values()]
       .map((gap) => {
-        const rolePercentage =
-          jobs.length === 0
-            ? 0
-            : Math.round(
-                (gap.roleCount / jobs.length) *
-                  100
-              );
+        const rolePercentage = Math.round(
+          (gap.roleCount / roleAnalysis.length) * 100,
+        );
 
-        const readinessForSkill = verifiedSkillSet.has(
-          normalizeSkill(gap.skill)
-        )
-          ? 100
-          : 0;
-
-        let priority = "medium";
+        let priority = "low";
 
         if (rolePercentage >= 60) {
           priority = "high";
         } else if (rolePercentage >= 30) {
           priority = "medium";
-        } else {
-          priority = "low";
         }
 
         return {
@@ -279,7 +294,11 @@ export const getSkillGapIntelligence = async (req, res) => {
 
           priority,
 
-          readiness: readinessForSkill,
+          /*
+           * Since this list only contains
+           * actual gaps, readiness is 0.
+           */
+          readiness: 0,
 
           roleCount: gap.roleCount,
 
@@ -295,30 +314,97 @@ export const getSkillGapIntelligence = async (req, res) => {
 
         return b.occurrences - a.occurrences;
       })
-      .slice(0, 6);
+      .slice(0, 10);
 
+    /* =================================================
+           12. LEARNING RECOMMENDATIONS
+        ================================================= */
 
-    // -------------------------------------------------
-    // 11. POTENTIAL IMPROVEMENT
-    // -------------------------------------------------
+    const learningRecommendations = [];
+
+    const prioritySkills = priorityGaps.map((gap) => gap.skill);
+
+    if (prioritySkills.length > 0) {
+      /*
+       * MongoDB matching is case-sensitive.
+       *
+       * Therefore we fetch active resources first
+       * and perform normalized skill matching in JS.
+       *
+       * This allows:
+       *
+       * React
+       * react
+       * REACT
+       *
+       * to match the same skill.
+       */
+
+      const allLearningResources = await LearningResource.find({
+        isActive: true,
+      })
+        .sort({
+          createdAt: -1,
+        })
+        .lean();
+
+      const prioritySkillSet = new Set(prioritySkills.map(normalizeSkillName));
+
+      const resourceMap = new Map();
+
+      for (const resource of allLearningResources) {
+        const normalized = normalizeSkillName(resource.skill);
+
+        if (!prioritySkillSet.has(normalized)) {
+          continue;
+        }
+
+        if (!resourceMap.has(normalized)) {
+          resourceMap.set(normalized, []);
+        }
+
+        const resources = resourceMap.get(normalized);
+
+        if (resources.length < 3) {
+          resources.push(resource);
+        }
+      }
+
+      for (const gap of priorityGaps) {
+        const normalized = normalizeSkillName(gap.skill);
+
+        const resources = resourceMap.get(normalized) || [];
+
+        learningRecommendations.push({
+          skill: gap.skill,
+
+          priority: gap.priority,
+
+          roleCount: gap.roleCount,
+
+          rolePercentage: gap.rolePercentage,
+
+          resources,
+        });
+      }
+    }
+
+    /* =================================================
+           13. POTENTIAL IMPROVEMENT
+        ================================================= */
 
     const topGap = priorityGaps[0];
 
-    const potential =
-      topGap && topGap.rolePercentage > 0
-        ? Math.min(
-            currentGap,
-            Math.round(
-              (topGap.rolePercentage / 100) *
-                currentGap
-            )
-          )
-        : 0;
+    const potential = topGap
+      ? Math.min(
+          currentGap,
+          Math.round((topGap.rolePercentage / 100) * currentGap),
+        )
+      : 0;
 
-
-    // -------------------------------------------------
-    // 12. RESPONSE
-    // -------------------------------------------------
+    /* =================================================
+           14. RESPONSE
+        ================================================= */
 
     return res.status(200).json({
       success: true,
@@ -331,25 +417,26 @@ export const getSkillGapIntelligence = async (req, res) => {
 
       claimedSkills,
 
-      verifiedSkills,
+      verifiedSkills: verifiedSkillsFromClaims,
+
+      unverifiedClaimedSkills,
+
+      verifiedCoverage,
 
       priorityGaps,
+
+      learningRecommendations,
 
       roleAnalysis,
 
       rolesAnalysed: roleAnalysis.length,
     });
-
   } catch (error) {
-    console.error(
-      "Get skill gap intelligence error:",
-      error
-    );
+    console.error("Get skill gap intelligence error:", error);
 
     return res.status(500).json({
       success: false,
-      message:
-        "Unable to calculate skill gap intelligence.",
+      message: "Unable to calculate skill gap intelligence.",
     });
   }
 };

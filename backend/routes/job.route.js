@@ -4,7 +4,9 @@ import {
     createJob,
     getAllJobs,
     getMyJobs,
-    getJobById
+    getJobById,
+    updateJob,
+    updateJobStatus
 } from "../controllers/job.controller.js";
 
 import {
@@ -15,10 +17,13 @@ import {
     authorizeRoles
 } from "../middlewares/role.middleware.js";
 
+
 const router = express.Router();
 
 
-/* ==================== PUBLIC ==================== */
+/* =====================================================
+   PUBLIC JOB DISCOVERY
+===================================================== */
 
 router.get(
     "/all",
@@ -26,7 +31,9 @@ router.get(
 );
 
 
-/* ==================== RECRUITER ==================== */
+/* =====================================================
+   RECRUITER
+===================================================== */
 
 router.post(
     "/create",
@@ -34,6 +41,7 @@ router.post(
     authorizeRoles("recruiter"),
     createJob
 );
+
 
 router.get(
     "/my",
@@ -43,7 +51,25 @@ router.get(
 );
 
 
-/* ==================== CANDIDATE ==================== */
+router.put(
+    "/:jobId",
+    isAuthenticated,
+    authorizeRoles("recruiter"),
+    updateJob
+);
+
+
+router.patch(
+    "/:jobId/status",
+    isAuthenticated,
+    authorizeRoles("recruiter"),
+    updateJobStatus
+);
+
+
+/* =====================================================
+   CANDIDATE
+===================================================== */
 
 router.get(
     "/:id",
