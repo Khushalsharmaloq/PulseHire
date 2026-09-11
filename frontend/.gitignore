@@ -1,5 +1,5 @@
 # =========================================================
-# PulseHire Backend - .gitignore
+# PulseHire Frontend - .gitignore
 # =========================================================
 
 # Dependencies
@@ -10,6 +10,14 @@ node_modules/
 .env.*
 !.env.example
 
+# Vite
+dist/
+.vite/
+
+# Build output
+build/
+out/
+
 # Logs
 logs/
 *.log
@@ -18,15 +26,18 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Build / generated output
-dist/
-build/
+# Testing / coverage
 coverage/
 .nyc_output/
+*.lcov
 
 # Cache
 .cache/
+.parcel-cache/
 .eslintcache/
+.stylelintcache/
+
+# TypeScript generated files
 *.tsbuildinfo
 
 # Temporary files
@@ -38,26 +49,14 @@ temp/
 *.swo
 *.bak
 *.backup
+*.orig
 
-# Uploads / runtime-generated files
-uploads/
-storage/
-generated/
-exports/
-reports/
-
-# Local database files
-data/
-db/
-mongodb-data/
-
-# SQLite / local DB files
-*.db
-*.sqlite
-*.sqlite3
-
-# IDE
+# IDE - VS Code
 .vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# Other IDEs
 .idea/
 *.iml
 *.ipr
@@ -81,10 +80,11 @@ ehthumbs.db
 *.local.yaml
 *.local.yml
 
-# Deployment / serverless
-.serverless/
+# Deployment
 .vercel/
 .netlify/
 
-# Docker local override
-docker-compose.override.yml
+# Generated local files
+exports/
+reports/
+tmp/

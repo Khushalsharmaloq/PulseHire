@@ -1,0 +1,55 @@
+:root {
+  --ph-bg: #06111d;
+  --ph-bg-soft: #081725;
+
+  --ph-surface: #0a1928;
+  --ph-surface-raised: #0d2032;
+  --ph-surface-hover: #10283d;
+
+  --ph-border: rgba(148, 163, 184, 0.13);
+  --ph-border-strong: rgba(45, 184, 255, 0.24);
+
+  --ph-text: #f3f8fc;
+  --ph-text-soft: #c7d6e0;
+  --ph-text-muted: #8299a9;
+  --ph-text-subtle: #5f7586;
+
+  --ph-primary: #2db8ff;
+  --ph-primary-strong: #168df2;
+  --ph-primary-soft: rgba(45, 184, 255, 0.10);
+
+  --ph-success: #4ade80;
+  --ph-success-soft: rgba(74, 222, 128, 0.10);
+
+  --ph-warning: #facc15;
+  --ph-warning-soft: rgba(250, 204, 21, 0.10);
+
+  --ph-danger: #f87171;
+  --ph-danger-soft: rgba(248, 113, 113, 0.10);
+
+  --ph-radius-sm: 8px;
+  --ph-radius-md: 12px;
+  --ph-radius-lg: 16px;
+  --ph-radius-xl: 22px;
+
+  --ph-shadow-sm:
+    0 8px 28px rgba(0, 0, 0, 0.16);
+
+  --ph-shadow-md:
+    0 18px 52px rgba(0, 0, 0, 0.22);
+
+  --ph-transition-fast:
+    150ms ease;
+
+  --ph-transition:
+    200ms ease;
+
+  --ph-content-max:
+    1440px;
+
+  --ph-sidebar-width:
+    250px;
+
+  --ph-header-height:
+    72px;
+}

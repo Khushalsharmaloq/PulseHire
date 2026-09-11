@@ -1,0 +1,206 @@
+import { Navigate, Route, Routes } from "react-router-dom";
+
+import Login from "../../pages/auth/Login";
+import Register from "../../pages/auth/Register";
+
+import CandidateDashboard from "../../pages/candidate/CandidateDashboard";
+
+import AppShell from "../../components/layout/AppShell";
+
+import ProtectedRoute from "./ProtectedRoute";
+
+import PublicOnlyRoute from "./PublicOnlyRoute";
+
+import CandidateProfile from "../../pages/candidate/CandidateProfile";
+
+import SkillProof from "../../pages/candidate/SkillProof";
+
+import SkillGap from "../../pages/candidate/SkillGap";
+
+import Learning from "../../pages/candidate/Learning";
+
+import Jobs from "../../pages/candidate/Jobs";
+
+import JobDetails from "../../pages/candidate/JobDetails";
+
+import Applications from "../../pages/candidate/Applications";
+
+const PlaceholderPage = ({ title, description }) => {
+  return (
+    <section
+      style={{
+        minHeight: "420px",
+        display: "grid",
+        placeItems: "center",
+        padding: "40px",
+        textAlign: "center",
+      }}
+    >
+      <div
+        style={{
+          maxWidth: "560px",
+        }}
+      >
+        <span
+          style={{
+            display: "block",
+            marginBottom: "10px",
+            color: "var(--ph-primary)",
+            fontSize: "10px",
+            fontWeight: 800,
+            letterSpacing: "0.15em",
+          }}
+        >
+          PULSEHIRE
+        </span>
+
+        <h1
+          style={{
+            margin: 0,
+            color: "var(--ph-text)",
+            fontSize: "30px",
+            lineHeight: 1.2,
+          }}
+        >
+          {title}
+        </h1>
+
+        {description && (
+          <p
+            style={{
+              margin: "12px 0 0",
+              color: "var(--ph-text-muted)",
+              fontSize: "14px",
+              lineHeight: 1.6,
+            }}
+          >
+            {description}
+          </p>
+        )}
+      </div>
+    </section>
+  );
+};
+
+const UnauthorizedPage = () => (
+  <PlaceholderPage
+    title="You don't have access to this workspace."
+    description="Your account role does not have permission to view this area."
+  />
+);
+
+const NotFoundPage = () => (
+  <PlaceholderPage
+    title="Page not found."
+    description="The page you're looking for doesn't exist."
+  />
+);
+
+const AppRouter = () => {
+  return (
+    <Routes>
+      {/* =====================================================
+          PUBLIC
+          ===================================================== */}
+
+      <Route path="/" element={<Navigate to="/login" replace />} />
+
+      <Route element={<PublicOnlyRoute />}>
+        <Route path="/login" element={<Login />} />
+
+        <Route path="/register" element={<Register />} />
+      </Route>
+
+      {/* =====================================================
+          SYSTEM
+          ===================================================== */}
+
+      <Route path="/unauthorized" element={<UnauthorizedPage />} />
+
+      {/* =====================================================
+          CANDIDATE
+          ===================================================== */}
+
+      <Route element={<ProtectedRoute requiredRole="candidate" />}>
+        <Route element={<AppShell role="candidate" />}>
+          <Route path="/candidate/dashboard" element={<CandidateDashboard />} />
+
+          <Route path="/candidate/profile" element={<CandidateProfile />} />
+
+          <Route path="/candidate/skill-proof" element={<SkillProof />} />
+
+          <Route path="/candidate/skill-gap" element={<SkillGap />} />
+
+          <Route path="/candidate/learning" element={<Learning />} />
+
+          <Route path="/candidate/jobs" element={<Jobs />} />
+
+          <Route path="/candidate/jobs/:jobId" element={<JobDetails />} />
+
+          <Route path="/candidate/applications" element={<Applications />} />
+
+          <Route
+            path="/candidate/settings"
+            element={<PlaceholderPage title="Settings" />}
+          />
+        </Route>
+      </Route>
+
+      {/* =====================================================
+          RECRUITER
+          ===================================================== */}
+
+      <Route element={<ProtectedRoute requiredRole="recruiter" />}>
+        <Route element={<AppShell role="recruiter" />}>
+          <Route
+            path="/recruiter/dashboard"
+            element={
+              <PlaceholderPage
+                title="Recruiter Dashboard"
+                description="Your hiring workspace will live here."
+              />
+            }
+          />
+
+          <Route
+            path="/recruiter/company"
+            element={<PlaceholderPage title="Company" />}
+          />
+
+          <Route
+            path="/recruiter/jobs"
+            element={<PlaceholderPage title="Jobs" />}
+          />
+
+          <Route
+            path="/recruiter/candidates"
+            element={<PlaceholderPage title="Candidates" />}
+          />
+
+          <Route
+            path="/recruiter/applications"
+            element={<PlaceholderPage title="Applications" />}
+          />
+
+          <Route
+            path="/recruiter/analytics"
+            element={<PlaceholderPage title="Analytics" />}
+          />
+
+          <Route
+            path="/recruiter/settings"
+            element={<PlaceholderPage title="Settings" />}
+          />
+        </Route>
+      </Route>
+
+      {/* =====================================================
+          FALLBACK
+          ===================================================== */}
+
+      <Route path="*" element={<NotFoundPage />} />
+    </Routes>
+  );
+};
+
+export default AppRouter;
