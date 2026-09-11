@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   ArrowRight,
@@ -7,15 +7,17 @@ import {
   BriefcaseBusiness,
   CheckCircle2,
   Clock3,
-  Code2,
+  ExternalLink,
   FileCheck2,
   LayoutDashboard,
+  Link as LinkIcon,
   LogOut,
   Plus,
   ShieldCheck,
   Target,
   Upload,
   User,
+  XCircle,
 } from "lucide-react";
 
 import { Link } from "react-router-dom";
@@ -24,7 +26,7 @@ import api from "../../services/api";
 import useAuth from "../../context/useAuth";
 
 const SkillProof = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   const [skillProofs, setSkillProofs] = useState([]);
   const [loadingProofs, setLoadingProofs] = useState(true);
@@ -43,23 +45,10 @@ const SkillProof = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const candidateSkills = user?.profile?.skills || [];
-  const approvedSkills = new Set(
-    skillProofs
-      .filter((proof) => proof.status === "approved")
-      .map((proof) => proof.skill.toLowerCase()),
-  );
-
-  const pendingProofCount = skillProofs.filter(
-    (proof) => proof.status === "pending",
-  ).length;
-
-  const needsProofCount = candidateSkills.filter(
-    (skill) =>
-      !skillProofs.some(
-        (proof) => proof.skill.toLowerCase() === skill.toLowerCase(),
-      ),
-  ).length;
+  const candidateSkills = useMemo(
+  () => user?.profile?.skills || [],
+  [user?.profile?.skills],
+);
 
   useEffect(() => {
     const fetchSkillProofs = async () => {
@@ -76,7 +65,8 @@ const SkillProof = () => {
         console.error("Fetch skill proofs error:", error);
 
         setError(
-          error.response?.data?.message || "Unable to load your skill proofs.",
+          error.response?.data?.message ||
+            "Unable to load your skill proofs.",
         );
       } finally {
         setLoadingProofs(false);
@@ -85,6 +75,53 @@ const SkillProof = () => {
 
     fetchSkillProofs();
   }, []);
+
+  const approvedProofs = useMemo(
+    () =>
+      skillProofs.filter(
+        (proof) => proof.status === "approved",
+      ),
+    [skillProofs],
+  );
+
+  const pendingProofs = useMemo(
+    () =>
+      skillProofs.filter(
+        (proof) => proof.status === "pending",
+      ),
+    [skillProofs],
+  );
+
+  const provenSkills = useMemo(() => {
+    return new Set(
+      approvedProofs.map((proof) =>
+        String(proof.skill || "").trim().toLowerCase(),
+      ),
+    );
+  }, [approvedProofs]);
+
+  const pendingSkills = useMemo(() => {
+    return new Set(
+      pendingProofs.map((proof) =>
+        String(proof.skill || "").trim().toLowerCase(),
+      ),
+    );
+  }, [pendingProofs]);
+
+  const skillsNeedingProof = useMemo(() => {
+    return candidateSkills.filter((skill) => {
+      const normalizedSkill = String(skill)
+        .trim()
+        .toLowerCase();
+
+      return (
+        !provenSkills.has(normalizedSkill) &&
+        !pendingSkills.has(normalizedSkill)
+      );
+    });
+  }, [candidateSkills, provenSkills, pendingSkills]);
+
+  const uniqueVerifiedSkillCount = provenSkills.size;
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
@@ -95,12 +132,18 @@ const SkillProof = () => {
     }));
   };
 
-  const handleOpenForm = () => {
+  const handleOpenForm = (preferredSkill = "") => {
     setError("");
     setSuccess("");
 
+    const defaultSkill =
+      preferredSkill ||
+      skillsNeedingProof[0] ||
+      candidateSkills[0] ||
+      "";
+
     setFormData({
-      skill: candidateSkills[0] || "",
+      skill: defaultSkill,
       proofType: "github",
       title: "",
       description: "",
@@ -124,7 +167,7 @@ const SkillProof = () => {
     setSuccess("");
 
     if (!formData.skill) {
-      setError("Please select a skill to prove.");
+      setError("Please select a claimed skill to prove.");
       return;
     }
 
@@ -150,13 +193,15 @@ const SkillProof = () => {
       });
 
       if (response.data?.success) {
+        const newProof = response.data.skillProof;
+
         setSkillProofs((previousProofs) => [
-          response.data.skillProof,
+          newProof,
           ...previousProofs,
         ]);
 
         setSuccess(
-          "Skill proof submitted successfully and is now pending review.",
+          "Skill proof submitted successfully. It is now pending recruiter review.",
         );
 
         setFormData({
@@ -173,11 +218,52 @@ const SkillProof = () => {
       console.error("Submit skill proof error:", error);
 
       setError(
-        error.response?.data?.message || "Unable to submit your skill proof.",
+        error.response?.data?.message ||
+          "Unable to submit your skill proof.",
       );
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const getProofTypeLabel = (proofType) => {
+    const labels = {
+      project: "Project",
+      certificate: "Certificate",
+      github: "GitHub",
+      portfolio: "Portfolio",
+      other: "Other",
+    };
+
+    return labels[proofType] || "Other";
+  };
+
+  const getStatusLabel = (status) => {
+    const labels = {
+      approved: "Approved",
+      pending: "Pending Review",
+      rejected: "Rejected",
+    };
+
+    return labels[status] || "Pending Review";
+  };
+
+  const getInitials = (name = "") => {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+
+    if (parts.length === 0) {
+      return "PH";
+    }
+
+    if (parts.length === 1) {
+      return parts[0].slice(0, 2).toUpperCase();
+    }
+
+    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  };
+
+  const handleLogout = async () => {
+    await logout();
   };
 
   return (
@@ -188,7 +274,10 @@ const SkillProof = () => {
 
       <aside className="candidate-sidebar">
         <div className="dashboard-brand">
-          <Link to="/candidate/dashboard" className="dashboard-brand">
+          <Link
+            to="/candidate/dashboard"
+            className="dashboard-brand"
+          >
             <div className="dashboard-brand-icon">
               <BriefcaseBusiness size={19} />
             </div>
@@ -198,40 +287,63 @@ const SkillProof = () => {
         </div>
 
         <div className="sidebar-section">
-          <span className="sidebar-label">CANDIDATE WORKSPACE</span>
+          <span className="sidebar-label">
+            CANDIDATE WORKSPACE
+          </span>
 
           <nav className="sidebar-nav">
-            <Link to="/candidate/dashboard" className="sidebar-link">
+            <Link
+              to="/candidate/dashboard"
+              className="sidebar-link"
+            >
               <LayoutDashboard size={17} />
               Dashboard
             </Link>
 
-            <Link to="/candidate/profile" className="sidebar-link">
+            <Link
+              to="/candidate/profile"
+              className="sidebar-link"
+            >
               <User size={17} />
               My Profile
             </Link>
 
-            <Link to="/candidate/skill-proof" className="sidebar-link active">
+            <Link
+              to="/candidate/skill-proof"
+              className="sidebar-link active"
+            >
               <BadgeCheck size={17} />
               Skill Proof
             </Link>
 
-            <Link to="/candidate/skill-gap" className="sidebar-link">
+            <Link
+              to="/candidate/skill-gap"
+              className="sidebar-link"
+            >
               <Target size={17} />
               Skill Gap
             </Link>
 
-            <Link to="/candidate/learning" className="sidebar-link">
+            <Link
+              to="/candidate/learning"
+              className="sidebar-link"
+            >
               <BookOpen size={17} />
               Learning
             </Link>
 
-            <Link to="/candidate/jobs" className="sidebar-link">
+            <Link
+              to="/candidate/jobs"
+              className="sidebar-link"
+            >
               <BriefcaseBusiness size={17} />
               Find Jobs
             </Link>
 
-            <Link to="/candidate/applications" className="sidebar-link">
+            <Link
+              to="/candidate/applications"
+              className="sidebar-link"
+            >
               <FileCheck2 size={17} />
               Applications
             </Link>
@@ -240,16 +352,24 @@ const SkillProof = () => {
 
         <div className="sidebar-bottom">
           <div className="sidebar-user">
-            <div className="user-avatar">AK</div>
+            <div className="user-avatar">
+              {getInitials(user?.fullname)}
+            </div>
 
             <div>
-              <strong>Arjun Kumar</strong>
+              <strong>
+                {user?.fullname || "Candidate"}
+              </strong>
 
               <span>Candidate</span>
             </div>
           </div>
 
-          <button className="logout-button" type="button">
+          <button
+            className="logout-button"
+            type="button"
+            onClick={handleLogout}
+          >
             <LogOut size={17} />
             Logout
           </button>
@@ -267,7 +387,9 @@ const SkillProof = () => {
 
         <header className="candidate-topbar">
           <div>
-            <span className="dashboard-eyebrow">SKILL PROOF</span>
+            <span className="dashboard-eyebrow">
+              SKILL PROOF
+            </span>
 
             <h1>Prove what you can actually do.</h1>
           </div>
@@ -279,14 +401,19 @@ const SkillProof = () => {
 
         <section className="proof-intro">
           <div>
-            <span className="panel-label">EVIDENCE-BACKED SKILLS</span>
+            <span className="panel-label">
+              EVIDENCE-BACKED SKILLS
+            </span>
 
-            <h2>Turn your skills into trusted signals.</h2>
+            <h2>
+              Turn your skills into trusted signals.
+            </h2>
 
             <p>
-              Submit projects, certificates, portfolios, assessments and other
-              evidence that helps recruiters understand what you can actually
-              do.
+              Submit projects, certificates, portfolios,
+              GitHub repositories and other evidence that
+              helps recruiters understand what you can
+              actually do.
             </p>
           </div>
 
@@ -296,248 +423,171 @@ const SkillProof = () => {
             <div>
               <strong>Your evidence matters.</strong>
 
-              <span>Recruiters can validate submitted proof.</span>
+              <span>
+                Recruiters can review and validate submitted
+                proof.
+              </span>
             </div>
           </div>
         </section>
 
         {/* ===================================================
-            VERIFICATION SUMMARY
+            SUMMARY
             =================================================== */}
 
         <section className="proof-summary">
           <div className="proof-summary-card">
             <span>VERIFIED</span>
 
-            <strong>{approvedSkills.size}</strong>
+            <strong>{uniqueVerifiedSkillCount}</strong>
 
-            <small>skills recruiters validated</small>
+            <small>
+              skills recruiters validated
+            </small>
           </div>
 
           <div className="proof-summary-card">
             <span>PENDING</span>
 
-            <strong>{pendingProofCount}</strong>
+            <strong>{pendingProofs.length}</strong>
 
-            <small>proof awaiting review</small>
+            <small>
+              proof items awaiting review
+            </small>
           </div>
 
           <div className="proof-summary-card">
             <span>NEEDS PROOF</span>
 
-            <strong>{needsProofCount}</strong>
+            <strong>{skillsNeedingProof.length}</strong>
 
-            <small>skill without evidence</small>
+            <small>
+              claimed skills without evidence
+            </small>
           </div>
 
           <button
             className="add-proof-button"
             type="button"
-            onClick={handleOpenForm}
+            onClick={() => handleOpenForm()}
             disabled={candidateSkills.length === 0}
           >
             <Plus size={16} />
             Add Skill Proof
           </button>
         </section>
+
         {/* ===================================================
-            SKILL PROOF LIST
+            CLAIMED SKILLS
             =================================================== */}
 
-<section className="proof-section">
-  <div className="proof-section-header">
-    <div>
-      <span className="panel-label">
-        YOUR EVIDENCE
-      </span>
-
-      <h2>
-        Skills and their proof.
-      </h2>
-    </div>
-  </div>
-
-  {loadingProofs ? (
-    <div className="proof-empty-state">
-      <p>Loading your skill proofs...</p>
-    </div>
-  ) : skillProofs.length === 0 ? (
-    <div className="proof-empty-state">
-      <BadgeCheck size={28} />
-
-      <h3>
-        No skill proof submitted yet.
-      </h3>
-
-      <p>
-        Submit evidence for one of your claimed skills
-        to start building verified signals.
-      </p>
-
-      <button
-        className="add-proof-button"
-        type="button"
-        onClick={handleOpenForm}
-        disabled={candidateSkills.length === 0}
-      >
-        <Plus size={16} />
-        Add Skill Proof
-      </button>
-    </div>
-  ) : (
-    <div className="proof-list">
-      {skillProofs.map((proof) => {
-        const statusLabel =
-          proof.status === "approved"
-            ? "Verified"
-            : proof.status === "rejected"
-              ? "Rejected"
-              : "Pending Review";
-
-        const statusClass =
-          proof.status === "approved"
-            ? "verified"
-            : proof.status === "rejected"
-              ? "missing"
-              : "pending";
-
-        const formattedDate = proof.createdAt
-          ? new Date(proof.createdAt).toLocaleDateString(
-              "en-IN",
-              {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              }
-            )
-          : "";
-
-        return (
-          <article
-            className={`proof-card ${proof.status === "pending" ? "pending-proof" : ""}`}
-            key={proof._id}
-          >
-            <div className="proof-card-header">
-              <div className={`proof-skill-icon ${statusClass}`}>
-                {proof.status === "approved" ? (
-                  <BadgeCheck size={18} />
-                ) : proof.status === "pending" ? (
-                  <Clock3 size={18} />
-                ) : (
-                  <Target size={18} />
-                )}
-              </div>
-
-              <div>
-                <div className="proof-skill-name">
-                  <h3>
-                    {proof.skill}
-                  </h3>
-
-                  <span
-                    className={`proof-status ${statusClass}`}
-                  >
-                    {statusLabel}
-                  </span>
-                </div>
-
-                <p>
-                  {proof.status === "approved"
-                    ? "Recruiter validated"
-                    : proof.status === "rejected"
-                      ? "Recruiter requested changes"
-                      : "Submitted · Waiting for recruiter validation"}
-                </p>
-              </div>
-            </div>
-
-            <div className="proof-evidence">
-              <div className="evidence-icon">
-                {proof.proofType === "github" ||
-                proof.proofType === "project" ? (
-                  <Code2 size={17} />
-                ) : (
-                  <FileCheck2 size={17} />
-                )}
-              </div>
-
-              <div className="evidence-info">
-                <strong>
-                  {proof.title}
-                </strong>
-
-                <span>
-                  {proof.proofType.charAt(0).toUpperCase() +
-                    proof.proofType.slice(1)}
-                  {formattedDate
-                    ? ` · Submitted ${formattedDate}`
-                    : ""}
-                </span>
-              </div>
-
-              {proof.proofUrl && (
-                <a
-                  href={proof.proofUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  View
-                  <ArrowRight size={12} />
-                </a>
-              )}
-            </div>
-
-            {proof.description && (
-              <div className="proof-description">
-                {proof.description}
-              </div>
-            )}
-
-            <div
-              className={`proof-footer ${
-                proof.status === "pending" ? "pending" : ""
-              }`}
-            >
-              <span>
-                {proof.status === "approved" ? (
-                  <>
-                    <CheckCircle2 size={12} />
-                    Evidence accepted
-                  </>
-                ) : proof.status === "pending" ? (
-                  <>
-                    <Clock3 size={12} />
-                    Awaiting review
-                  </>
-                ) : (
-                  <>
-                    <Target size={12} />
-                    Review required
-                  </>
-                )}
+        <section className="proof-skill-overview">
+          <div className="proof-section-heading">
+            <div>
+              <span className="panel-label">
+                YOUR CLAIMED SKILLS
               </span>
 
-              {proof.status === "approved" ? (
-                <span>
-                  Recruiter validation complete
-                </span>
-              ) : proof.status === "rejected" ? (
-                <span>
-                  {proof.recruiterComment ||
-                    "Please review your submitted evidence."}
-                </span>
-              ) : (
-                <span>
-                  Your proof is being reviewed
-                </span>
-              )}
+              <h2>Build evidence around your capabilities.</h2>
+
+              <p>
+                Start with the skills you've claimed on your
+                PulseHire profile.
+              </p>
             </div>
-          </article>
-        );
-      })}
-    </div>
-  )}
-</section>
+
+            <BadgeCheck size={21} />
+          </div>
+
+          {candidateSkills.length === 0 ? (
+            <div className="proof-empty-state">
+              <Target size={20} />
+
+              <div>
+                <strong>No claimed skills yet.</strong>
+
+                <p>
+                  Add skills to your profile before submitting
+                  evidence for them.
+                </p>
+              </div>
+
+              <Link
+                to="/candidate/profile"
+                className="proof-inline-link"
+              >
+                Go to Profile
+                <ArrowRight size={14} />
+              </Link>
+            </div>
+          ) : (
+            <div className="proof-skill-list">
+              {candidateSkills.map((skill) => {
+                const normalizedSkill = String(skill)
+                  .trim()
+                  .toLowerCase();
+
+                const isVerified =
+                  provenSkills.has(normalizedSkill);
+
+                const isPending =
+                  pendingSkills.has(normalizedSkill);
+
+                return (
+                  <div
+                    className={`proof-skill-item ${
+                      isVerified
+                        ? "verified"
+                        : isPending
+                          ? "pending"
+                          : "needs-proof"
+                    }`}
+                    key={skill}
+                  >
+                    <div className="proof-skill-item-icon">
+                      {isVerified ? (
+                        <CheckCircle2 size={17} />
+                      ) : isPending ? (
+                        <Clock3 size={17} />
+                      ) : (
+                        <Target size={17} />
+                      )}
+                    </div>
+
+                    <div className="proof-skill-item-info">
+                      <strong>{skill}</strong>
+
+                      <span>
+                        {isVerified
+                          ? "Recruiter verified"
+                          : isPending
+                            ? "Proof pending review"
+                            : "Evidence not submitted"}
+                      </span>
+                    </div>
+
+                    {!isVerified && !isPending && (
+                      <button
+                        type="button"
+                        className="proof-skill-prove-button"
+                        onClick={() =>
+                          handleOpenForm(skill)
+                        }
+                      >
+                        Prove
+                        <ArrowRight size={13} />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        {/* ===================================================
+            ADD NEW EVIDENCE
+            =================================================== */}
 
         <section className="add-proof-panel">
           <div className="add-proof-heading">
@@ -546,41 +596,39 @@ const SkillProof = () => {
             </div>
 
             <div>
-              <span className="panel-label">ADD NEW EVIDENCE</span>
+              <span className="panel-label">
+                ADD NEW EVIDENCE
+              </span>
 
               <h2>What would you like to prove?</h2>
 
               <p>
-                Submit evidence that demonstrates how you have used a claimed
-                skill.
+                Submit evidence that demonstrates how you
+                have used a claimed skill.
               </p>
             </div>
           </div>
 
           {!showForm ? (
-            <>
-              {candidateSkills.length === 0 && (
-                <div className="skill-proof-message error">
-                  Add at least one claimed skill to your profile before
-                  submitting skill proof.
-                </div>
-              )}
-
-              <button
-                className="add-proof-button"
-                type="button"
-                onClick={handleOpenForm}
-                disabled={candidateSkills.length === 0}
-              >
-                <Plus size={16} />
-                Add Skill Proof
-              </button>
-            </>
+            <button
+              className="add-proof-button"
+              type="button"
+              onClick={() => handleOpenForm()}
+              disabled={candidateSkills.length === 0}
+            >
+              <Plus size={16} />
+              Add Skill Proof
+            </button>
           ) : (
-            <form className="skill-proof-form" onSubmit={handleSubmitProof}>
+            <form
+              className="skill-proof-form"
+              onSubmit={handleSubmitProof}
+            >
               <div className="skill-proof-form-grid">
                 <div className="skill-proof-field">
-                  <label htmlFor="skill">Skill</label>
+                  <label htmlFor="skill">
+                    Skill
+                  </label>
 
                   <select
                     id="skill"
@@ -589,10 +637,15 @@ const SkillProof = () => {
                     onChange={handleInputChange}
                     required
                   >
-                    <option value="">Select a claimed skill</option>
+                    <option value="">
+                      Select a claimed skill
+                    </option>
 
                     {candidateSkills.map((skill) => (
-                      <option key={skill} value={skill}>
+                      <option
+                        key={skill}
+                        value={skill}
+                      >
                         {skill}
                       </option>
                     ))}
@@ -600,7 +653,9 @@ const SkillProof = () => {
                 </div>
 
                 <div className="skill-proof-field">
-                  <label htmlFor="proofType">Proof Type</label>
+                  <label htmlFor="proofType">
+                    Proof Type
+                  </label>
 
                   <select
                     id="proofType"
@@ -609,20 +664,32 @@ const SkillProof = () => {
                     onChange={handleInputChange}
                     required
                   >
-                    <option value="project">Project</option>
+                    <option value="project">
+                      Project
+                    </option>
 
-                    <option value="certificate">Certificate</option>
+                    <option value="certificate">
+                      Certificate
+                    </option>
 
-                    <option value="github">GitHub</option>
+                    <option value="github">
+                      GitHub
+                    </option>
 
-                    <option value="portfolio">Portfolio</option>
+                    <option value="portfolio">
+                      Portfolio
+                    </option>
 
-                    <option value="other">Other</option>
+                    <option value="other">
+                      Other
+                    </option>
                   </select>
                 </div>
 
                 <div className="skill-proof-field full-width">
-                  <label htmlFor="title">Proof Title</label>
+                  <label htmlFor="title">
+                    Proof Title
+                  </label>
 
                   <input
                     id="title"
@@ -637,7 +704,9 @@ const SkillProof = () => {
                 </div>
 
                 <div className="skill-proof-field full-width">
-                  <label htmlFor="description">Description</label>
+                  <label htmlFor="description">
+                    Description
+                  </label>
 
                   <textarea
                     id="description"
@@ -651,7 +720,9 @@ const SkillProof = () => {
                 </div>
 
                 <div className="skill-proof-field full-width">
-                  <label htmlFor="proofUrl">Proof URL</label>
+                  <label htmlFor="proofUrl">
+                    Proof URL
+                  </label>
 
                   <input
                     id="proofUrl"
@@ -666,11 +737,17 @@ const SkillProof = () => {
               </div>
 
               {error && (
-                <div className="skill-proof-message error">{error}</div>
+                <div className="skill-proof-message error">
+                  <XCircle size={16} />
+                  {error}
+                </div>
               )}
 
               {success && (
-                <div className="skill-proof-message success">{success}</div>
+                <div className="skill-proof-message success">
+                  <CheckCircle2 size={16} />
+                  {success}
+                </div>
               )}
 
               <div className="skill-proof-form-actions">
@@ -686,9 +763,14 @@ const SkillProof = () => {
                 <button
                   type="submit"
                   className="submit-proof-button"
-                  disabled={submitting || candidateSkills.length === 0}
+                  disabled={
+                    submitting ||
+                    candidateSkills.length === 0
+                  }
                 >
-                  {submitting ? "Submitting..." : "Submit Proof"}
+                  {submitting
+                    ? "Submitting..."
+                    : "Submit Proof"}
                 </button>
               </div>
             </form>
@@ -696,7 +778,154 @@ const SkillProof = () => {
         </section>
 
         {/* ===================================================
-            IMPORTANT MESSAGE
+            PROOF HISTORY
+            =================================================== */}
+
+        <section className="proof-history">
+          <div className="proof-section-heading">
+            <div>
+              <span className="panel-label">
+                EVIDENCE HISTORY
+              </span>
+
+              <h2>Proof you've submitted.</h2>
+
+              <p>
+                Track recruiter review status for every piece
+                of evidence.
+              </p>
+            </div>
+
+            <FileCheck2 size={21} />
+          </div>
+
+          {loadingProofs ? (
+            <div className="proof-empty-state">
+              <Clock3 size={20} />
+
+              <div>
+                <strong>Loading your evidence...</strong>
+
+                <p>
+                  We're retrieving your submitted skill proofs.
+                </p>
+              </div>
+            </div>
+          ) : skillProofs.length === 0 ? (
+            <div className="proof-empty-state">
+              <Upload size={20} />
+
+              <div>
+                <strong>No skill proofs submitted yet.</strong>
+
+                <p>
+                  Submit your first piece of evidence to start
+                  building verified skills.
+                </p>
+              </div>
+
+              {candidateSkills.length > 0 && (
+                <button
+                  type="button"
+                  className="proof-inline-button"
+                  onClick={() => handleOpenForm()}
+                >
+                  Add Proof
+                  <ArrowRight size={14} />
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="proof-history-list">
+              {skillProofs.map((proof) => (
+                <article
+                  className="proof-history-card"
+                  key={proof._id}
+                >
+                  <div className="proof-history-main">
+                    <div className="proof-history-icon">
+                      {proof.status === "approved" ? (
+                        <CheckCircle2 size={18} />
+                      ) : proof.status === "rejected" ? (
+                        <XCircle size={18} />
+                      ) : (
+                        <Clock3 size={18} />
+                      )}
+                    </div>
+
+                    <div className="proof-history-content">
+                      <div className="proof-history-top">
+                        <span className="proof-history-skill">
+                          {proof.skill}
+                        </span>
+
+                        <span
+                          className={`proof-status ${proof.status}`}
+                        >
+                          {getStatusLabel(
+                            proof.status,
+                          )}
+                        </span>
+                      </div>
+
+                      <h3>{proof.title}</h3>
+
+                      <p>
+                        {proof.description ||
+                          "No description provided."}
+                      </p>
+
+                      <div className="proof-history-meta">
+                        <span>
+                          <LinkIcon size={13} />
+                          {getProofTypeLabel(
+                            proof.proofType,
+                          )}
+                        </span>
+
+                        {proof.createdAt && (
+                          <span>
+                            Submitted{" "}
+                            {new Date(
+                              proof.createdAt,
+                            ).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+
+                      {proof.recruiterComment && (
+                        <div className="proof-review-comment">
+                          <strong>
+                            Recruiter feedback
+                          </strong>
+
+                          <p>
+                            {proof.recruiterComment}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {proof.proofUrl && (
+                    <a
+                      href={proof.proofUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="proof-view-link"
+                    >
+                      View Evidence
+                      <ExternalLink size={13} />
+                    </a>
+                  )}
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* ===================================================
+            PRINCIPLE
             =================================================== */}
 
         <section className="proof-principle">
@@ -705,16 +934,20 @@ const SkillProof = () => {
           </div>
 
           <div>
-            <span className="panel-label">WHY VERIFICATION MATTERS</span>
+            <span className="panel-label">
+              WHY VERIFICATION MATTERS
+            </span>
 
             <h2>
-              A skill becomes a stronger signal when there's evidence behind it.
+              A skill becomes a stronger signal when there's
+              evidence behind it.
             </h2>
 
             <p>
-              PulseHire doesn't ask recruiters to simply trust what candidates
-              write on their resumes. Candidates provide evidence, recruiters
-              validate it, and the resulting verified skill becomes part of the
+              PulseHire doesn't ask recruiters to simply trust
+              what candidates write on their resumes. Candidates
+              provide evidence, recruiters validate it, and the
+              resulting verified skill becomes part of the
               candidate's professional profile.
             </p>
           </div>
@@ -723,7 +956,5 @@ const SkillProof = () => {
     </div>
   );
 };
-
-/* Small local icon used for the Docker card */
 
 export default SkillProof;

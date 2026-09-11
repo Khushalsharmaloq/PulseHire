@@ -1,14 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   ArrowLeft,
+  ArrowRight,
   BadgeCheck,
   BarChart3,
   BriefcaseBusiness,
   CheckCircle2,
+  Code2,
   ExternalLink,
   FileCheck2,
-  Code2,
   LayoutDashboard,
   LogOut,
   Target,
@@ -17,9 +18,13 @@ import {
 } from "lucide-react";
 
 import { Link } from "react-router-dom";
-import api from "../../services/api";
 
-const SkillVerification = () => {
+import api from "../../services/api";
+import useAuth from "../../context/useAuth";
+
+const Verification = () => {
+  const { user, logout } = useAuth();
+
   const [skillProofs, setSkillProofs] = useState([]);
   const [selectedProof, setSelectedProof] = useState(null);
 
@@ -29,64 +34,12 @@ const SkillVerification = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  /*
-   * =========================================================
-   * FETCH SKILL PROOFS
-   * =========================================================
-   */
-
-  const fetchSkillProofs = async () => {
-    try {
-      setLoading(true);
-      setError("");
-
-      const response = await api.get("/skill-proof/recruiter");
-
-      if (response.data?.success) {
-        const proofs = response.data.skillProofs || [];
-
-        setSkillProofs(proofs);
-
-        const firstPendingProof = proofs.find(
-          (proof) => proof.status === "pending"
-        );
-
-        setSelectedProof(
-          firstPendingProof || proofs[0] || null
-        );
-      }
-    } catch (error) {
-      console.error(
-        "Fetch recruiter skill proofs error:",
-        error
-      );
-
-      setError(
-        error.response?.data?.message ||
-          "Unable to load skill proofs."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  /*
-   * =========================================================
-   * INITIAL PAGE LOAD
-   * =========================================================
-   *
-   * We intentionally load the data inside the effect itself.
-   * This avoids the React setState-in-effect lint problem.
-   */
-
   useEffect(() => {
     let cancelled = false;
 
-    const loadInitialProofs = async () => {
+    const loadSkillProofs = async () => {
       try {
-        const response = await api.get(
-          "/skill-proof/recruiter"
-        );
+        const response = await api.get("/skill-proof/recruiter");
 
         if (cancelled) return;
 
@@ -96,24 +49,18 @@ const SkillVerification = () => {
           setSkillProofs(proofs);
 
           const firstPendingProof = proofs.find(
-            (proof) => proof.status === "pending"
+            (proof) => proof.status === "pending",
           );
 
-          setSelectedProof(
-            firstPendingProof || proofs[0] || null
-          );
+          setSelectedProof(firstPendingProof || proofs[0] || null);
         }
       } catch (error) {
         if (cancelled) return;
 
-        console.error(
-          "Initial recruiter skill proofs error:",
-          error
-        );
+        console.error("Fetch recruiter skill proofs error:", error);
 
         setError(
-          error.response?.data?.message ||
-            "Unable to load skill proofs."
+          error.response?.data?.message || "Unable to load skill proofs.",
         );
       } finally {
         if (!cancelled) {
@@ -122,18 +69,27 @@ const SkillVerification = () => {
       }
     };
 
-    loadInitialProofs();
+    loadSkillProofs();
 
     return () => {
       cancelled = true;
     };
   }, []);
 
-  /*
-   * =========================================================
-   * SELECT PROOF
-   * =========================================================
-   */
+  const pendingProofs = useMemo(
+    () => skillProofs.filter((proof) => proof.status === "pending"),
+    [skillProofs],
+  );
+
+  const approvedProofs = useMemo(
+    () => skillProofs.filter((proof) => proof.status === "approved"),
+    [skillProofs],
+  );
+
+  const rejectedProofs = useMemo(
+    () => skillProofs.filter((proof) => proof.status === "rejected"),
+    [skillProofs],
+  );
 
   const handleSelectProof = (proof) => {
     setSelectedProof(proof);
@@ -141,14 +97,10 @@ const SkillVerification = () => {
     setSuccess("");
   };
 
-  /*
-   * =========================================================
-   * APPROVE / REJECT PROOF
-   * =========================================================
-   */
-
   const handleReview = async (status) => {
-    if (!selectedProof) return;
+    if (!selectedProof) {
+      return;
+    }
 
     try {
       setReviewing(true);
@@ -165,74 +117,77 @@ const SkillVerification = () => {
         {
           status,
           recruiterComment,
-        }
+        },
       );
 
       if (response.data?.success) {
         setSuccess(response.data.message);
 
-        await fetchSkillProofs();
+        const updatedProof = response.data.skillProof;
+
+        setSkillProofs((previousProofs) =>
+          previousProofs.map((proof) =>
+            proof._id === updatedProof._id ? updatedProof : proof,
+          ),
+        );
+
+        const nextPendingProof = skillProofs.find(
+          (proof) =>
+            proof._id !== updatedProof._id && proof.status === "pending",
+        );
+
+        setSelectedProof(nextPendingProof || updatedProof);
       }
     } catch (error) {
-      console.error(
-        "Review skill proof error:",
-        error
-      );
+      console.error("Review skill proof error:", error);
 
       setError(
-        error.response?.data?.message ||
-          "Unable to review this skill proof."
+        error.response?.data?.message || "Unable to review this skill proof.",
       );
     } finally {
       setReviewing(false);
     }
   };
 
-  /*
-   * =========================================================
-   * DERIVED DATA
-   * =========================================================
-   */
+  const getInitials = (name = "") => {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
 
-  const pendingProofs = skillProofs.filter(
-    (proof) => proof.status === "pending"
-  );
+    if (parts.length === 0) {
+      return "PH";
+    }
 
-  const approvedProofs = skillProofs.filter(
-    (proof) => proof.status === "approved"
-  );
+    if (parts.length === 1) {
+      return parts[0].slice(0, 2).toUpperCase();
+    }
 
-  const candidateName =
-    selectedProof?.candidate?.fullname ||
-    "Candidate";
+    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  };
 
-  const candidateEmail =
-    selectedProof?.candidate?.email || "";
+  const getProofTypeLabel = (type = "") => {
+    const labels = {
+      project: "PROJECT",
+      certificate: "CERTIFICATE",
+      github: "GITHUB",
+      portfolio: "PORTFOLIO",
+      other: "OTHER",
+    };
 
-  const proofTypeLabel = selectedProof?.proofType
-    ? selectedProof.proofType.toUpperCase()
-    : "";
+    return labels[type] || "EVIDENCE";
+  };
 
-  /*
-   * =========================================================
-   * PAGE
-   * =========================================================
-   */
+  const handleLogout = async () => {
+    await logout();
+  };
 
   return (
     <div className="recruiter-dashboard">
-
       {/* =====================================================
           SIDEBAR
           ===================================================== */}
 
       <aside className="recruiter-sidebar">
-
-        <Link
-          to="/recruiter/dashboard"
-          className="dashboard-brand"
-        >
-          <div className="dashboard-brand-icon">
+        <Link to="/recruiter/dashboard" className="recruiter-brand">
+          <div className="recruiter-brand-icon">
             <BriefcaseBusiness size={19} />
           </div>
 
@@ -240,72 +195,45 @@ const SkillVerification = () => {
         </Link>
 
         <div className="sidebar-section">
-          <span className="sidebar-label">
-            RECRUITER WORKSPACE
-          </span>
+          <span className="sidebar-label">RECRUITER WORKSPACE</span>
 
           <nav className="sidebar-nav">
-
-            <Link
-              to="/recruiter/dashboard"
-              className="sidebar-link"
-            >
+            <Link to="/recruiter/dashboard" className="sidebar-link">
               <LayoutDashboard size={17} />
               Dashboard
             </Link>
 
-            <Link
-              to="/recruiter/jobs"
-              className="sidebar-link"
-            >
+            <Link to="/recruiter/jobs" className="sidebar-link">
               <BriefcaseBusiness size={17} />
-              My Jobs
+              Jobs
             </Link>
 
-            <Link
-              to="/recruiter/applications"
-              className="sidebar-link"
-            >
-              <FileCheck2 size={17} />
-              Applications
-            </Link>
-
-            <Link
-              to="/recruiter/candidates"
-              className="sidebar-link"
-            >
+            <Link to="/recruiter/candidates" className="sidebar-link">
               <Users size={17} />
               Candidates
             </Link>
 
-            <Link
-              to="/recruiter/verification"
-              className="sidebar-link active"
-            >
+            <Link to="/recruiter/verification" className="sidebar-link active">
               <BadgeCheck size={17} />
               Verification
             </Link>
 
-            <Link
-              to="/recruiter/analytics"
-              className="sidebar-link"
-            >
+            <Link to="/recruiter/analytics" className="sidebar-link">
               <BarChart3 size={17} />
               Analytics
             </Link>
-
           </nav>
         </div>
 
         <div className="sidebar-bottom">
-
           <div className="sidebar-user">
             <div className="user-avatar recruiter-avatar">
-              TN
+              {getInitials(user?.fullname)}
             </div>
 
             <div>
-              <strong>TechNova</strong>
+              <strong>{user?.fullname || "Recruiter"}</strong>
+
               <span>Recruiter</span>
             </div>
           </div>
@@ -313,88 +241,57 @@ const SkillVerification = () => {
           <button
             className="logout-button"
             type="button"
+            onClick={handleLogout}
           >
             <LogOut size={17} />
             Logout
           </button>
-
         </div>
-
       </aside>
-
 
       {/* =====================================================
           MAIN
           ===================================================== */}
 
       <main className="recruiter-main">
-
-        {/* ===================================================
-            BACK
-            =================================================== */}
-
-        <Link
-          to="/recruiter/candidates"
-          className="skill-verification-back"
-        >
+        <Link to="/recruiter/candidates" className="skill-verification-back">
           <ArrowLeft size={13} />
           Back to candidates
         </Link>
-
 
         {/* ===================================================
             HEADER
             =================================================== */}
 
         <header className="skill-verification-header">
-
           <div className="verification-candidate">
-
             <div className="verification-avatar">
-              {candidateName
-                .split(" ")
-                .map((part) => part[0])
-                .join("")
-                .slice(0, 2)
-                .toUpperCase()}
+              {getInitials(selectedProof?.candidate?.fullname)}
             </div>
 
             <div>
-
-              <span className="dashboard-eyebrow">
-                SKILL VERIFICATION
-              </span>
+              <span className="dashboard-eyebrow">SKILL VERIFICATION</span>
 
               <h1>
-                {candidateName}
+                {selectedProof?.candidate?.fullname || "Candidate Evidence"}
               </h1>
 
               <p>
-                {candidateEmail
-                  ? `Reviewing submitted skill evidence from ${candidateEmail}.`
-                  : "Reviewing submitted skill evidence."}
+                {selectedProof?.candidate?.email
+                  ? `Reviewing submitted skill evidence from ${selectedProof.candidate.email}.`
+                  : "Review submitted candidate skill evidence."}
               </p>
-
             </div>
-
           </div>
-
 
           <div className="verification-progress">
-
-            <span>
-              EVIDENCE REVIEW
-            </span>
+            <span>EVIDENCE REVIEW</span>
 
             <strong>
-              {approvedProofs.length} verified ·{" "}
-              {pendingProofs.length} pending
+              {approvedProofs.length} verified · {pendingProofs.length} pending
             </strong>
-
           </div>
-
         </header>
-
 
         {/* ===================================================
             MESSAGES
@@ -402,187 +299,127 @@ const SkillVerification = () => {
 
         {error && (
           <div className="verification-message error">
+            <XCircle size={16} />
             {error}
           </div>
         )}
 
         {success && (
           <div className="verification-message success">
+            <CheckCircle2 size={16} />
             {success}
           </div>
         )}
 
-
         {/* ===================================================
-            SKILL SELECTOR
+            PENDING PROOF SELECTOR
             =================================================== */}
 
         <section className="verification-skill-selector">
-
           {loading ? (
-
             <div className="verification-skill-tab">
-              Loading proofs...
+              Loading skill proofs...
             </div>
-
           ) : pendingProofs.length === 0 ? (
-
             <div className="verification-skill-tab">
-              <BadgeCheck size={14} />
+              <BadgeCheck size={15} />
 
               <div>
-                <strong>
-                  No pending proofs
-                </strong>
+                <strong>No pending proofs</strong>
 
-                <span>
-                  All submitted proofs have been reviewed.
-                </span>
+                <span>All submitted evidence has been reviewed.</span>
               </div>
             </div>
-
           ) : (
-
             pendingProofs.map((proof) => (
-
               <button
                 key={proof._id}
                 type="button"
                 className={`verification-skill-tab ${
-                  selectedProof?._id === proof._id
-                    ? "active"
-                    : ""
+                  selectedProof?._id === proof._id ? "active" : ""
                 }`}
-                onClick={() =>
-                  handleSelectProof(proof)
-                }
+                onClick={() => handleSelectProof(proof)}
               >
-
                 <Target size={14} />
 
                 <div>
-
-                  <strong>
-                    {proof.skill}
-                  </strong>
+                  <strong>{proof.skill}</strong>
 
                   <span>
-                    {proof.candidate?.fullname ||
-                      "Candidate"}{" "}
-                    · Pending
+                    {proof.candidate?.fullname || "Candidate"} · Pending
                   </span>
-
                 </div>
-
               </button>
-
             ))
-
           )}
-
         </section>
 
-
         {/* ===================================================
-            VERIFICATION LAYOUT
+            MAIN VERIFICATION LAYOUT
             =================================================== */}
 
         <div className="verification-layout">
-
-
           {/* =================================================
-              LEFT — EVIDENCE
+              EVIDENCE
               ================================================= */}
 
           <section className="verification-evidence-panel">
-
             <div className="verification-panel-heading">
-
               <div>
-
                 <span className="panel-label">
-                  {selectedProof?.skill?.toUpperCase() ||
-                    "EVIDENCE"}
+                  {selectedProof?.skill?.toUpperCase() || "EVIDENCE"}
                 </span>
 
-                <h2>
-                  Evidence submitted by candidate.
-                </h2>
+                <h2>Evidence submitted by candidate.</h2>
 
                 <p>
-                  Review the submitted evidence before
-                  making your decision.
+                  Review the submitted evidence before making your decision.
                 </p>
-
               </div>
-
             </div>
 
-
             {selectedProof ? (
-
               <article className="evidence-card">
-
                 <div className="evidence-card-header">
-
                   <div className="evidence-source-icon github">
-
-                    {selectedProof.proofType ===
-                    "github" ? (
+                    {selectedProof.proofType === "github" ? (
                       <Code2 size={17} />
                     ) : (
                       <FileCheck2 size={17} />
                     )}
-
                   </div>
-
 
                   <div>
-
                     <span className="evidence-type">
-                      {proofTypeLabel}
+                      {getProofTypeLabel(selectedProof.proofType)}
                     </span>
 
-                    <h3>
-                      {selectedProof.title}
-                    </h3>
-
+                    <h3>{selectedProof.title}</h3>
                   </div>
-
 
                   <span
                     className={`evidence-strength ${
                       selectedProof.status === "approved"
                         ? "strong"
-                        : "medium"
+                        : selectedProof.status === "rejected"
+                          ? "weak"
+                          : "medium"
                     }`}
                   >
                     {selectedProof.status}
                   </span>
-
                 </div>
-
 
                 <p className="evidence-description">
-
                   {selectedProof.description ||
                     "No description was provided by the candidate."}
-
                 </p>
 
-
                 <div className="evidence-technologies">
+                  <span>{selectedProof.skill}</span>
 
-                  <span>
-                    {selectedProof.skill}
-                  </span>
-
-                  <span>
-                    {selectedProof.proofType}
-                  </span>
-
+                  <span>{getProofTypeLabel(selectedProof.proofType)}</span>
                 </div>
-
 
                 {selectedProof.proofUrl && (
                   <a
@@ -592,188 +429,121 @@ const SkillVerification = () => {
                     className="evidence-external-link"
                   >
                     View submitted evidence
-                    <ExternalLink size={11} />
+                    <ExternalLink size={12} />
                   </a>
                 )}
 
+                <div className="evidence-review-details">
+                  <div>
+                    <span>Candidate</span>
+
+                    <strong>
+                      {selectedProof.candidate?.fullname || "Unknown candidate"}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>Submitted</span>
+
+                    <strong>
+                      {selectedProof.createdAt
+                        ? new Date(selectedProof.createdAt).toLocaleDateString()
+                        : "Unknown date"}
+                    </strong>
+                  </div>
+                </div>
               </article>
-
             ) : (
-
               <div className="verification-empty-state">
-
                 <BadgeCheck size={30} />
 
-                <h3>
-                  No skill proof selected
-                </h3>
+                <h3>No skill proof selected</h3>
 
                 <p>
-                  Select a pending proof above to review
-                  the candidate's evidence.
+                  There are currently no submitted skill proofs available for
+                  review.
                 </p>
-
               </div>
-
             )}
-
           </section>
 
-
           {/* =================================================
-              RIGHT — DECISION
+              DECISION SIDEBAR
               ================================================= */}
 
           <aside className="verification-sidebar">
-
-
-            {/* =================================================
-                SKILL RESULT
-                ================================================= */}
-
             <section className="verification-result-card">
-
-              <span className="panel-label">
-                CURRENT RESULT
-              </span>
-
+              <span className="panel-label">CURRENT RESULT</span>
 
               <div className="verification-result-icon">
-
-                {selectedProof?.status ===
-                "approved" ? (
-
+                {selectedProof?.status === "approved" ? (
                   <BadgeCheck size={22} />
-
-                ) : selectedProof?.status ===
-                  "rejected" ? (
-
+                ) : selectedProof?.status === "rejected" ? (
                   <XCircle size={22} />
-
                 ) : (
-
                   <Target size={22} />
-
                 )}
-
               </div>
 
-
-              <h2>
-                {selectedProof?.skill ||
-                  "No skill selected"}
-              </h2>
-
+              <h2>{selectedProof?.skill || "No skill selected"}</h2>
 
               <strong>
-
-                {selectedProof
-                  ? selectedProof.status ===
-                    "approved"
-                    ? "Verified"
-                    : selectedProof.status ===
-                      "rejected"
-                      ? "Rejected"
-                      : "Pending Review"
-                  : "Waiting for review"}
-
+                {selectedProof?.status === "approved"
+                  ? "Verified"
+                  : selectedProof?.status === "rejected"
+                    ? "Rejected"
+                    : selectedProof
+                      ? "Pending Review"
+                      : "Waiting for evidence"}
               </strong>
 
-
               <p>
-
-                {selectedProof?.status ===
-                "approved"
-
+                {selectedProof?.status === "approved"
                   ? "Evidence has been validated by a recruiter."
-
-                  : selectedProof?.status ===
-                    "rejected"
-
+                  : selectedProof?.status === "rejected"
                     ? selectedProof.recruiterComment ||
                       "The submitted evidence was not sufficient."
-
-                    : "Review the submitted evidence before making a decision."}
-
+                    : selectedProof
+                      ? "Review the evidence and decide whether it sufficiently supports the claimed skill."
+                      : "Select a submitted proof to begin review."}
               </p>
-
             </section>
-
-
-            {/* =================================================
-                CRITERIA
-                ================================================= */}
 
             <section className="verification-criteria">
+              <span className="panel-label">REVIEW CRITERIA</span>
 
-              <span className="panel-label">
-                VERIFICATION CRITERIA
-              </span>
-
-              <h2>
-                Evidence checklist
-              </h2>
-
+              <h2>Evidence checklist</h2>
 
               <div className="criteria-row">
                 <CheckCircle2 size={14} />
-
-                <span>
-                  Real project usage
-                </span>
+                <span>Evidence is relevant to the claimed skill</span>
               </div>
-
 
               <div className="criteria-row">
                 <CheckCircle2 size={14} />
-
-                <span>
-                  Evidence is relevant to the skill
-                </span>
+                <span>Candidate's contribution is clear</span>
               </div>
-
 
               <div className="criteria-row">
                 <CheckCircle2 size={14} />
-
-                <span>
-                  Evidence source is accessible
-                </span>
+                <span>Evidence can be independently reviewed</span>
               </div>
-
 
               <div className="criteria-row">
                 <CheckCircle2 size={14} />
-
-                <span>
-                  Evidence supports the claim
-                </span>
+                <span>Evidence supports the skill claim</span>
               </div>
-
             </section>
 
-
-            {/* =================================================
-                DECISION
-                ================================================= */}
-
             <section className="verification-decision">
+              <span className="panel-label">RECRUITER DECISION</span>
 
-              <span className="panel-label">
-                RECRUITER DECISION
-              </span>
-
-
-              <h2>
-                Review this skill proof?
-              </h2>
-
+              <h2>Review this skill proof?</h2>
 
               <p>
-                Your decision will affect the candidate's
-                verified skill profile and future matching.
+                Your decision will affect the candidate's verified skill profile
+                and future matching.
               </p>
-
 
               <button
                 className="approve-verification-button"
@@ -783,19 +553,12 @@ const SkillVerification = () => {
                   selectedProof.status !== "pending" ||
                   reviewing
                 }
-                onClick={() =>
-                  handleReview("approved")
-                }
+                onClick={() => handleReview("approved")}
               >
-
                 <CheckCircle2 size={14} />
 
-                {reviewing
-                  ? "Processing..."
-                  : "Approve Evidence"}
-
+                {reviewing ? "Processing..." : "Approve Evidence"}
               </button>
-
 
               <button
                 className="reject-verification-button"
@@ -805,59 +568,57 @@ const SkillVerification = () => {
                   selectedProof.status !== "pending" ||
                   reviewing
                 }
-                onClick={() =>
-                  handleReview("rejected")
-                }
+                onClick={() => handleReview("rejected")}
               >
-
                 <XCircle size={14} />
 
-                Reject Evidence
-
+                {reviewing ? "Processing..." : "Reject Evidence"}
               </button>
-
             </section>
-
           </aside>
-
         </div>
-
 
         {/* ===================================================
             FOOTER INSIGHT
             =================================================== */}
 
         <section className="recruiter-insight">
-
           <div className="recruiter-insight-icon">
             <BadgeCheck size={21} />
           </div>
 
           <div>
+            <span className="panel-label">TRUSTED SKILLS</span>
 
-            <span className="panel-label">
-              TRUSTED SKILLS
-            </span>
-
-            <h2>
-              Verification should be backed by evidence.
-            </h2>
+            <h2>Verification should be backed by evidence.</h2>
 
             <p>
-              Recruiter validation adds another layer of
-              trust to candidate skills. Once confirmed,
-              verified skills can strengthen future
+              Recruiter validation adds another layer of trust to candidate
+              skills. Once confirmed, verified skills can strengthen future
               candidate-role matching.
             </p>
-
           </div>
-
         </section>
 
-      </main>
+        {/* ===================================================
+            REVIEW SUMMARY
+            =================================================== */}
 
+        <div className="verification-review-summary">
+          <span>{approvedProofs.length} approved</span>
+
+          <span>{pendingProofs.length} pending</span>
+
+          <span>{rejectedProofs.length} rejected</span>
+
+          <Link to="/recruiter/candidates">
+            Review candidates
+            <ArrowRight size={13} />
+          </Link>
+        </div>
+      </main>
     </div>
   );
 };
 
-export default SkillVerification;
+export default Verification;

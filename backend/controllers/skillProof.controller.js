@@ -1,6 +1,12 @@
 import { SkillProof } from "../models/skillProof.model.js";
 import { User } from "../models/user.model.js";
 
+/*
+|--------------------------------------------------------------------------
+| Candidate: Submit Skill Proof
+|--------------------------------------------------------------------------
+*/
+
 export const submitSkillProof = async (req, res) => {
   try {
     const {
@@ -11,26 +17,27 @@ export const submitSkillProof = async (req, res) => {
       proofUrl,
     } = req.body;
 
-    const normalizedSkill = skill?.trim();
-    const normalizedTitle = title?.trim();
-    const normalizedDescription = description?.trim() || "";
-    const normalizedProofUrl = proofUrl?.trim() || "";
+    const normalizedSkill = String(skill || "").trim();
+    const normalizedTitle = String(title || "").trim();
+    const normalizedDescription = String(
+      description || "",
+    ).trim();
+    const normalizedProofUrl = String(
+      proofUrl || "",
+    ).trim();
 
-    /* =====================================================
-       BASIC VALIDATION
-    ===================================================== */
+    const allowedProofTypes = [
+      "project",
+      "certificate",
+      "github",
+      "portfolio",
+      "other",
+    ];
 
     if (!normalizedSkill) {
       return res.status(400).json({
         success: false,
         message: "Skill is required.",
-      });
-    }
-
-    if (!proofType) {
-      return res.status(400).json({
-        success: false,
-        message: "Proof type is required.",
       });
     }
 
@@ -41,72 +48,58 @@ export const submitSkillProof = async (req, res) => {
       });
     }
 
-    /* =====================================================
-       VALIDATE PROOF TYPE
-    ===================================================== */
-
-    const allowedProofTypes = [
-      "project",
-      "certificate",
-      "github",
-      "portfolio",
-      "other",
-    ];
-
-    if (!allowedProofTypes.includes(proofType)) {
+    if (!proofType || !allowedProofTypes.includes(proofType)) {
       return res.status(400).json({
         success: false,
         message: "Invalid proof type.",
       });
     }
 
-    /* =====================================================
-       GET CANDIDATE
-    ===================================================== */
+    if (!normalizedProofUrl) {
+      return res.status(400).json({
+        success: false,
+        message: "Proof URL is required.",
+      });
+    }
 
     const candidate = await User.findById(req.userId);
 
     if (!candidate) {
       return res.status(404).json({
         success: false,
-        message: "Candidate not found.",
+        message: "Candidate account not found.",
       });
     }
 
     if (candidate.role !== "candidate") {
       return res.status(403).json({
         success: false,
-        message: "Only candidates can submit skill proof.",
+        message: "Only candidates can submit skill proofs.",
       });
     }
-
-    /* =====================================================
-       VALIDATE CLAIMED SKILL
-    ===================================================== */
 
     const claimedSkills = candidate.profile?.skills || [];
 
-    const matchedSkill = claimedSkills.find(
+    const hasClaimedSkill = claimedSkills.some(
       (candidateSkill) =>
-        candidateSkill.trim().toLowerCase() ===
-        normalizedSkill.toLowerCase()
+        String(candidateSkill).trim().toLowerCase() ===
+        normalizedSkill.toLowerCase(),
     );
 
-    if (!matchedSkill) {
+    if (!hasClaimedSkill) {
       return res.status(400).json({
         success: false,
         message:
-          "You can only submit proof for a skill already added to your profile.",
+          "You can only submit proof for a skill already claimed on your profile.",
       });
     }
 
-    /* =====================================================
-       PREVENT MULTIPLE PENDING PROOFS
-    ===================================================== */
-
     const existingPendingProof = await SkillProof.findOne({
-      candidate: candidate._id,
-      skill: matchedSkill,
+      candidate: req.userId,
+      skill: {
+        $regex: `^${normalizedSkill}$`,
+        $options: "i",
+      },
       status: "pending",
     });
 
@@ -114,17 +107,13 @@ export const submitSkillProof = async (req, res) => {
       return res.status(409).json({
         success: false,
         message:
-          "You already have a pending proof submission for this skill.",
+          "You already have a pending proof for this skill.",
       });
     }
 
-    /* =====================================================
-       CREATE SKILL PROOF
-    ===================================================== */
-
     const skillProof = await SkillProof.create({
-      candidate: candidate._id,
-      skill: matchedSkill,
+      candidate: req.userId,
+      skill: normalizedSkill,
       proofType,
       title: normalizedTitle,
       description: normalizedDescription,
@@ -134,7 +123,8 @@ export const submitSkillProof = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: "Skill proof submitted successfully.",
+      message:
+        "Skill proof submitted successfully and is pending review.",
       skillProof,
     });
   } catch (error) {
@@ -142,10 +132,16 @@ export const submitSkillProof = async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      message: "Unable to submit skill proof.",
+      message: "Unable to submit your skill proof.",
     });
   }
 };
+
+/*
+|--------------------------------------------------------------------------
+| Candidate: Get My Skill Proofs
+|--------------------------------------------------------------------------
+*/
 
 export const getMySkillProofs = async (req, res) => {
   try {
@@ -169,19 +165,37 @@ export const getMySkillProofs = async (req, res) => {
   }
 };
 
+/*
+|--------------------------------------------------------------------------
+| Recruiter: Get Skill Proofs
+|--------------------------------------------------------------------------
+*/
+
 export const getRecruiterSkillProofs = async (req, res) => {
   try {
-    const skillProofs = await SkillProof.find()
-      .sort({ createdAt: -1 })
-      .populate("candidate", "fullname email profile")
-      .populate("reviewedBy", "fullname email");
+    const skillProofs = await SkillProof.find({})
+      .sort({
+        status: 1,
+        createdAt: -1,
+      })
+      .populate(
+        "candidate",
+        "fullname email profile.skills",
+      )
+      .populate(
+        "reviewedBy",
+        "fullname email",
+      );
 
     return res.status(200).json({
       success: true,
       skillProofs,
     });
   } catch (error) {
-    console.error("Get recruiter skill proofs error:", error);
+    console.error(
+      "Get recruiter skill proofs error:",
+      error,
+    );
 
     return res.status(500).json({
       success: false,
@@ -190,19 +204,33 @@ export const getRecruiterSkillProofs = async (req, res) => {
   }
 };
 
+/*
+|--------------------------------------------------------------------------
+| Recruiter: Review Skill Proof
+|--------------------------------------------------------------------------
+*/
+
 export const reviewSkillProof = async (req, res) => {
   try {
     const { proofId } = req.params;
     const { status, recruiterComment } = req.body;
 
-    if (!["approved", "rejected"].includes(status)) {
+    const allowedStatuses = [
+      "approved",
+      "rejected",
+    ];
+
+    if (!allowedStatuses.includes(status)) {
       return res.status(400).json({
         success: false,
-        message: "Review status must be approved or rejected.",
+        message:
+          "Review status must be approved or rejected.",
       });
     }
 
-    const skillProof = await SkillProof.findById(proofId);
+    const skillProof = await SkillProof.findById(
+      proofId,
+    );
 
     if (!skillProof) {
       return res.status(404).json({
@@ -212,22 +240,46 @@ export const reviewSkillProof = async (req, res) => {
     }
 
     if (skillProof.status !== "pending") {
+      return res.status(409).json({
+        success: false,
+        message:
+          "This skill proof has already been reviewed.",
+      });
+    }
+
+    const normalizedComment = String(
+      recruiterComment || "",
+    ).trim();
+
+    if (
+      status === "rejected" &&
+      !normalizedComment
+    ) {
       return res.status(400).json({
         success: false,
-        message: "Only pending skill proofs can be reviewed.",
+        message:
+          "Please provide feedback when rejecting a skill proof.",
       });
     }
 
     skillProof.status = status;
     skillProof.recruiterComment =
-      typeof recruiterComment === "string"
-        ? recruiterComment.trim()
-        : "";
-
+      normalizedComment;
     skillProof.reviewedBy = req.userId;
     skillProof.reviewedAt = new Date();
 
     await skillProof.save();
+
+    const updatedProof =
+      await SkillProof.findById(skillProof._id)
+        .populate(
+          "candidate",
+          "fullname email profile.skills",
+        )
+        .populate(
+          "reviewedBy",
+          "fullname email",
+        );
 
     return res.status(200).json({
       success: true,
@@ -235,14 +287,17 @@ export const reviewSkillProof = async (req, res) => {
         status === "approved"
           ? "Skill proof approved successfully."
           : "Skill proof rejected successfully.",
-      skillProof,
+      skillProof: updatedProof,
     });
   } catch (error) {
-    console.error("Review skill proof error:", error);
+    console.error(
+      "Review skill proof error:",
+      error,
+    );
 
     return res.status(500).json({
       success: false,
-      message: "Unable to review skill proof.",
+      message: "Unable to review this skill proof.",
     });
   }
 };

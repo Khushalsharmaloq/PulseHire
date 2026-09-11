@@ -12,6 +12,12 @@ import { authorizeRoles } from "../middlewares/role.middleware.js";
 
 const router = express.Router();
 
+/*
+|--------------------------------------------------------------------------
+| Candidate Routes
+|--------------------------------------------------------------------------
+*/
+
 router.post(
   "/",
   isAuthenticated,
@@ -25,6 +31,12 @@ router.get(
   authorizeRoles("candidate"),
   getMySkillProofs,
 );
+
+/*
+|--------------------------------------------------------------------------
+| Recruiter Routes
+|--------------------------------------------------------------------------
+*/
 
 router.get(
   "/recruiter",

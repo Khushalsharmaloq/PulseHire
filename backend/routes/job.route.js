@@ -3,7 +3,8 @@ import express from "express";
 import {
     createJob,
     getAllJobs,
-    getMyJobs
+    getMyJobs,
+    getJobById
 } from "../controllers/job.controller.js";
 
 import {
@@ -34,12 +35,21 @@ router.post(
     createJob
 );
 
-
 router.get(
     "/my",
     isAuthenticated,
     authorizeRoles("recruiter"),
     getMyJobs
+);
+
+
+/* ==================== CANDIDATE ==================== */
+
+router.get(
+    "/:id",
+    isAuthenticated,
+    authorizeRoles("candidate"),
+    getJobById
 );
 
 
