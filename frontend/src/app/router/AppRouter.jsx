@@ -41,6 +41,8 @@ import RecruiterDashboard from "../../pages/recruiter/RecruiterDashboard";
 
 import RecruiterAnalytics from "../../pages/recruiter/RecruiterAnalytics";
 
+import RecruiterApplicationsOverview from "../../pages/recruiter/RecruiterApplicationsOverview";
+
 import RecruiterSettings from "../../pages/recruiter/RecruiterSettings";
 
 const PlaceholderPage = ({ title, description }) => {
@@ -175,6 +177,8 @@ const AppRouter = () => {
           <Route path="/recruiter/jobs" element={<RecruiterJobs />} />
 
           <Route path="/recruiter/candidates" element={<RecruiterCandidates />}/>
+
+          <Route path="/recruiter/applications" element={<RecruiterApplicationsOverview />}/>
 
           <Route path="/recruiter/applications/:jobId" element={<RecruiterApplications />}/>
 

@@ -29,7 +29,7 @@ import "./styles/recruiter-candidates.css";
 import "./styles/recruiter-dashboard.css";
 import "./styles/recruiter-analytics.css";
 import "./styles/recruiter-settings.css";
-
+import "./styles/recruiter-applications-overview.css";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>

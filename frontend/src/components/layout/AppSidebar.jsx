@@ -60,10 +60,6 @@ const candidateNavigation = [
     icon: Search,
   },
 
-  /*
-   * Candidate Applications DOES exist.
-   * Keep this navigation item.
-   */
   {
     label: "Applications",
     path: "/candidate/applications",
@@ -101,16 +97,11 @@ const recruiterNavigation = [
     icon: Users,
   },
 
-  /*
-   * Recruiter Applications is intentionally NOT listed here
-   * yet because the existing recruiter application page
-   * requires a jobId:
-   *
-   * /recruiter/applications/:jobId
-   *
-   * We will add an All Applications page before restoring
-   * this sidebar item.
-   */
+  {
+    label: "Applications",
+    path: "/recruiter/applications",
+    icon: FileCheck2,
+  },
 
   {
     label: "Analytics",
@@ -310,10 +301,10 @@ const AppSidebar = ({
 
 
       {/* ===================================================
-          SETTINGS
+          ACCOUNT
           
-          Candidate Settings does NOT exist.
-          Recruiter Settings DOES exist.
+          Candidate Settings does not exist.
+          Recruiter Settings does exist.
           =================================================== */}
 
       {role === "recruiter" && (
