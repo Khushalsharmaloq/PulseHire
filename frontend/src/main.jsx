@@ -20,6 +20,17 @@ import "./styles/learning.css";
 import "./styles/jobs.css";
 import "./styles/job-details.css";
 import "./styles/applications.css";
+import "./styles/skill-verification.css";
+import "./styles/recruiter-applications.css";
+import "./styles/recruiter-jobs.css";
+import "./styles/post-job.css";
+import "./styles/recruiter-company.css";
+import "./styles/recruiter-candidates.css";
+import "./styles/recruiter-dashboard.css";
+import "./styles/recruiter-analytics.css";
+import "./styles/recruiter-settings.css";
+
+
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>

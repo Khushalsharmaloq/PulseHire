@@ -19,37 +19,51 @@ import {
 import useAuth from "../../hooks/useAuth";
 
 
+/* =========================================================
+   CANDIDATE NAVIGATION
+   ========================================================= */
+
 const candidateNavigation = [
   {
     label: "Dashboard",
     path: "/candidate/dashboard",
     icon: LayoutDashboard,
   },
+
   {
     label: "My Profile",
     path: "/candidate/profile",
     icon: User,
   },
+
   {
     label: "Skill Proof",
     path: "/candidate/skill-proof",
     icon: BadgeCheck,
   },
+
   {
     label: "Skill Gap",
     path: "/candidate/skill-gap",
     icon: Target,
   },
+
   {
     label: "Learning",
     path: "/candidate/learning",
     icon: BookOpen,
   },
+
   {
     label: "Find Jobs",
     path: "/candidate/jobs",
     icon: Search,
   },
+
+  /*
+   * Candidate Applications DOES exist.
+   * Keep this navigation item.
+   */
   {
     label: "Applications",
     path: "/candidate/applications",
@@ -58,32 +72,46 @@ const candidateNavigation = [
 ];
 
 
+/* =========================================================
+   RECRUITER NAVIGATION
+   ========================================================= */
+
 const recruiterNavigation = [
   {
     label: "Dashboard",
     path: "/recruiter/dashboard",
     icon: LayoutDashboard,
   },
+
   {
     label: "Company",
     path: "/recruiter/company",
     icon: BriefcaseBusiness,
   },
+
   {
     label: "Jobs",
     path: "/recruiter/jobs",
     icon: Search,
   },
+
   {
     label: "Candidates",
     path: "/recruiter/candidates",
     icon: Users,
   },
-  {
-    label: "Applications",
-    path: "/recruiter/applications",
-    icon: FileCheck2,
-  },
+
+  /*
+   * Recruiter Applications is intentionally NOT listed here
+   * yet because the existing recruiter application page
+   * requires a jobId:
+   *
+   * /recruiter/applications/:jobId
+   *
+   * We will add an All Applications page before restoring
+   * this sidebar item.
+   */
+
   {
     label: "Analytics",
     path: "/recruiter/analytics",
@@ -91,6 +119,10 @@ const recruiterNavigation = [
   },
 ];
 
+
+/* =========================================================
+   APP SIDEBAR
+   ========================================================= */
 
 const AppSidebar = ({
   role,
@@ -120,6 +152,10 @@ const AppSidebar = ({
       : "Candidate";
 
 
+  /* =======================================================
+     INITIALS
+     ======================================================= */
+
   const getInitials = (
     name = ""
   ) => {
@@ -134,27 +170,42 @@ const AppSidebar = ({
     if (
       parts.length === 0
     ) {
+
       return "PH";
+
     }
 
 
     return parts
       .map(
-        (part) =>
+        (
+          part
+        ) =>
           part.charAt(0)
       )
       .join("")
-      .slice(0, 2)
+      .slice(
+        0,
+        2
+      )
       .toUpperCase();
 
   };
 
 
+  /* =======================================================
+     NAVIGATION HANDLER
+     ======================================================= */
+
   const handleNavigation =
     () => {
 
-      if (onNavigate) {
+      if (
+        onNavigate
+      ) {
+
         onNavigate();
+
       }
 
     };
@@ -168,9 +219,9 @@ const AppSidebar = ({
       }
     >
 
-      {/* =====================================================
+      {/* ===================================================
           BRAND
-          ===================================================== */}
+          =================================================== */}
 
       <NavLink
         to={
@@ -196,9 +247,9 @@ const AppSidebar = ({
       </NavLink>
 
 
-      {/* =====================================================
+      {/* ===================================================
           WORKSPACE
-          ===================================================== */}
+          =================================================== */}
 
       <div className="app-sidebar-section">
 
@@ -226,7 +277,9 @@ const AppSidebar = ({
                 onClick={
                   handleNavigation
                 }
-                className={({ isActive }) =>
+                className={({
+                  isActive,
+                }) =>
                   `app-sidebar-link ${
                     isActive
                       ? "active"
@@ -256,61 +309,69 @@ const AppSidebar = ({
       </div>
 
 
-      {/* =====================================================
+      {/* ===================================================
           SETTINGS
-          ===================================================== */}
+          
+          Candidate Settings does NOT exist.
+          Recruiter Settings DOES exist.
+          =================================================== */}
 
-      <div className="app-sidebar-section app-sidebar-secondary">
+      {role === "recruiter" && (
 
-        <span className="app-sidebar-label">
-          ACCOUNT
-        </span>
-
-
-        <nav
-          className="app-sidebar-nav"
-          aria-label="Account navigation"
+        <div
+          className="app-sidebar-section app-sidebar-secondary"
         >
 
-          <NavLink
-            to={
-              role === "recruiter"
-                ? "/recruiter/settings"
-                : "/candidate/settings"
-            }
-            onClick={
-              handleNavigation
-            }
-            className={({ isActive }) =>
-              `app-sidebar-link ${
-                isActive
-                  ? "active"
-                  : ""
-              }`
-            }
+          <span className="app-sidebar-label">
+            ACCOUNT
+          </span>
+
+
+          <nav
+            className="app-sidebar-nav"
+            aria-label="Account navigation"
           >
 
-            <Settings
-              size={18}
-              strokeWidth={1.9}
-              aria-hidden="true"
-            />
+            <NavLink
+              to="/recruiter/settings"
+              end
+              onClick={
+                handleNavigation
+              }
+              className={({
+                isActive,
+              }) =>
+                `app-sidebar-link ${
+                  isActive
+                    ? "active"
+                    : ""
+                }`
+              }
+            >
+
+              <Settings
+                size={18}
+                strokeWidth={1.9}
+                aria-hidden="true"
+              />
 
 
-            <span>
-              Settings
-            </span>
+              <span>
+                Settings
+              </span>
 
-          </NavLink>
+            </NavLink>
 
-        </nav>
+          </nav>
 
-      </div>
+        </div>
+
+      )}
 
 
-      {/* =====================================================
+      {/* ===================================================
           USER
-          ===================================================== */}
+          =================================================== */}
 
       <div className="app-sidebar-bottom">
 

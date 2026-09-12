@@ -25,43 +25,42 @@ const AppShell = ({
     };
 
 
-  useEffect(() => {
+ useEffect(() => {
 
-    if (!mobileMenuOpen) {
-      return undefined;
-    }
-
-
-    const handleKeyDown =
-      (event) => {
-
-        if (
-          event.key ===
-          "Escape"
-        ) {
-          closeMobileMenu();
-        }
-
-      };
+  if (!mobileMenuOpen) {
+    return undefined;
+  }
 
 
-    window.addEventListener(
+  const handleKeyDown =
+    (event) => {
+
+      if (
+        event.key ===
+        "Escape"
+      ) {
+        closeMobileMenu();
+      }
+
+    };
+
+
+  window.addEventListener(
+    "keydown",
+    handleKeyDown
+  );
+
+
+  return () => {
+
+    window.removeEventListener(
       "keydown",
       handleKeyDown
     );
 
+  };
 
-    return () => {
-
-      window.removeEventListener(
-        "keydown",
-        handleKeyDown
-      );
-
-    };
-
-  }, [mobileMenuOpen]);
-
+}, [mobileMenuOpen]);
 
   useEffect(() => {
 

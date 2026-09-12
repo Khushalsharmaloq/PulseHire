@@ -25,6 +25,24 @@ import JobDetails from "../../pages/candidate/JobDetails";
 
 import Applications from "../../pages/candidate/Applications";
 
+import SkillVerification from "../../pages/recruiter/SkillVerification";
+
+import RecruiterApplications from "../../pages/recruiter/RecruiterApplications";
+
+import RecruiterCompany from "../../pages/recruiter/RecruiterCompany";
+
+import RecruiterCandidates from "../../pages/recruiter/RecruiterCandidates";
+
+import RecruiterJobs from "../../pages/recruiter/RecruiterJobs";
+
+import PostJob from "../../pages/recruiter/PostJob";
+
+import RecruiterDashboard from "../../pages/recruiter/RecruiterDashboard";
+
+import RecruiterAnalytics from "../../pages/recruiter/RecruiterAnalytics";
+
+import RecruiterSettings from "../../pages/recruiter/RecruiterSettings";
+
 const PlaceholderPage = ({ title, description }) => {
   return (
     <section
@@ -139,10 +157,6 @@ const AppRouter = () => {
 
           <Route path="/candidate/applications" element={<Applications />} />
 
-          <Route
-            path="/candidate/settings"
-            element={<PlaceholderPage title="Settings" />}
-          />
         </Route>
       </Route>
 
@@ -152,45 +166,24 @@ const AppRouter = () => {
 
       <Route element={<ProtectedRoute requiredRole="recruiter" />}>
         <Route element={<AppShell role="recruiter" />}>
-          <Route
-            path="/recruiter/dashboard"
-            element={
-              <PlaceholderPage
-                title="Recruiter Dashboard"
-                description="Your hiring workspace will live here."
-              />
-            }
-          />
+          <Route path="/recruiter/dashboard" element={<RecruiterDashboard />} />
 
-          <Route
-            path="/recruiter/company"
-            element={<PlaceholderPage title="Company" />}
-          />
+          <Route path="/recruiter/company" element={<RecruiterCompany />} />
 
-          <Route
-            path="/recruiter/jobs"
-            element={<PlaceholderPage title="Jobs" />}
-          />
+          <Route path="/recruiter/jobs/new" element={<PostJob />} />
 
-          <Route
-            path="/recruiter/candidates"
-            element={<PlaceholderPage title="Candidates" />}
-          />
+          <Route path="/recruiter/jobs" element={<RecruiterJobs />} />
 
-          <Route
-            path="/recruiter/applications"
-            element={<PlaceholderPage title="Applications" />}
-          />
+          <Route path="/recruiter/candidates" element={<RecruiterCandidates />}/>
 
-          <Route
-            path="/recruiter/analytics"
-            element={<PlaceholderPage title="Analytics" />}
-          />
+          <Route path="/recruiter/applications/:jobId" element={<RecruiterApplications />}/>
 
-          <Route
-            path="/recruiter/settings"
-            element={<PlaceholderPage title="Settings" />}
-          />
+          <Route path="/recruiter/analytics" element={<RecruiterAnalytics />} />
+
+          <Route path="/recruiter/settings" element={<RecruiterSettings />}/>
+
+          <Route path="/recruiter/verification" element={<SkillVerification />} />
+
         </Route>
       </Route>
 
