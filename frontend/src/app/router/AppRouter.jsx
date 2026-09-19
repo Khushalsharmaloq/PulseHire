@@ -1,49 +1,39 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
+
+import Landing from "../../pages/Landing";
 
 import Login from "../../pages/auth/Login";
 import Register from "../../pages/auth/Register";
 
 import CandidateDashboard from "../../pages/candidate/CandidateDashboard";
+import CandidateProfile from "../../pages/candidate/CandidateProfile";
+import SkillProof from "../../pages/candidate/SkillProof";
+import SkillGap from "../../pages/candidate/SkillGap";
+import Learning from "../../pages/candidate/Learning";
+import Jobs from "../../pages/candidate/Jobs";
+import JobDetails from "../../pages/candidate/JobDetails";
+import Applications from "../../pages/candidate/Applications";
+
+import RecruiterDashboard from "../../pages/recruiter/RecruiterDashboard";
+import RecruiterCompany from "../../pages/recruiter/RecruiterCompany";
+import RecruiterJobs from "../../pages/recruiter/RecruiterJobs";
+import RecruiterCandidates from "../../pages/recruiter/RecruiterCandidates";
+import RecruiterApplicationsOverview from "../../pages/recruiter/RecruiterApplicationsOverview";
+import RecruiterApplications from "../../pages/recruiter/RecruiterApplications";
+import RecruiterAnalytics from "../../pages/recruiter/RecruiterAnalytics";
+import RecruiterSettings from "../../pages/recruiter/RecruiterSettings";
+import SkillVerification from "../../pages/recruiter/SkillVerification";
+import PostJob from "../../pages/recruiter/PostJob";
 
 import AppShell from "../../components/layout/AppShell";
 
 import ProtectedRoute from "./ProtectedRoute";
-
 import PublicOnlyRoute from "./PublicOnlyRoute";
 
-import CandidateProfile from "../../pages/candidate/CandidateProfile";
 
-import SkillProof from "../../pages/candidate/SkillProof";
-
-import SkillGap from "../../pages/candidate/SkillGap";
-
-import Learning from "../../pages/candidate/Learning";
-
-import Jobs from "../../pages/candidate/Jobs";
-
-import JobDetails from "../../pages/candidate/JobDetails";
-
-import Applications from "../../pages/candidate/Applications";
-
-import SkillVerification from "../../pages/recruiter/SkillVerification";
-
-import RecruiterApplications from "../../pages/recruiter/RecruiterApplications";
-
-import RecruiterCompany from "../../pages/recruiter/RecruiterCompany";
-
-import RecruiterCandidates from "../../pages/recruiter/RecruiterCandidates";
-
-import RecruiterJobs from "../../pages/recruiter/RecruiterJobs";
-
-import PostJob from "../../pages/recruiter/PostJob";
-
-import RecruiterDashboard from "../../pages/recruiter/RecruiterDashboard";
-
-import RecruiterAnalytics from "../../pages/recruiter/RecruiterAnalytics";
-
-import RecruiterApplicationsOverview from "../../pages/recruiter/RecruiterApplicationsOverview";
-
-import RecruiterSettings from "../../pages/recruiter/RecruiterSettings";
+/* =========================================================
+   PLACEHOLDER PAGE
+   ========================================================= */
 
 const PlaceholderPage = ({ title, description }) => {
   return (
@@ -102,12 +92,22 @@ const PlaceholderPage = ({ title, description }) => {
   );
 };
 
+
+/* =========================================================
+   UNAUTHORIZED PAGE
+   ========================================================= */
+
 const UnauthorizedPage = () => (
   <PlaceholderPage
     title="You don't have access to this workspace."
     description="Your account role does not have permission to view this area."
   />
 );
+
+
+/* =========================================================
+   NOT FOUND PAGE
+   ========================================================= */
 
 const NotFoundPage = () => (
   <PlaceholderPage
@@ -116,88 +116,198 @@ const NotFoundPage = () => (
   />
 );
 
+
+/* =========================================================
+   APP ROUTER
+   ========================================================= */
+
 const AppRouter = () => {
   return (
     <Routes>
+
       {/* =====================================================
           PUBLIC
           ===================================================== */}
 
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      {/* LANDING PAGE */}
+
+      <Route
+        path="/"
+        element={<Landing />}
+      />
+
+
+      {/* AUTHENTICATION */}
 
       <Route element={<PublicOnlyRoute />}>
-        <Route path="/login" element={<Login />} />
 
-        <Route path="/register" element={<Register />} />
+        <Route
+          path="/login"
+          element={<Login />}
+        />
+
+        <Route
+          path="/register"
+          element={<Register />}
+        />
+
       </Route>
+
 
       {/* =====================================================
           SYSTEM
           ===================================================== */}
 
-      <Route path="/unauthorized" element={<UnauthorizedPage />} />
+      <Route
+        path="/unauthorized"
+        element={<UnauthorizedPage />}
+      />
+
 
       {/* =====================================================
           CANDIDATE
           ===================================================== */}
 
-      <Route element={<ProtectedRoute requiredRole="candidate" />}>
-        <Route element={<AppShell role="candidate" />}>
-          <Route path="/candidate/dashboard" element={<CandidateDashboard />} />
+      <Route
+        element={
+          <ProtectedRoute requiredRole="candidate" />
+        }
+      >
 
-          <Route path="/candidate/profile" element={<CandidateProfile />} />
+        <Route
+          element={
+            <AppShell role="candidate" />
+          }
+        >
 
-          <Route path="/candidate/skill-proof" element={<SkillProof />} />
+          <Route
+            path="/candidate/dashboard"
+            element={<CandidateDashboard />}
+          />
 
-          <Route path="/candidate/skill-gap" element={<SkillGap />} />
+          <Route
+            path="/candidate/profile"
+            element={<CandidateProfile />}
+          />
 
-          <Route path="/candidate/learning" element={<Learning />} />
+          <Route
+            path="/candidate/skill-proof"
+            element={<SkillProof />}
+          />
 
-          <Route path="/candidate/jobs" element={<Jobs />} />
+          <Route
+            path="/candidate/skill-gap"
+            element={<SkillGap />}
+          />
 
-          <Route path="/candidate/jobs/:jobId" element={<JobDetails />} />
+          <Route
+            path="/candidate/learning"
+            element={<Learning />}
+          />
 
-          <Route path="/candidate/applications" element={<Applications />} />
+          <Route
+            path="/candidate/jobs"
+            element={<Jobs />}
+          />
+
+          <Route
+            path="/candidate/jobs/:jobId"
+            element={<JobDetails />}
+          />
+
+          <Route
+            path="/candidate/applications"
+            element={<Applications />}
+          />
 
         </Route>
+
       </Route>
+
 
       {/* =====================================================
           RECRUITER
           ===================================================== */}
 
-      <Route element={<ProtectedRoute requiredRole="recruiter" />}>
-        <Route element={<AppShell role="recruiter" />}>
-          <Route path="/recruiter/dashboard" element={<RecruiterDashboard />} />
+      <Route
+        element={
+          <ProtectedRoute requiredRole="recruiter" />
+        }
+      >
 
-          <Route path="/recruiter/company" element={<RecruiterCompany />} />
+        <Route
+          element={
+            <AppShell role="recruiter" />
+          }
+        >
 
-          <Route path="/recruiter/jobs/new" element={<PostJob />} />
+          <Route
+            path="/recruiter/dashboard"
+            element={<RecruiterDashboard />}
+          />
 
-          <Route path="/recruiter/jobs" element={<RecruiterJobs />} />
+          <Route
+            path="/recruiter/company"
+            element={<RecruiterCompany />}
+          />
 
-          <Route path="/recruiter/candidates" element={<RecruiterCandidates />}/>
+          <Route
+            path="/recruiter/jobs/new"
+            element={<PostJob />}
+          />
 
-          <Route path="/recruiter/applications" element={<RecruiterApplicationsOverview />}/>
+          <Route
+            path="/recruiter/jobs"
+            element={<RecruiterJobs />}
+          />
 
-          <Route path="/recruiter/applications/:jobId" element={<RecruiterApplications />}/>
+          <Route
+            path="/recruiter/candidates"
+            element={<RecruiterCandidates />}
+          />
 
-          <Route path="/recruiter/analytics" element={<RecruiterAnalytics />} />
+          <Route
+            path="/recruiter/applications"
+            element={<RecruiterApplicationsOverview />}
+          />
 
-          <Route path="/recruiter/settings" element={<RecruiterSettings />}/>
+          <Route
+            path="/recruiter/applications/:jobId"
+            element={<RecruiterApplications />}
+          />
 
-          <Route path="/recruiter/verification" element={<SkillVerification />} />
+          <Route
+            path="/recruiter/analytics"
+            element={<RecruiterAnalytics />}
+          />
+
+          <Route
+            path="/recruiter/settings"
+            element={<RecruiterSettings />}
+          />
+
+          <Route
+            path="/recruiter/verification"
+            element={<SkillVerification />}
+          />
 
         </Route>
+
       </Route>
+
 
       {/* =====================================================
           FALLBACK
           ===================================================== */}
 
-      <Route path="*" element={<NotFoundPage />} />
+      <Route
+        path="*"
+        element={<NotFoundPage />}
+      />
+
     </Routes>
   );
 };
+
 
 export default AppRouter;
