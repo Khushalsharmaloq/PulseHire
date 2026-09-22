@@ -12,12 +12,9 @@ import {
   Users,
 } from "lucide-react";
 
-import {
-  NavLink,
-} from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
 import useAuth from "../../hooks/useAuth";
-
 
 /* =========================================================
    CANDIDATE NAVIGATION
@@ -67,7 +64,6 @@ const candidateNavigation = [
   },
 ];
 
-
 /* =========================================================
    RECRUITER NAVIGATION
    ========================================================= */
@@ -110,195 +106,92 @@ const recruiterNavigation = [
   },
 ];
 
-
 /* =========================================================
    APP SIDEBAR
    ========================================================= */
 
-const AppSidebar = ({
-  role,
-  onNavigate,
-}) => {
-
-  const {
-    user,
-  } = useAuth();
-
+const AppSidebar = ({ role, onNavigate }) => {
+  const { user } = useAuth();
 
   const navigation =
-    role === "recruiter"
-      ? recruiterNavigation
-      : candidateNavigation;
-
+    role === "recruiter" ? recruiterNavigation : candidateNavigation;
 
   const workspaceLabel =
-    role === "recruiter"
-      ? "RECRUITER WORKSPACE"
-      : "CANDIDATE WORKSPACE";
+    role === "recruiter" ? "RECRUITER WORKSPACE" : "CANDIDATE WORKSPACE";
 
-
-  const roleLabel =
-    role === "recruiter"
-      ? "Recruiter"
-      : "Candidate";
-
+  const roleLabel = role === "recruiter" ? "Recruiter" : "Candidate";
 
   /* =======================================================
      INITIALS
      ======================================================= */
 
-  const getInitials = (
-    name = ""
-  ) => {
+  const getInitials = (name = "") => {
+    const parts = String(name).trim().split(/\s+/).filter(Boolean);
 
-    const parts =
-      String(name)
-        .trim()
-        .split(/\s+/)
-        .filter(Boolean);
-
-
-    if (
-      parts.length === 0
-    ) {
-
+    if (parts.length === 0) {
       return "PH";
-
     }
 
-
     return parts
-      .map(
-        (
-          part
-        ) =>
-          part.charAt(0)
-      )
+      .map((part) => part.charAt(0))
       .join("")
-      .slice(
-        0,
-        2
-      )
+      .slice(0, 2)
       .toUpperCase();
-
   };
-
 
   /* =======================================================
      NAVIGATION HANDLER
      ======================================================= */
 
-  const handleNavigation =
-    () => {
-
-      if (
-        onNavigate
-      ) {
-
-        onNavigate();
-
-      }
-
-    };
-
+  const handleNavigation = () => {
+    if (onNavigate) {
+      onNavigate();
+    }
+  };
 
   return (
-    <aside
-      className="app-sidebar"
-      aria-label={
-        `${roleLabel} navigation`
-      }
-    >
-
+    <aside className="app-sidebar" aria-label={`${roleLabel} navigation`}>
       {/* ===================================================
           BRAND
           =================================================== */}
 
       <NavLink
         to={
-          role === "recruiter"
-            ? "/recruiter/dashboard"
-            : "/candidate/dashboard"
+          role === "recruiter" ? "/recruiter/dashboard" : "/candidate/dashboard"
         }
         className="app-brand"
-        onClick={
-          handleNavigation
-        }
+        onClick={handleNavigation}
       >
+        <span className="app-brand-mark">PH</span>
 
-        <span className="app-brand-mark">
-          PH
-        </span>
-
-
-        <span className="app-brand-name">
-          PulseHire
-        </span>
-
+        <span className="app-brand-name">PulseHire</span>
       </NavLink>
-
 
       {/* ===================================================
           WORKSPACE
           =================================================== */}
 
       <div className="app-sidebar-section">
+        <span className="app-sidebar-label">{workspaceLabel}</span>
 
-        <span className="app-sidebar-label">
-          {workspaceLabel}
-        </span>
+        <nav className="app-sidebar-nav" aria-label="Workspace navigation">
+          {navigation.map(({ label, path, icon: Icon }) => (
+            <NavLink
+              key={path}
+              to={path}
+              end
+              onClick={handleNavigation}
+              className={({ isActive }) =>
+                `app-sidebar-link ${isActive ? "active" : ""}`
+              }
+            >
+              <Icon size={18} strokeWidth={1.9} aria-hidden="true" />
 
-
-        <nav
-          className="app-sidebar-nav"
-          aria-label="Workspace navigation"
-        >
-
-          {navigation.map(
-            ({
-              label,
-              path,
-              icon: Icon,
-            }) => (
-
-              <NavLink
-                key={path}
-                to={path}
-                end
-                onClick={
-                  handleNavigation
-                }
-                className={({
-                  isActive,
-                }) =>
-                  `app-sidebar-link ${
-                    isActive
-                      ? "active"
-                      : ""
-                  }`
-                }
-              >
-
-                <Icon
-                  size={18}
-                  strokeWidth={1.9}
-                  aria-hidden="true"
-                />
-
-
-                <span>
-                  {label}
-                </span>
-
-              </NavLink>
-
-            )
-          )}
-
+              <span>{label}</span>
+            </NavLink>
+          ))}
         </nav>
-
       </div>
-
 
       {/* ===================================================
           ACCOUNT
@@ -308,102 +201,47 @@ const AppSidebar = ({
           =================================================== */}
 
       {role === "recruiter" && (
+        <div className="app-sidebar-section app-sidebar-secondary">
+          <span className="app-sidebar-label">ACCOUNT</span>
 
-        <div
-          className="app-sidebar-section app-sidebar-secondary"
-        >
-
-          <span className="app-sidebar-label">
-            ACCOUNT
-          </span>
-
-
-          <nav
-            className="app-sidebar-nav"
-            aria-label="Account navigation"
-          >
-
+          <nav className="app-sidebar-nav" aria-label="Account navigation">
             <NavLink
               to="/recruiter/settings"
               end
-              onClick={
-                handleNavigation
-              }
-              className={({
-                isActive,
-              }) =>
-                `app-sidebar-link ${
-                  isActive
-                    ? "active"
-                    : ""
-                }`
+              onClick={handleNavigation}
+              className={({ isActive }) =>
+                `app-sidebar-link ${isActive ? "active" : ""}`
               }
             >
+              <Settings size={18} strokeWidth={1.9} aria-hidden="true" />
 
-              <Settings
-                size={18}
-                strokeWidth={1.9}
-                aria-hidden="true"
-              />
-
-
-              <span>
-                Settings
-              </span>
-
+              <span>Settings</span>
             </NavLink>
-
           </nav>
-
         </div>
-
       )}
-
 
       {/* ===================================================
           USER
           =================================================== */}
 
       <div className="app-sidebar-bottom">
-
         <div className="app-sidebar-user">
-
-          <div
-            className="app-user-avatar"
-            aria-hidden="true"
-          >
-            {getInitials(
-              user?.fullname
-            )}
+          <div className="app-user-avatar" aria-hidden="true">
+            {getInitials(user?.fullname)}
           </div>
-
 
           <div className="app-user-info">
+            <strong>{user?.fullname || roleLabel}</strong>
 
-            <strong>
-              {user?.fullname ||
-                roleLabel}
-            </strong>
-
-
-            <span>
-              {roleLabel}
-            </span>
-
+            <span>{roleLabel}</span>
           </div>
-
         </div>
 
-
-        <div className="app-sidebar-brand-note">
-          Evidence-backed hiring
-        </div>
-
+        <div className="app-sidebar-brand-note">Evidence-backed hiring</div>
       </div>
-
     </aside>
   );
 };
-
 
 export default AppSidebar;

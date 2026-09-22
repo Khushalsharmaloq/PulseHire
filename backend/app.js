@@ -20,7 +20,6 @@ import {
 
 const app = express();
 
-
 /* ==================== MIDDLEWARE ==================== */
 
 app.use(
@@ -40,7 +39,6 @@ app.use(
 
 app.use(cookieParser());
 
-
 /* ==================== HEALTH ROUTE ==================== */
 
 app.get("/", (req, res) => {
@@ -50,59 +48,27 @@ app.get("/", (req, res) => {
   });
 });
 
-
 /* ==================== API ROUTES ==================== */
 
-app.use(
-  "/api/v1/user",
-  userRoute,
-);
+app.use("/api/v1/user", userRoute);
 
-app.use(
-  "/api/v1/company",
-  companyRoute,
-);
+app.use("/api/v1/company", companyRoute);
 
-app.use(
-  "/api/v1/job",
-  jobRoute,
-);
+app.use("/api/v1/job", jobRoute);
 
-app.use(
-  "/api/v1/application",
-  applicationRoute,
-);
+app.use("/api/v1/application", applicationRoute);
 
-app.use(
-  "/api/v1/skill-proof",
-  skillProofRoute,
-);
+app.use("/api/v1/skill-proof", skillProofRoute);
 
-app.use(
-  "/api/v1/skill-gap",
-  skillGapRoute,
-);
+app.use("/api/v1/skill-gap", skillGapRoute);
 
-app.use(
-  "/api/v1/skill-gap-admin",
-  skillGapAdminRoute,
-);
+app.use("/api/v1/skill-gap-admin", skillGapAdminRoute);
 
-app.use(
-  "/api/v1/learning",
-  learningRoute,
-);
+app.use("/api/v1/learning", learningRoute);
 
-app.use(
-  "/api/v1/candidate",
-  candidateRoute,
-);
+app.use("/api/v1/candidate", candidateRoute);
 
-app.use(
-  "/api/v1/analytics",
-  analyticsRoute,
-);
-
+app.use("/api/v1/analytics", analyticsRoute);
 
 /*
 |--------------------------------------------------------------------------
@@ -114,13 +80,8 @@ app.use(
 |
 */
 
-app.use(
-  notFoundHandler,
-);
+app.use(notFoundHandler);
 
-app.use(
-  errorHandler,
-);
-
+app.use(errorHandler);
 
 export default app;

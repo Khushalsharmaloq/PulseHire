@@ -1,23 +1,14 @@
 import api from "./api";
 
-
 /* =========================================================
    GET APPLICATIONS FOR ONE JOB
    ========================================================= */
 
-const getApplicationsForJob =
-  async (
-    jobId
-  ) => {
+const getApplicationsForJob = async (jobId) => {
+  const response = await api.get(`/application/job/${jobId}`);
 
-    const response =
-      await api.get(
-        `/application/job/${jobId}`
-      );
-
-    return response.data;
-  };
-
+  return response.data;
+};
 
 /* =========================================================
    GET ALL RECRUITER APPLICATIONS
@@ -32,271 +23,127 @@ const getApplicationsForJob =
    3. Combine them on the frontend.
    ========================================================= */
 
-export const getRecruiterApplicationsOverview =
-  async (
-    jobs
-  ) => {
+export const getRecruiterApplicationsOverview = async (jobs) => {
+  const recruiterJobs = Array.isArray(jobs)
+    ? jobs.filter((job) => Boolean(job?._id))
+    : [];
 
-    const recruiterJobs =
-      Array.isArray(
-        jobs
-      )
-        ? jobs.filter(
-            (
-              job
-            ) =>
-              Boolean(
-                job?._id
-              )
-          )
-        : [];
+  if (recruiterJobs.length === 0) {
+    return {
+      success: true,
 
+      applications: [],
 
-    if (
-      recruiterJobs.length ===
-      0
-    ) {
+      summary: {
+        total: 0,
 
-      return {
-        success: true,
+        applied: 0,
 
-        applications: [],
+        reviewing: 0,
 
-        summary: {
-          total:
-            0,
+        shortlisted: 0,
 
-          applied:
-            0,
+        interview: 0,
 
-          reviewing:
-            0,
+        rejected: 0,
 
-          shortlisted:
-            0,
+        hired: 0,
+      },
+    };
+  }
 
-          interview:
-            0,
+  const responses = await Promise.all(
+    recruiterJobs.map(async (job) => {
+      try {
+        const response = await getApplicationsForJob(job._id);
 
-          rejected:
-            0,
+        return {
+          job,
 
-          hired:
-            0,
-        },
-      };
+          response,
+        };
+      } catch (error) {
+        console.error(`Unable to load applications for job ${job._id}:`, error);
 
+        return {
+          job,
+
+          response: null,
+        };
+      }
+    }),
+  );
+
+  const applications = [];
+
+  responses.forEach(({ job, response }) => {
+    if (!response?.success || !Array.isArray(response.applications)) {
+      return;
     }
 
+    response.applications.forEach((application) => {
+      applications.push({
+        ...application,
 
-    const responses =
-      await Promise.all(
-        recruiterJobs.map(
-          async (
-            job
-          ) => {
+        job: {
+          ...(application?.job || {}),
 
-            try {
+          id: application?.job?.id || application?.job?._id || job?._id,
 
-              const response =
-                await getApplicationsForJob(
-                  job._id
-                );
+          title: application?.job?.title || job?.title || "Untitled role",
 
+          company: application?.job?.company || job?.company,
 
-              return {
-                job,
+          location: application?.job?.location || job?.location,
 
-                response,
-              };
+          status: application?.job?.status || job?.status,
+        },
 
-            } catch (
-              error
-            ) {
+        recruiterJobId: job?._id,
+      });
+    });
+  });
 
-              console.error(
-                `Unable to load applications for job ${job._id}:`,
-                error
-              );
+  applications.sort((first, second) => {
+    const firstDate = new Date(first?.appliedAt || 0).getTime();
 
+    const secondDate = new Date(second?.appliedAt || 0).getTime();
 
-              return {
-                job,
+    return secondDate - firstDate;
+  });
 
-                response:
-                  null,
-              };
+  const summary = {
+    total: applications.length,
 
-            }
+    applied: applications.filter(
+      (application) => application?.status === "applied",
+    ).length,
 
-          }
-        )
-      );
+    reviewing: applications.filter(
+      (application) => application?.status === "reviewing",
+    ).length,
 
+    shortlisted: applications.filter(
+      (application) => application?.status === "shortlisted",
+    ).length,
 
-    const applications = [];
+    interview: applications.filter(
+      (application) => application?.status === "interview",
+    ).length,
 
+    rejected: applications.filter(
+      (application) => application?.status === "rejected",
+    ).length,
 
-    responses.forEach(
-      ({
-        job,
-        response,
-      }) => {
-
-        if (
-          !response?.success ||
-          !Array.isArray(
-            response.applications
-          )
-        ) {
-
-          return;
-
-        }
-
-
-        response.applications.forEach(
-          (
-            application
-          ) => {
-
-            applications.push({
-              ...application,
-
-              job: {
-                ...(application?.job ||
-                  {}),
-
-                id:
-                  application?.job?.id ||
-                  application?.job?._id ||
-                  job?._id,
-
-                title:
-                  application?.job?.title ||
-                  job?.title ||
-                  "Untitled role",
-
-                company:
-                  application?.job?.company ||
-                  job?.company,
-
-                location:
-                  application?.job?.location ||
-                  job?.location,
-
-                status:
-                  application?.job?.status ||
-                  job?.status,
-              },
-
-              recruiterJobId:
-                job?._id,
-            });
-
-          }
-        );
-
-      }
-    );
-
-
-    applications.sort(
-      (
-        first,
-        second
-      ) => {
-
-        const firstDate =
-          new Date(
-            first?.appliedAt ||
-              0
-          ).getTime();
-
-
-        const secondDate =
-          new Date(
-            second?.appliedAt ||
-              0
-          ).getTime();
-
-
-        return (
-          secondDate -
-          firstDate
-        );
-
-      }
-    );
-
-
-    const summary = {
-      total:
-        applications.length,
-
-      applied:
-        applications.filter(
-          (
-            application
-          ) =>
-            application?.status ===
-            "applied"
-        ).length,
-
-      reviewing:
-        applications.filter(
-          (
-            application
-          ) =>
-            application?.status ===
-            "reviewing"
-        ).length,
-
-      shortlisted:
-        applications.filter(
-          (
-            application
-          ) =>
-            application?.status ===
-            "shortlisted"
-        ).length,
-
-      interview:
-        applications.filter(
-          (
-            application
-          ) =>
-            application?.status ===
-            "interview"
-        ).length,
-
-      rejected:
-        applications.filter(
-          (
-            application
-          ) =>
-            application?.status ===
-            "rejected"
-        ).length,
-
-      hired:
-        applications.filter(
-          (
-            application
-          ) =>
-            application?.status ===
-            "hired"
-        ).length,
-    };
-
-
-    return {
-      success:
-        true,
-
-      applications,
-
-      summary,
-    };
-
+    hired: applications.filter((application) => application?.status === "hired")
+      .length,
   };
+
+  return {
+    success: true,
+
+    applications,
+
+    summary,
+  };
+};

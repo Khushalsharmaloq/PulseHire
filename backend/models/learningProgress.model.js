@@ -25,11 +25,7 @@ const learningProgressSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: [
-        "not_started",
-        "in_progress",
-        "completed",
-      ],
+      enum: ["not_started", "in_progress", "completed"],
       default: "not_started",
       index: true,
     },
@@ -46,7 +42,7 @@ const learningProgressSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 learningProgressSchema.index(
@@ -56,11 +52,10 @@ learningProgressSchema.index(
   },
   {
     unique: true,
-  }
+  },
 );
 
-export const LearningProgress =
-  mongoose.model(
-    "LearningProgress",
-    learningProgressSchema
-  );
+export const LearningProgress = mongoose.model(
+  "LearningProgress",
+  learningProgressSchema,
+);

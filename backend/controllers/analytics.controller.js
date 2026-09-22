@@ -2,11 +2,7 @@ import { Job } from "../models/job.model.js";
 import { Application } from "../models/application.model.js";
 import { SkillProof } from "../models/skillProof.model.js";
 
-import {
-    calculateJobMatch,
-    uniqueSkills,
-} from "../utils/match.util.js";
-
+import { calculateJobMatch, uniqueSkills } from "../utils/match.util.js";
 
 /*
 |--------------------------------------------------------------------------
@@ -19,910 +15,538 @@ import {
 |--------------------------------------------------------------------------
 */
 
-export const getRecruiterAnalytics = async (
-    req,
-    res
-) => {
-    try {
-        /* =================================================
+export const getRecruiterAnalytics = async (req, res) => {
+  try {
+    /* =================================================
            1. GET RECRUITER JOBS
         ================================================= */
 
-        const jobs = await Job.find({
-            recruiter: req.userId,
-        })
-            .select(
-                "title description skills requirements location jobType status company createdAt lastRecruiterActivity"
-            )
-            .populate(
-                "company",
-                "name logo location"
-            )
-            .sort({
-                createdAt: -1,
-            })
-            .lean();
+    const jobs = await Job.find({
+      recruiter: req.userId,
+    })
+      .select(
+        "title description skills requirements location jobType status company createdAt lastRecruiterActivity",
+      )
+      .populate("company", "name logo location")
+      .sort({
+        createdAt: -1,
+      })
+      .lean();
 
+    if (jobs.length === 0) {
+      return res.status(200).json({
+        success: true,
 
-        if (jobs.length === 0) {
-            return res.status(200).json({
-                success: true,
+        summary: {
+          totalJobs: 0,
+          activeJobs: 0,
+          draftJobs: 0,
+          pausedJobs: 0,
+          closedJobs: 0,
 
-                summary: {
-                    totalJobs: 0,
-                    activeJobs: 0,
-                    draftJobs: 0,
-                    pausedJobs: 0,
-                    closedJobs: 0,
+          totalApplications: 0,
+          applicationsLast7Days: 0,
 
-                    totalApplications: 0,
-                    applicationsLast7Days: 0,
+          applied: 0,
+          reviewing: 0,
+          shortlisted: 0,
+          interview: 0,
+          rejected: 0,
+          hired: 0,
 
-                    applied: 0,
-                    reviewing: 0,
-                    shortlisted: 0,
-                    interview: 0,
-                    rejected: 0,
-                    hired: 0,
+          verifiedApplicants: 0,
+          strongMatches: 0,
+          averageMatchRate: 0,
+          averageResponseHours: 0,
 
-                    verifiedApplicants: 0,
-                    strongMatches: 0,
-                    averageMatchRate: 0,
-                    averageResponseHours: 0,
+          hiringConversionRate: 0,
+          shortlistRate: 0,
+          interviewRate: 0,
+        },
 
-                    hiringConversionRate: 0,
-                    shortlistRate: 0,
-                    interviewRate: 0,
-                },
+        funnel: {
+          applied: 0,
+          reviewing: 0,
+          shortlisted: 0,
+          interview: 0,
+          hired: 0,
+          rejected: 0,
+        },
 
-                funnel: {
-                    applied: 0,
-                    reviewing: 0,
-                    shortlisted: 0,
-                    interview: 0,
-                    hired: 0,
-                    rejected: 0,
-                },
+        jobPerformance: [],
 
-                jobPerformance: [],
+        topRequiredSkills: [],
 
-                topRequiredSkills: [],
+        recentApplications: [],
 
-                recentApplications: [],
+        recentHiringActivity: [],
+      });
+    }
 
-                recentHiringActivity: [],
-            });
-        }
+    const jobIds = jobs.map((job) => job._id);
 
-
-        const jobIds = jobs.map(
-            (job) => job._id
-        );
-
-
-        /* =================================================
+    /* =================================================
            2. GET APPLICATIONS
         ================================================= */
 
-        const applications =
-            await Application.find({
-                recruiter: req.userId,
+    const applications = await Application.find({
+      recruiter: req.userId,
 
-                job: {
-                    $in: jobIds,
-                },
-            })
-                .select(
-                    "job candidate status intentResponse appliedAt recruiterRespondedAt lastStatusChangedAt createdAt"
-                )
-                .populate(
-                    "candidate",
-                    "fullname email profile"
-                )
-                .sort({
-                    appliedAt: -1,
-                })
-                .lean();
+      job: {
+        $in: jobIds,
+      },
+    })
+      .select(
+        "job candidate status intentResponse appliedAt recruiterRespondedAt lastStatusChangedAt createdAt",
+      )
+      .populate("candidate", "fullname email profile")
+      .sort({
+        appliedAt: -1,
+      })
+      .lean();
 
-
-        /* =================================================
+    /* =================================================
            3. GET APPROVED PROOFS
         ================================================= */
 
-        const candidateIds = [
-            ...new Set(
-                applications
-                    .map(
-                        (application) =>
-                            application.candidate?._id
-                    )
-                    .filter(Boolean)
-                    .map(String)
-            ),
-        ];
+    const candidateIds = [
+      ...new Set(
+        applications
+          .map((application) => application.candidate?._id)
+          .filter(Boolean)
+          .map(String),
+      ),
+    ];
 
+    let approvedProofs = [];
 
-        let approvedProofs = [];
+    if (candidateIds.length > 0) {
+      approvedProofs = await SkillProof.find({
+        candidate: {
+          $in: candidateIds,
+        },
 
+        status: "approved",
+      })
+        .select("candidate skill")
+        .lean();
+    }
 
-        if (candidateIds.length > 0) {
-            approvedProofs =
-                await SkillProof.find({
-                    candidate: {
-                        $in: candidateIds,
-                    },
-
-                    status: "approved",
-                })
-                    .select(
-                        "candidate skill"
-                    )
-                    .lean();
-        }
-
-
-        /* =================================================
+    /* =================================================
            4. GROUP VERIFIED SKILLS BY CANDIDATE
         ================================================= */
 
-        const verifiedSkillsByCandidate =
-            new Map();
+    const verifiedSkillsByCandidate = new Map();
 
+    for (const proof of approvedProofs) {
+      const candidateId = String(proof.candidate);
 
-        for (
-            const proof of approvedProofs
-        ) {
-            const candidateId =
-                String(proof.candidate);
+      if (!verifiedSkillsByCandidate.has(candidateId)) {
+        verifiedSkillsByCandidate.set(candidateId, []);
+      }
 
+      verifiedSkillsByCandidate.get(candidateId).push(proof.skill);
+    }
 
-            if (
-                !verifiedSkillsByCandidate.has(
-                    candidateId
-                )
-            ) {
-                verifiedSkillsByCandidate.set(
-                    candidateId,
-                    []
-                );
-            }
-
-
-            verifiedSkillsByCandidate
-                .get(candidateId)
-                .push(proof.skill);
-        }
-
-
-        /* =================================================
+    /* =================================================
            5. JOB MAP
         ================================================= */
 
-        const jobMap = new Map(
-            jobs.map(
-                (job) => [
-                    String(job._id),
-                    job,
-                ]
-            )
-        );
+    const jobMap = new Map(jobs.map((job) => [String(job._id), job]));
 
-
-        /* =================================================
+    /* =================================================
            6. APPLICATION STATUS COUNTS
         ================================================= */
 
-        const statusCounts = {
-            applied: 0,
-            reviewing: 0,
-            shortlisted: 0,
-            interview: 0,
-            rejected: 0,
-            hired: 0,
-        };
+    const statusCounts = {
+      applied: 0,
+      reviewing: 0,
+      shortlisted: 0,
+      interview: 0,
+      rejected: 0,
+      hired: 0,
+    };
 
+    for (const application of applications) {
+      if (
+        Object.prototype.hasOwnProperty.call(statusCounts, application.status)
+      ) {
+        statusCounts[application.status] += 1;
+      }
+    }
 
-        for (
-            const application of applications
-        ) {
-            if (
-                Object.prototype.hasOwnProperty.call(
-                    statusCounts,
-                    application.status
-                )
-            ) {
-                statusCounts[
-                    application.status
-                ] += 1;
-            }
-        }
-
-
-        /* =================================================
+    /* =================================================
            7. LAST 7 DAYS
         ================================================= */
 
-        const now = Date.now();
+    const now = Date.now();
 
-        const sevenDaysAgo =
-            now -
-            7 * 24 * 60 * 60 * 1000;
+    const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
 
+    const applicationsLast7Days = applications.filter((application) => {
+      const appliedAt = application.appliedAt
+        ? new Date(application.appliedAt).getTime()
+        : 0;
 
-        const applicationsLast7Days =
-            applications.filter(
-                (application) => {
+      return appliedAt >= sevenDaysAgo;
+    }).length;
 
-                    const appliedAt =
-                        application.appliedAt
-                            ? new Date(
-                                application.appliedAt
-                            ).getTime()
-                            : 0;
-
-
-                    return (
-                        appliedAt >=
-                        sevenDaysAgo
-                    );
-                }
-            ).length;
-
-
-        /* =================================================
+    /* =================================================
            8. RESPONSE TIME
         ================================================= */
 
-        const responseTimes = [];
+    const responseTimes = [];
 
+    for (const application of applications) {
+      if (!application.appliedAt || !application.recruiterRespondedAt) {
+        continue;
+      }
 
-        for (
-            const application of applications
-        ) {
-            if (
-                !application.appliedAt ||
-                !application.recruiterRespondedAt
-            ) {
-                continue;
-            }
+      const appliedAt = new Date(application.appliedAt).getTime();
 
+      const respondedAt = new Date(application.recruiterRespondedAt).getTime();
 
-            const appliedAt =
-                new Date(
-                    application.appliedAt
-                ).getTime();
+      if (
+        Number.isFinite(appliedAt) &&
+        Number.isFinite(respondedAt) &&
+        respondedAt >= appliedAt
+      ) {
+        const hours = (respondedAt - appliedAt) / (1000 * 60 * 60);
 
+        responseTimes.push(hours);
+      }
+    }
 
-            const respondedAt =
-                new Date(
-                    application.recruiterRespondedAt
-                ).getTime();
+    const averageResponseHours =
+      responseTimes.length === 0
+        ? 0
+        : Math.round(
+            (responseTimes.reduce((total, hours) => total + hours, 0) /
+              responseTimes.length) *
+              10,
+          ) / 10;
 
-
-            if (
-                Number.isFinite(appliedAt) &&
-                Number.isFinite(respondedAt) &&
-                respondedAt >= appliedAt
-            ) {
-                const hours =
-                    (
-                        respondedAt -
-                        appliedAt
-                    ) /
-                    (
-                        1000 *
-                        60 *
-                        60
-                    );
-
-
-                responseTimes.push(hours);
-            }
-        }
-
-
-        const averageResponseHours =
-            responseTimes.length === 0
-                ? 0
-                : Math.round(
-                    (
-                        responseTimes.reduce(
-                            (
-                                total,
-                                hours
-                            ) =>
-                                total + hours,
-                            0
-                        ) /
-                        responseTimes.length
-                    ) *
-                    10
-                ) / 10;
-
-
-        /* =================================================
+    /* =================================================
            9. JOB PERFORMANCE
         ================================================= */
 
-        const jobPerformance =
-            jobs.map(
-                (job) => {
+    const jobPerformance = jobs.map((job) => {
+      const jobApplications = applications.filter(
+        (application) => String(application.job) === String(job._id),
+      );
 
-                    const jobApplications =
-                        applications.filter(
-                            (application) =>
-                                String(
-                                    application.job
-                                ) ===
-                                String(
-                                    job._id
-                                )
-                        );
+      let strongMatches = 0;
 
+      let totalMatchScore = 0;
 
-                    let strongMatches = 0;
+      let scoredApplications = 0;
 
-                    let totalMatchScore = 0;
+      let verifiedApplicants = 0;
 
-                    let scoredApplications = 0;
+      const requiredSkills = uniqueSkills([
+        ...(job.skills || []),
 
-                    let verifiedApplicants = 0;
+        ...(job.requirements || []),
+      ]);
 
+      for (const application of jobApplications) {
+        const candidateId = String(application.candidate?._id);
 
-                    const requiredSkills =
-                        uniqueSkills([
-                            ...(job.skills || []),
+        const verifiedSkills = verifiedSkillsByCandidate.get(candidateId) || [];
 
-                            ...(job.requirements || []),
-                        ]);
+        if (verifiedSkills.length > 0) {
+          verifiedApplicants += 1;
+        }
 
+        if (requiredSkills.length > 0) {
+          const match = calculateJobMatch(requiredSkills, verifiedSkills);
 
-                    for (
-                        const application
-                        of jobApplications
-                    ) {
-                        const candidateId =
-                            String(
-                                application.candidate?._id
-                            );
+          totalMatchScore += match.score;
 
+          scoredApplications += 1;
 
-                        const verifiedSkills =
-                            verifiedSkillsByCandidate.get(
-                                candidateId
-                            ) || [];
+          if (match.score >= 80) {
+            strongMatches += 1;
+          }
+        }
+      }
 
+      const averageMatchRate =
+        scoredApplications === 0
+          ? 0
+          : Math.round(totalMatchScore / scoredApplications);
 
-                        if (
-                            verifiedSkills.length >
-                            0
-                        ) {
-                            verifiedApplicants +=
-                                1;
-                        }
+      const hired = jobApplications.filter(
+        (application) => application.status === "hired",
+      ).length;
 
+      const shortlisted = jobApplications.filter(
+        (application) => application.status === "shortlisted",
+      ).length;
 
-                        if (
-                            requiredSkills.length >
-                            0
-                        ) {
-                            const match =
-                                calculateJobMatch(
-                                    requiredSkills,
-                                    verifiedSkills
-                                );
+      return {
+        jobId: job._id,
 
+        title: job.title,
 
-                            totalMatchScore +=
-                                match.score;
+        company: job.company ? job.company.name : "",
 
-                            scoredApplications +=
-                                1;
+        status: job.status,
 
+        applicants: jobApplications.length,
 
-                            if (
-                                match.score >=
-                                80
-                            ) {
-                                strongMatches +=
-                                    1;
-                            }
-                        }
-                    }
+        verifiedApplicants,
 
+        strongMatches,
 
-                    const averageMatchRate =
-                        scoredApplications === 0
-                            ? 0
-                            : Math.round(
-                                totalMatchScore /
-                                scoredApplications
-                            );
+        averageMatchRate,
 
+        shortlisted,
 
-                    const hired =
-                        jobApplications.filter(
-                            (application) =>
-                                application.status ===
-                                "hired"
-                        ).length;
+        hired,
 
+        requiredSkills,
+      };
+    });
 
-                    const shortlisted =
-                        jobApplications.filter(
-                            (application) =>
-                                application.status ===
-                                "shortlisted"
-                        ).length;
-
-
-                    return {
-                        jobId:
-                            job._id,
-
-                        title:
-                            job.title,
-
-                        company:
-                            job.company
-                                ? job.company.name
-                                : "",
-
-                        status:
-                            job.status,
-
-                        applicants:
-                            jobApplications.length,
-
-                        verifiedApplicants,
-
-                        strongMatches,
-
-                        averageMatchRate,
-
-                        shortlisted,
-
-                        hired,
-
-                        requiredSkills,
-                    };
-                }
-            );
-
-
-        /* =================================================
+    /* =================================================
            10. SORT JOB PERFORMANCE
         ================================================= */
 
-        jobPerformance.sort(
-            (a, b) =>
-                b.applicants -
-                a.applicants
-        );
+    jobPerformance.sort((a, b) => b.applicants - a.applicants);
 
-
-        /* =================================================
+    /* =================================================
            11. REQUIRED SKILL FREQUENCY
         ================================================= */
 
-        const skillFrequency =
-            new Map();
+    const skillFrequency = new Map();
 
+    for (const job of jobs) {
+      const requiredSkills = uniqueSkills([
+        ...(job.skills || []),
 
-        for (
-            const job of jobs
-        ) {
-            const requiredSkills =
-                uniqueSkills([
-                    ...(job.skills || []),
+        ...(job.requirements || []),
+      ]);
 
-                    ...(job.requirements || []),
-                ]);
+      for (const skill of requiredSkills) {
+        const normalized = String(skill).trim().toLowerCase();
 
-
-            for (
-                const skill
-                of requiredSkills
-            ) {
-                const normalized =
-                    String(skill)
-                        .trim()
-                        .toLowerCase();
-
-
-                if (
-                    !skillFrequency.has(
-                        normalized
-                    )
-                ) {
-                    skillFrequency.set(
-                        normalized,
-                        {
-                            skill,
-                            count: 0,
-                        }
-                    );
-                }
-
-
-                skillFrequency.get(
-                    normalized
-                ).count += 1;
-            }
+        if (!skillFrequency.has(normalized)) {
+          skillFrequency.set(normalized, {
+            skill,
+            count: 0,
+          });
         }
 
+        skillFrequency.get(normalized).count += 1;
+      }
+    }
 
-        const topRequiredSkills =
-            [...skillFrequency.values()]
-                .sort(
-                    (a, b) =>
-                        b.count -
-                        a.count
-                )
-                .slice(
-                    0,
-                    10
-                );
+    const topRequiredSkills = [...skillFrequency.values()]
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
 
-
-        /* =================================================
+    /* =================================================
            12. MATCH TOTALS
         ================================================= */
 
-        const totalStrongMatches =
-            jobPerformance.reduce(
-                (
-                    total,
-                    job
-                ) =>
-                    total +
-                    job.strongMatches,
-                0
-            );
+    const totalStrongMatches = jobPerformance.reduce(
+      (total, job) => total + job.strongMatches,
+      0,
+    );
 
+    const totalVerifiedApplicants = jobPerformance.reduce(
+      (total, job) => total + job.verifiedApplicants,
+      0,
+    );
 
-        const totalVerifiedApplicants =
-            jobPerformance.reduce(
-                (
-                    total,
-                    job
-                ) =>
-                    total +
-                    job.verifiedApplicants,
-                0
-            );
+    const totalMatchScore = jobPerformance.reduce(
+      (total, job) => total + job.averageMatchRate * job.applicants,
+      0,
+    );
 
+    const jobsWithApplicants = jobPerformance.filter(
+      (job) => job.applicants > 0,
+    ).length;
 
-        const totalMatchScore =
-            jobPerformance.reduce(
-                (
-                    total,
-                    job
-                ) =>
-                    total +
-                    (
-                        job.averageMatchRate *
-                        job.applicants
-                    ),
-                0
-            );
+    const averageMatchRate =
+      jobsWithApplicants === 0
+        ? 0
+        : Math.round(totalMatchScore / applications.length);
 
-
-        const jobsWithApplicants =
-            jobPerformance.filter(
-                (job) =>
-                    job.applicants >
-                    0
-            ).length;
-
-
-        const averageMatchRate =
-            jobsWithApplicants === 0
-                ? 0
-                : Math.round(
-                    totalMatchScore /
-                    applications.length
-                );
-
-
-        /* =================================================
+    /* =================================================
            13. CONVERSION RATES
         ================================================= */
 
-        const totalApplications =
-            applications.length;
+    const totalApplications = applications.length;
 
+    const hiringConversionRate =
+      totalApplications === 0
+        ? 0
+        : Math.round((statusCounts.hired / totalApplications) * 100);
 
-        const hiringConversionRate =
-            totalApplications === 0
-                ? 0
-                : Math.round(
-                    (
-                        statusCounts.hired /
-                        totalApplications
-                    ) *
-                    100
-                );
+    const shortlistRate =
+      totalApplications === 0
+        ? 0
+        : Math.round((statusCounts.shortlisted / totalApplications) * 100);
 
+    const interviewRate =
+      totalApplications === 0
+        ? 0
+        : Math.round((statusCounts.interview / totalApplications) * 100);
 
-        const shortlistRate =
-            totalApplications === 0
-                ? 0
-                : Math.round(
-                    (
-                        statusCounts.shortlisted /
-                        totalApplications
-                    ) *
-                    100
-                );
-
-
-        const interviewRate =
-            totalApplications === 0
-                ? 0
-                : Math.round(
-                    (
-                        statusCounts.interview /
-                        totalApplications
-                    ) *
-                    100
-                );
-
-
-        /* =================================================
+    /* =================================================
            14. RECENT APPLICATIONS
         ================================================= */
 
-        const recentApplications =
-            applications
-                .slice(
-                    0,
-                    10
-                )
-                .map(
-                    (application) => {
+    const recentApplications = applications.slice(0, 10).map((application) => {
+      const job = jobMap.get(String(application.job));
 
-                        const job =
-                            jobMap.get(
-                                String(
-                                    application.job
-                                )
-                            );
+      return {
+        applicationId: application._id,
 
+        candidate: application.candidate
+          ? {
+              id: application.candidate._id,
 
-                        return {
-                            applicationId:
-                                application._id,
+              fullname: application.candidate.fullname,
 
-                            candidate:
-                                application.candidate
-                                    ? {
-                                        id:
-                                            application
-                                                .candidate
-                                                ._id,
+              email: application.candidate.email,
+            }
+          : null,
 
-                                        fullname:
-                                            application
-                                                .candidate
-                                                .fullname,
+        job: job
+          ? {
+              id: job._id,
 
-                                        email:
-                                            application
-                                                .candidate
-                                                .email,
-                                    }
-                                    : null,
+              title: job.title,
+            }
+          : null,
 
-                            job:
-                                job
-                                    ? {
-                                        id:
-                                            job._id,
+        status: application.status,
 
-                                        title:
-                                            job.title,
-                                    }
-                                    : null,
+        appliedAt: application.appliedAt,
+      };
+    });
 
-                            status:
-                                application.status,
-
-                            appliedAt:
-                                application.appliedAt,
-                        };
-                    }
-                );
-
-
-        /* =================================================
+    /* =================================================
            15. RECENT HIRING ACTIVITY
         ================================================= */
 
-        const recentHiringActivity =
-            applications
-                .filter(
-                    (application) =>
-                        [
-                            "shortlisted",
-                            "interview",
-                            "hired",
-                            "rejected",
-                        ].includes(
-                            application.status
-                        )
-                )
-                .slice(
-                    0,
-                    10
-                )
-                .map(
-                    (application) => {
+    const recentHiringActivity = applications
+      .filter((application) =>
+        ["shortlisted", "interview", "hired", "rejected"].includes(
+          application.status,
+        ),
+      )
+      .slice(0, 10)
+      .map((application) => {
+        const job = jobMap.get(String(application.job));
 
-                        const job =
-                            jobMap.get(
-                                String(
-                                    application.job
-                                )
-                            );
+        return {
+          applicationId: application._id,
 
+          candidate: application.candidate
+            ? application.candidate.fullname
+            : "Candidate",
 
-                        return {
-                            applicationId:
-                                application._id,
+          job: job ? job.title : "Job",
 
-                            candidate:
-                                application.candidate
-                                    ? application
-                                        .candidate
-                                        .fullname
-                                    : "Candidate",
+          status: application.status,
 
-                            job:
-                                job
-                                    ? job.title
-                                    : "Job",
+          updatedAt: application.lastStatusChangedAt,
+        };
+      });
 
-                            status:
-                                application.status,
-
-                            updatedAt:
-                                application
-                                    .lastStatusChangedAt,
-                        };
-                    }
-                );
-
-
-        /* =================================================
+    /* =================================================
            16. RESPONSE
         ================================================= */
 
-        return res.status(200).json({
-            success: true,
+    return res.status(200).json({
+      success: true,
 
-            summary: {
-                totalJobs:
-                    jobs.length,
+      summary: {
+        totalJobs: jobs.length,
 
-                activeJobs:
-                    jobs.filter(
-                        (job) =>
-                            job.status ===
-                            "active"
-                    ).length,
+        activeJobs: jobs.filter((job) => job.status === "active").length,
 
-                draftJobs:
-                    jobs.filter(
-                        (job) =>
-                            job.status ===
-                            "draft"
-                    ).length,
+        draftJobs: jobs.filter((job) => job.status === "draft").length,
 
-                pausedJobs:
-                    jobs.filter(
-                        (job) =>
-                            job.status ===
-                            "paused"
-                    ).length,
+        pausedJobs: jobs.filter((job) => job.status === "paused").length,
 
-                closedJobs:
-                    jobs.filter(
-                        (job) =>
-                            job.status ===
-                            "closed"
-                    ).length,
+        closedJobs: jobs.filter((job) => job.status === "closed").length,
 
-                totalApplications,
+        totalApplications,
 
-                applicationsLast7Days,
+        applicationsLast7Days,
 
-                applied:
-                    statusCounts.applied,
+        applied: statusCounts.applied,
 
-                reviewing:
-                    statusCounts.reviewing,
+        reviewing: statusCounts.reviewing,
 
-                shortlisted:
-                    statusCounts.shortlisted,
+        shortlisted: statusCounts.shortlisted,
 
-                interview:
-                    statusCounts.interview,
+        interview: statusCounts.interview,
 
-                rejected:
-                    statusCounts.rejected,
+        rejected: statusCounts.rejected,
 
-                hired:
-                    statusCounts.hired,
+        hired: statusCounts.hired,
 
-                verifiedApplicants:
-                    totalVerifiedApplicants,
+        verifiedApplicants: totalVerifiedApplicants,
 
-                strongMatches:
-                    totalStrongMatches,
+        strongMatches: totalStrongMatches,
 
-                averageMatchRate,
+        averageMatchRate,
 
-                averageResponseHours,
+        averageResponseHours,
 
-                hiringConversionRate,
+        hiringConversionRate,
 
-                shortlistRate,
+        shortlistRate,
 
-                interviewRate,
-            },
+        interviewRate,
+      },
 
-            funnel: {
-                applied:
-                    statusCounts.applied +
-                    statusCounts.reviewing +
-                    statusCounts.shortlisted +
-                    statusCounts.interview +
-                    statusCounts.hired,
+      funnel: {
+        applied:
+          statusCounts.applied +
+          statusCounts.reviewing +
+          statusCounts.shortlisted +
+          statusCounts.interview +
+          statusCounts.hired,
 
-                reviewing:
-                    statusCounts.reviewing +
-                    statusCounts.shortlisted +
-                    statusCounts.interview +
-                    statusCounts.hired,
+        reviewing:
+          statusCounts.reviewing +
+          statusCounts.shortlisted +
+          statusCounts.interview +
+          statusCounts.hired,
 
-                shortlisted:
-                    statusCounts.shortlisted +
-                    statusCounts.interview +
-                    statusCounts.hired,
+        shortlisted:
+          statusCounts.shortlisted +
+          statusCounts.interview +
+          statusCounts.hired,
 
-                interview:
-                    statusCounts.interview +
-                    statusCounts.hired,
+        interview: statusCounts.interview + statusCounts.hired,
 
-                hired:
-                    statusCounts.hired,
+        hired: statusCounts.hired,
 
-                rejected:
-                    statusCounts.rejected,
-            },
+        rejected: statusCounts.rejected,
+      },
 
-            jobPerformance,
+      jobPerformance,
 
-            topRequiredSkills,
+      topRequiredSkills,
 
-            recentApplications,
+      recentApplications,
 
-            recentHiringActivity,
-        });
+      recentHiringActivity,
+    });
+  } catch (error) {
+    console.error("Get recruiter analytics error:", error);
 
-    } catch (error) {
-
-        console.error(
-            "Get recruiter analytics error:",
-            error
-        );
-
-
-        return res.status(500).json({
-            success: false,
-            message:
-                "Unable to calculate recruiter analytics."
-        });
-    }
+    return res.status(500).json({
+      success: false,
+      message: "Unable to calculate recruiter analytics.",
+    });
+  }
 };

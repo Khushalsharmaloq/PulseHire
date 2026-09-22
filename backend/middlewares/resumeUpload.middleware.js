@@ -8,10 +8,7 @@ const fileFilter = (req, file, cb) => {
     return;
   }
 
-  const extension = file.originalname
-    .split(".")
-    .pop()
-    ?.toLowerCase();
+  const extension = file.originalname.split(".").pop()?.toLowerCase();
 
   if (extension === "pdf") {
     cb(null, true);

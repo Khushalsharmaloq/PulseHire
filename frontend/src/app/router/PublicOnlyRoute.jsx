@@ -1,42 +1,23 @@
-import {
-  Navigate,
-  Outlet,
-} from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 
 import useAuth from "../../hooks/useAuth";
 
-
-const getDashboardPath = (
-  role
-) => {
-
-  if (
-    role === "candidate"
-  ) {
+const getDashboardPath = (role) => {
+  if (role === "candidate") {
     return "/candidate/dashboard";
   }
 
-  if (
-    role === "recruiter"
-  ) {
+  if (role === "recruiter") {
     return "/recruiter/dashboard";
   }
 
   return "/";
-
 };
 
-
 const PublicOnlyRoute = () => {
-
-  const {
-    user,
-    isLoading,
-  } = useAuth();
-
+  const { user, isLoading } = useAuth();
 
   if (isLoading) {
-
     return (
       <main
         style={{
@@ -46,31 +27,16 @@ const PublicOnlyRoute = () => {
           padding: "32px",
         }}
       >
-        <p>
-          Preparing PulseHire...
-        </p>
+        <p>Preparing PulseHire...</p>
       </main>
     );
-
   }
-
 
   if (user) {
-
-    return (
-      <Navigate
-        to={getDashboardPath(
-          user.role
-        )}
-        replace
-      />
-    );
-
+    return <Navigate to={getDashboardPath(user.role)} replace />;
   }
-
 
   return <Outlet />;
 };
-
 
 export default PublicOnlyRoute;

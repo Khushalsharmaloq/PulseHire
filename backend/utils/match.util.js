@@ -20,7 +20,6 @@
 |--------------------------------------------------------------------------
 */
 
-
 /*
 |--------------------------------------------------------------------------
 | NORMALIZE SKILL
@@ -28,11 +27,10 @@
 */
 
 export const normalizeSkill = (skill) => {
-    return String(skill || "")
-        .trim()
-        .toLowerCase();
+  return String(skill || "")
+    .trim()
+    .toLowerCase();
 };
-
 
 /*
 |--------------------------------------------------------------------------
@@ -50,38 +48,24 @@ export const normalizeSkill = (skill) => {
 */
 
 export const uniqueSkills = (skills = []) => {
-    const skillMap = new Map();
+  const skillMap = new Map();
 
+  for (const skill of skills) {
+    const readableSkill = String(skill || "").trim();
 
-    for (const skill of skills) {
-
-        const readableSkill =
-            String(skill || "").trim();
-
-
-        if (!readableSkill) {
-            continue;
-        }
-
-
-        const normalized =
-            normalizeSkill(
-                readableSkill
-            );
-
-
-        if (!skillMap.has(normalized)) {
-            skillMap.set(
-                normalized,
-                readableSkill
-            );
-        }
+    if (!readableSkill) {
+      continue;
     }
 
+    const normalized = normalizeSkill(readableSkill);
 
-    return [...skillMap.values()];
+    if (!skillMap.has(normalized)) {
+      skillMap.set(normalized, readableSkill);
+    }
+  }
+
+  return [...skillMap.values()];
 };
-
 
 /*
 |--------------------------------------------------------------------------
@@ -89,24 +73,13 @@ export const uniqueSkills = (skills = []) => {
 |--------------------------------------------------------------------------
 */
 
-export const getApprovedSkills = (
-    skillProofs = []
-) => {
-
-    return uniqueSkills(
-        skillProofs
-            .filter(
-                (proof) =>
-                    proof?.status ===
-                    "approved"
-            )
-            .map(
-                (proof) =>
-                    proof?.skill
-            )
-    );
+export const getApprovedSkills = (skillProofs = []) => {
+  return uniqueSkills(
+    skillProofs
+      .filter((proof) => proof?.status === "approved")
+      .map((proof) => proof?.skill),
+  );
 };
-
 
 /*
 |--------------------------------------------------------------------------
@@ -114,130 +87,61 @@ export const getApprovedSkills = (
 |--------------------------------------------------------------------------
 */
 
-export const calculateJobMatch = (
-    requiredSkills = [],
-    approvedSkills = []
-) => {
+export const calculateJobMatch = (requiredSkills = [], approvedSkills = []) => {
+  const jobSkills = uniqueSkills(requiredSkills);
 
-    const jobSkills =
-        uniqueSkills(
-            requiredSkills
-        );
+  const candidateSkills = uniqueSkills(approvedSkills);
 
+  const candidateSkillSet = new Set(candidateSkills.map(normalizeSkill));
 
-    const candidateSkills =
-        uniqueSkills(
-            approvedSkills
-        );
+  const matchedSkills = jobSkills.filter((skill) =>
+    candidateSkillSet.has(normalizeSkill(skill)),
+  );
 
+  const missingSkills = jobSkills.filter(
+    (skill) => !candidateSkillSet.has(normalizeSkill(skill)),
+  );
 
-    const candidateSkillSet =
-        new Set(
-            candidateSkills.map(
-                normalizeSkill
-            )
-        );
+  const totalRequired = jobSkills.length;
 
+  const matchedCount = matchedSkills.length;
 
-    const matchedSkills =
-        jobSkills.filter(
-            (skill) =>
-                candidateSkillSet.has(
-                    normalizeSkill(
-                        skill
-                    )
-                )
-        );
+  const matchPercentage =
+    totalRequired === 0 ? 0 : Math.round((matchedCount / totalRequired) * 100);
 
+  const verificationCoverage =
+    totalRequired === 0 ? 0 : Math.round((matchedCount / totalRequired) * 100);
 
-    const missingSkills =
-        jobSkills.filter(
-            (skill) =>
-                !candidateSkillSet.has(
-                    normalizeSkill(
-                        skill
-                    )
-                )
-        );
+  let strength = "low";
 
+  if (matchPercentage >= 80) {
+    strength = "excellent";
+  } else if (matchPercentage >= 60) {
+    strength = "strong";
+  } else if (matchPercentage >= 40) {
+    strength = "potential";
+  }
 
-    const totalRequired =
-        jobSkills.length;
+  return {
+    score: matchPercentage,
 
+    matchPercentage,
 
-    const matchedCount =
-        matchedSkills.length;
+    matchedSkills,
 
+    missingSkills,
 
-    const matchPercentage =
-        totalRequired === 0
-            ? 0
-            : Math.round(
-                (
-                    matchedCount /
-                    totalRequired
-                ) * 100
-            );
+    totalRequiredSkills: totalRequired,
 
+    matchedSkillCount: matchedCount,
 
-    const verificationCoverage =
-        totalRequired === 0
-            ? 0
-            : Math.round(
-                (
-                    matchedCount /
-                    totalRequired
-                ) * 100
-            );
+    missingSkillCount: missingSkills.length,
 
+    verificationCoverage,
 
-    let strength =
-        "low";
-
-
-    if (
-        matchPercentage >= 80
-    ) {
-        strength =
-            "excellent";
-    } else if (
-        matchPercentage >= 60
-    ) {
-        strength =
-            "strong";
-    } else if (
-        matchPercentage >= 40
-    ) {
-        strength =
-            "potential";
-    }
-
-
-    return {
-        score:
-            matchPercentage,
-
-        matchPercentage,
-
-        matchedSkills,
-
-        missingSkills,
-
-        totalRequiredSkills:
-            totalRequired,
-
-        matchedSkillCount:
-            matchedCount,
-
-        missingSkillCount:
-            missingSkills.length,
-
-        verificationCoverage,
-
-        strength
-    };
+    strength,
+  };
 };
-
 
 /*
 |--------------------------------------------------------------------------
@@ -246,22 +150,13 @@ export const calculateJobMatch = (
 */
 
 export const calculateMatchFromProofs = (
-    requiredSkills = [],
-    skillProofs = []
+  requiredSkills = [],
+  skillProofs = [],
 ) => {
+  const approvedSkills = getApprovedSkills(skillProofs);
 
-    const approvedSkills =
-        getApprovedSkills(
-            skillProofs
-        );
-
-
-    return calculateJobMatch(
-        requiredSkills,
-        approvedSkills
-    );
+  return calculateJobMatch(requiredSkills, approvedSkills);
 };
-
 
 /*
 |--------------------------------------------------------------------------
@@ -269,33 +164,25 @@ export const calculateMatchFromProofs = (
 |--------------------------------------------------------------------------
 */
 
-export const getMatchLabel = (
-    score
-) => {
+export const getMatchLabel = (score) => {
+  if (score >= 80) {
+    return "Excellent fit";
+  }
 
-    if (score >= 80) {
-        return "Excellent fit";
-    }
+  if (score >= 60) {
+    return "Strong fit";
+  }
 
+  if (score >= 40) {
+    return "Potential fit";
+  }
 
-    if (score >= 60) {
-        return "Strong fit";
-    }
+  if (score > 0) {
+    return "Skill gap";
+  }
 
-
-    if (score >= 40) {
-        return "Potential fit";
-    }
-
-
-    if (score > 0) {
-        return "Skill gap";
-    }
-
-
-    return "No verified match";
+  return "No verified match";
 };
-
 
 /*
 |--------------------------------------------------------------------------
@@ -303,12 +190,9 @@ export const getMatchLabel = (
 |--------------------------------------------------------------------------
 */
 
-export const isStrongMatch = (
-    score
-) => {
-    return score >= 80;
+export const isStrongMatch = (score) => {
+  return score >= 80;
 };
-
 
 /*
 |--------------------------------------------------------------------------
@@ -316,8 +200,6 @@ export const isStrongMatch = (
 |--------------------------------------------------------------------------
 */
 
-export const hasVerifiedMatch = (
-    score
-) => {
-    return score > 0;
+export const hasVerifiedMatch = (score) => {
+  return score > 0;
 };

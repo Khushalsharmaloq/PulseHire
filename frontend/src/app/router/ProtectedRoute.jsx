@@ -1,23 +1,11 @@
-import {
-  Navigate,
-  Outlet,
-} from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 
 import useAuth from "../../hooks/useAuth";
 
-
-const ProtectedRoute = ({
-  requiredRole,
-}) => {
-
-  const {
-    user,
-    isLoading,
-  } = useAuth();
-
+const ProtectedRoute = ({ requiredRole }) => {
+  const { user, isLoading } = useAuth();
 
   if (isLoading) {
-
     return (
       <main
         style={{
@@ -27,44 +15,20 @@ const ProtectedRoute = ({
           padding: "32px",
         }}
       >
-        <p>
-          Restoring your PulseHire session...
-        </p>
+        <p>Restoring your PulseHire session...</p>
       </main>
     );
-
   }
-
 
   if (!user) {
-
-    return (
-      <Navigate
-        to="/login"
-        replace
-      />
-    );
-
+    return <Navigate to="/login" replace />;
   }
 
-
-  if (
-    requiredRole &&
-    user.role !== requiredRole
-  ) {
-
-    return (
-      <Navigate
-        to="/unauthorized"
-        replace
-      />
-    );
-
+  if (requiredRole && user.role !== requiredRole) {
+    return <Navigate to="/unauthorized" replace />;
   }
-
 
   return <Outlet />;
 };
-
 
 export default ProtectedRoute;

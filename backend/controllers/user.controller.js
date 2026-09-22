@@ -435,7 +435,7 @@ export const uploadProfilePhoto = async (req, res) => {
 
     const result = await uploadToCloudinary(
       req.file.buffer,
-      "pulsehire/profile-photos"
+      "pulsehire/profile-photos",
     );
 
     user.profile.profilePhoto = result.secure_url;
@@ -459,7 +459,7 @@ export const uploadProfilePhoto = async (req, res) => {
   }
 };
 
- /* =====================================================
+/* =====================================================
     UPLOAD RESUME   
 ===================================================== */
 export const uploadResume = async (req, res) => {
@@ -486,12 +486,12 @@ export const uploadResume = async (req, res) => {
 
     const result = await uploadToCloudinary(
       req.file.buffer,
-      "pulsehire/resumes"
+      "pulsehire/resumes",
     );
 
     user.profile.resume = result.secure_url.endsWith(".pdf")
-  ? result.secure_url
-  : `${result.secure_url}.pdf`;
+      ? result.secure_url
+      : `${result.secure_url}.pdf`;
     user.profile.resumeOriginalName = req.file.originalname;
 
     await user.save();

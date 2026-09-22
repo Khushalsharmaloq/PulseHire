@@ -1,9 +1,8 @@
 import {
-    normalizeSkill,
-    uniqueSkills,
-    calculateJobMatch
+  normalizeSkill,
+  uniqueSkills,
+  calculateJobMatch,
 } from "./match.util.js";
-
 
 /*
 |--------------------------------------------------------------------------
@@ -16,12 +15,9 @@ import {
 |--------------------------------------------------------------------------
 */
 
-export const normalizeSkillName = (
-    skillName
-) => {
-    return normalizeSkill(skillName);
+export const normalizeSkillName = (skillName) => {
+  return normalizeSkill(skillName);
 };
-
 
 /*
 |--------------------------------------------------------------------------
@@ -29,10 +25,7 @@ export const normalizeSkillName = (
 |--------------------------------------------------------------------------
 */
 
-export {
-    uniqueSkills
-};
-
+export { uniqueSkills };
 
 /*
 |--------------------------------------------------------------------------
@@ -45,53 +38,28 @@ export {
 |--------------------------------------------------------------------------
 */
 
-export const calculateSkillGap = (
-    requiredSkills = [],
-    skillProofs = []
-) => {
+export const calculateSkillGap = (requiredSkills = [], skillProofs = []) => {
+  const approvedSkills = uniqueSkills(
+    skillProofs
+      .filter((proof) => proof?.status === "approved")
+      .map((proof) => proof?.skill),
+  );
 
-    const approvedSkills =
-        uniqueSkills(
-            skillProofs
-                .filter(
-                    (proof) =>
-                        proof?.status ===
-                        "approved"
-                )
-                .map(
-                    (proof) =>
-                        proof?.skill
-                )
-        );
+  const match = calculateJobMatch(requiredSkills, approvedSkills);
 
+  return {
+    totalRequiredSkills: match.totalRequiredSkills,
 
-    const match =
-        calculateJobMatch(
-            requiredSkills,
-            approvedSkills
-        );
+    matchedSkills: match.matchedSkills,
 
+    missingSkills: match.missingSkills,
 
-    return {
-        totalRequiredSkills:
-            match.totalRequiredSkills,
+    verifiedSkills: approvedSkills,
 
-        matchedSkills:
-            match.matchedSkills,
+    matchPercentage: match.matchPercentage,
 
-        missingSkills:
-            match.missingSkills,
+    score: match.score,
 
-        verifiedSkills:
-            approvedSkills,
-
-        matchPercentage:
-            match.matchPercentage,
-
-        score:
-            match.score,
-
-        strength:
-            match.strength
-    };
+    strength: match.strength,
+  };
 };

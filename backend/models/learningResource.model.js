@@ -39,11 +39,7 @@ const learningResourceSchema = new mongoose.Schema(
 
     difficulty: {
       type: String,
-      enum: [
-        "beginner",
-        "intermediate",
-        "advanced",
-      ],
+      enum: ["beginner", "intermediate", "advanced"],
       default: "intermediate",
     },
 
@@ -73,11 +69,10 @@ const learningResourceSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
-export const LearningResource =
-  mongoose.model(
-    "LearningResource",
-    learningResourceSchema
-  );
+export const LearningResource = mongoose.model(
+  "LearningResource",
+  learningResourceSchema,
+);

@@ -410,43 +410,26 @@ const RecruiterJobs = () => {
           HEADER
           =================================================== */}
 
-     <div className="recruiter-jobs-header-actions">
+      <div className="recruiter-jobs-header-actions">
+        <Link to="/recruiter/jobs/new" className="recruiter-jobs-post-button">
+          <Plus size={14} />
+          Post a job
+        </Link>
 
-  <Link
-    to="/recruiter/jobs/new"
-    className="recruiter-jobs-post-button"
-  >
-    <Plus
-      size={14}
-    />
+        <button
+          type="button"
+          className="recruiter-jobs-refresh-button"
+          onClick={handleRefresh}
+          disabled={refreshing}
+        >
+          <RefreshCw
+            size={14}
+            className={refreshing ? "recruiter-jobs-spin" : ""}
+          />
 
-    Post a job
-  </Link>
-
-
-  <button
-    type="button"
-    className="recruiter-jobs-refresh-button"
-    onClick={handleRefresh}
-    disabled={refreshing}
-  >
-
-    <RefreshCw
-      size={14}
-      className={
-        refreshing
-          ? "recruiter-jobs-spin"
-          : ""
-      }
-    />
-
-    {refreshing
-      ? "Refreshing..."
-      : "Refresh"}
-
-  </button>
-
-</div>
+          {refreshing ? "Refreshing..." : "Refresh"}
+        </button>
+      </div>
 
       {/* ===================================================
           ALERTS

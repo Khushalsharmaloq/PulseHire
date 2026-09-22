@@ -10,17 +10,9 @@ const allowedImageTypes = new Set([
 ]);
 
 const fileFilter = (req, file, cb) => {
-  const fileExtension = file.originalname
-    .split(".")
-    .pop()
-    ?.toLowerCase();
+  const fileExtension = file.originalname.split(".").pop()?.toLowerCase();
 
-  const allowedExtensions = new Set([
-    "jpg",
-    "jpeg",
-    "png",
-    "webp",
-  ]);
+  const allowedExtensions = new Set(["jpg", "jpeg", "png", "webp"]);
 
   const isValidMimeType = allowedImageTypes.has(file.mimetype);
   const isValidExtension = allowedExtensions.has(fileExtension);
@@ -31,10 +23,8 @@ const fileFilter = (req, file, cb) => {
   }
 
   cb(
-    new Error(
-      "Only JPG, JPEG, PNG, and WEBP image files are allowed."
-    ),
-    false
+    new Error("Only JPG, JPEG, PNG, and WEBP image files are allowed."),
+    false,
   );
 };
 

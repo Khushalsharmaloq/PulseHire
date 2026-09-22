@@ -15,7 +15,7 @@ export const uploadToCloudinary = (buffer, folder) => {
         }
 
         resolve(result);
-      }
+      },
     );
 
     Readable.from(buffer).pipe(uploadStream);

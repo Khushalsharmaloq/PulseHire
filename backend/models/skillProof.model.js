@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 
-
 /*
 |--------------------------------------------------------------------------
 | VALIDATE PROOF URL
@@ -8,169 +7,144 @@ import mongoose from "mongoose";
 */
 
 const isValidProofUrl = (value) => {
-    if (!value) {
-        return false;
-    }
+  if (!value) {
+    return false;
+  }
 
-    try {
-        const url = new URL(value);
+  try {
+    const url = new URL(value);
 
-        return (
-            url.protocol === "http:" ||
-            url.protocol === "https:"
-        );
-    } catch {
-        return false;
-    }
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
 };
 
-
 const skillProofSchema = new mongoose.Schema(
-    {
-        /* =================================================
+  {
+    /* =================================================
            CANDIDATE
         ================================================= */
 
-        candidate: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-            required: true,
-            index: true
-        },
+    candidate: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
 
-
-        /* =================================================
+    /* =================================================
            CLAIMED SKILL
         ================================================= */
 
-        skill: {
-            type: String,
-            required: true,
-            trim: true,
-            minlength: 1,
-            maxlength: 80
-        },
+    skill: {
+      type: String,
+      required: true,
+      trim: true,
+      minlength: 1,
+      maxlength: 80,
+    },
 
-
-        /* =================================================
+    /* =================================================
            TYPE OF EVIDENCE
         ================================================= */
 
-        proofType: {
-            type: String,
-            enum: [
-                "project",
-                "certificate",
-                "github",
-                "portfolio",
-                "other"
-            ],
-            required: true
-        },
+    proofType: {
+      type: String,
+      enum: ["project", "certificate", "github", "portfolio", "other"],
+      required: true,
+    },
 
-
-        /* =================================================
+    /* =================================================
            TITLE
         ================================================= */
 
-        title: {
-            type: String,
-            required: true,
-            trim: true,
-            minlength: 2,
-            maxlength: 120
-        },
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+      minlength: 2,
+      maxlength: 120,
+    },
 
-
-        /* =================================================
+    /* =================================================
            DESCRIPTION
         ================================================= */
 
-        description: {
-            type: String,
-            default: "",
-            trim: true,
-            maxlength: 1000
-        },
+    description: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: 1000,
+    },
 
-
-        /* =================================================
+    /* =================================================
            EVIDENCE URL
         ================================================= */
 
-        proofUrl: {
-            type: String,
-            required: true,
-            trim: true,
+    proofUrl: {
+      type: String,
+      required: true,
+      trim: true,
 
-            validate: {
-                validator: isValidProofUrl,
+      validate: {
+        validator: isValidProofUrl,
 
-                message:
-                    "Proof URL must be a valid HTTP or HTTPS URL."
-            }
-        },
+        message: "Proof URL must be a valid HTTP or HTTPS URL.",
+      },
+    },
 
-
-        /* =================================================
+    /* =================================================
            REVIEW STATUS
         ================================================= */
 
-        status: {
-            type: String,
+    status: {
+      type: String,
 
-            enum: [
-                "pending",
-                "approved",
-                "rejected"
-            ],
+      enum: ["pending", "approved", "rejected"],
 
-            default: "pending",
+      default: "pending",
 
-            index: true
-        },
+      index: true,
+    },
 
-
-        /* =================================================
+    /* =================================================
            RECRUITER FEEDBACK
         ================================================= */
 
-        recruiterComment: {
-            type: String,
-            default: "",
-            trim: true,
-            maxlength: 1000
-        },
+    recruiterComment: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: 1000,
+    },
 
-
-        /* =================================================
+    /* =================================================
            REVIEWER
         ================================================= */
 
-        reviewedBy: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-            default: null,
-            index: true
-        },
+    reviewedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+      index: true,
+    },
 
-
-        /* =================================================
+    /* =================================================
            REVIEW TIME
         ================================================= */
 
-        reviewedAt: {
-            type: Date,
-            default: null,
-            index: true
-        }
+    reviewedAt: {
+      type: Date,
+      default: null,
+      index: true,
     },
+  },
 
-    {
-        timestamps: true
-    }
+  {
+    timestamps: true,
+  },
 );
-
 
 /*
 |--------------------------------------------------------------------------
@@ -187,31 +161,26 @@ const skillProofSchema = new mongoose.Schema(
 |--------------------------------------------------------------------------
 */
 
-
 skillProofSchema.index({
-    candidate: 1,
-    status: 1
+  candidate: 1,
+  status: 1,
 });
 
-
 skillProofSchema.index({
-    candidate: 1,
-    skill: 1,
-    status: 1
+  candidate: 1,
+  skill: 1,
+  status: 1,
 });
 
-
 skillProofSchema.index({
-    status: 1,
-    createdAt: -1
+  status: 1,
+  createdAt: -1,
 });
 
-
 skillProofSchema.index({
-    reviewedBy: 1,
-    reviewedAt: -1
+  reviewedBy: 1,
+  reviewedAt: -1,
 });
-
 
 /*
 |--------------------------------------------------------------------------
@@ -219,7 +188,4 @@ skillProofSchema.index({
 |--------------------------------------------------------------------------
 */
 
-export const SkillProof = mongoose.model(
-    "SkillProof",
-    skillProofSchema
-);
+export const SkillProof = mongoose.model("SkillProof", skillProofSchema);

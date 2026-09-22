@@ -3,107 +3,75 @@
    ========================================================= */
 
 .skill-gap-page {
-  width:
-    100%;
+  width: 100%;
 }
-
 
 /* =========================================================
    HEADER
    ========================================================= */
 
 .skill-gap-header {
-  display:
-    flex;
+  display: flex;
 
-  align-items:
-    flex-end;
+  align-items: flex-end;
 
-  justify-content:
-    space-between;
+  justify-content: space-between;
 
-  gap:
-    24px;
+  gap: 24px;
 
-  margin-bottom:
-    24px;
+  margin-bottom: 24px;
 }
-
 
 .skill-gap-header h1 {
-  max-width:
-    850px;
+  max-width: 850px;
 
-  margin:
-    8px 0 8px;
+  margin: 8px 0 8px;
 
-  color:
-    var(--ph-text);
+  color: var(--ph-text);
 
-  font-size:
-    clamp(30px, 3vw, 42px);
+  font-size: clamp(30px, 3vw, 42px);
 
-  line-height:
-    1.08;
+  line-height: 1.08;
 
-  letter-spacing:
-    -0.04em;
+  letter-spacing: -0.04em;
 }
-
 
 .skill-gap-header p {
-  max-width:
-    760px;
+  max-width: 760px;
 
-  margin:
-    0;
+  margin: 0;
 
-  color:
-    var(--ph-text-muted);
+  color: var(--ph-text-muted);
 
-  font-size:
-    14px;
+  font-size: 14px;
 
-  line-height:
-    1.65;
+  line-height: 1.65;
 }
-
 
 .skill-gap-header-action,
 .skill-gap-primary-button,
 .skill-gap-secondary-button {
-  min-height:
-    42px;
+  min-height: 42px;
 
-  display:
-    inline-flex;
+  display: inline-flex;
 
-  align-items:
-    center;
+  align-items: center;
 
-  justify-content:
-    center;
+  justify-content: center;
 
-  gap:
-    7px;
+  gap: 7px;
 
-  flex-shrink:
-    0;
+  flex-shrink: 0;
 
-  padding:
-    0 14px;
+  padding: 0 14px;
 
-  border-radius:
-    var(--ph-radius-sm);
+  border-radius: var(--ph-radius-sm);
 
-  text-decoration:
-    none;
+  text-decoration: none;
 
-  font-size:
-    12px;
+  font-size: 12px;
 
-  font-weight:
-    750;
+  font-weight: 750;
 
   transition:
     transform var(--ph-transition-fast),
@@ -111,197 +79,133 @@
     border-color var(--ph-transition-fast);
 }
 
-
 .skill-gap-header-action,
 .skill-gap-primary-button {
-  border:
-    0;
+  border: 0;
 
-  background:
-    linear-gradient(
-      135deg,
-      var(--ph-primary-strong),
-      #27b7ef
-    );
+  background: linear-gradient(135deg, var(--ph-primary-strong), #27b7ef);
 
-  color:
-    #ffffff;
+  color: #ffffff;
 }
-
 
 .skill-gap-header-action:hover,
 .skill-gap-primary-button:hover {
-  transform:
-    translateY(-1px);
+  transform: translateY(-1px);
 }
-
 
 .skill-gap-secondary-button {
-  border:
-    1px solid var(--ph-border);
+  border: 1px solid var(--ph-border);
 
-  background:
-    rgba(255, 255, 255, 0.025);
+  background: rgba(255, 255, 255, 0.025);
 
-  color:
-    var(--ph-text-soft);
+  color: var(--ph-text-soft);
 }
-
 
 .skill-gap-secondary-button:hover {
-  transform:
-    translateY(-1px);
+  transform: translateY(-1px);
 
-  border-color:
-    var(--ph-border-strong);
+  border-color: var(--ph-border-strong);
 }
-
 
 /* =========================================================
    ERROR
    ========================================================= */
 
 .skill-gap-inline-error {
-  display:
-    flex;
+  display: flex;
 
-  align-items:
-    flex-start;
+  align-items: flex-start;
 
-  gap:
-    9px;
+  gap: 9px;
 
-  margin-bottom:
-    16px;
+  margin-bottom: 16px;
 
-  padding:
-    12px 14px;
+  padding: 12px 14px;
 
-  border:
-    1px solid rgba(248, 113, 113, 0.16);
+  border: 1px solid rgba(248, 113, 113, 0.16);
 
-  border-radius:
-    var(--ph-radius-sm);
+  border-radius: var(--ph-radius-sm);
 
-  background:
-    var(--ph-danger-soft);
+  background: var(--ph-danger-soft);
 
-  color:
-    #fca5a5;
+  color: #fca5a5;
 
-  font-size:
-    12px;
+  font-size: 12px;
 
-  line-height:
-    1.5;
+  line-height: 1.5;
 }
-
 
 .skill-gap-inline-error svg {
-  flex-shrink:
-    0;
+  flex-shrink: 0;
 
-  margin-top:
-    1px;
+  margin-top: 1px;
 }
-
 
 /* =========================================================
    NO ROLES
    ========================================================= */
 
 .skill-gap-no-roles {
-  display:
-    flex;
+  display: flex;
 
-  align-items:
-    center;
+  align-items: center;
 
-  gap:
-    14px;
+  gap: 14px;
 
-  margin-bottom:
-    16px;
+  margin-bottom: 16px;
 
-  padding:
-    18px;
+  padding: 18px;
 
-  border:
-    1px solid rgba(250, 204, 21, 0.14);
+  border: 1px solid rgba(250, 204, 21, 0.14);
 
-  border-radius:
-    var(--ph-radius-lg);
+  border-radius: var(--ph-radius-lg);
 
-  background:
-    rgba(250, 204, 21, 0.045);
+  background: rgba(250, 204, 21, 0.045);
 }
-
 
 .skill-gap-no-roles-icon {
-  width:
-    42px;
+  width: 42px;
 
-  height:
-    42px;
+  height: 42px;
 
-  display:
-    grid;
+  display: grid;
 
-  place-items:
-    center;
+  place-items: center;
 
-  flex-shrink:
-    0;
+  flex-shrink: 0;
 
-  border-radius:
-    10px;
+  border-radius: 10px;
 
-  background:
-    rgba(250, 204, 21, 0.08);
+  background: rgba(250, 204, 21, 0.08);
 
-  color:
-    var(--ph-warning);
+  color: var(--ph-warning);
 }
-
 
 .skill-gap-no-roles > div:nth-child(2) {
-  min-width:
-    0;
+  min-width: 0;
 
-  flex:
-    1;
+  flex: 1;
 }
-
 
 .skill-gap-no-roles h2 {
-  margin:
-    6px 0 4px;
+  margin: 6px 0 4px;
 
-  color:
-    var(--ph-text);
+  color: var(--ph-text);
 
-  font-size:
-    16px;
+  font-size: 16px;
 
-  line-height:
-    1.3;
+  line-height: 1.3;
 }
-
 
 .skill-gap-no-roles p {
-  margin:
-    0;
+  margin: 0;
 
-  color:
-    var(--ph-text-muted);
+  color: var(--ph-text-muted);
 
-  font-size:
-    11px;
+  font-size: 11px;
 
-  line-height:
-    1.55;
+  line-height: 1.55;
 }
-
 
 /* =========================================================
    LOADING / ERROR STATE
@@ -309,2315 +213,1551 @@
 
 .skill-gap-loading,
 .skill-gap-error-state {
-  min-height:
-    520px;
+  min-height: 520px;
 
-  display:
-    flex;
+  display: flex;
 
-  flex-direction:
-    column;
+  flex-direction: column;
 
-  align-items:
-    center;
+  align-items: center;
 
-  justify-content:
-    center;
+  justify-content: center;
 
-  padding:
-    40px;
+  padding: 40px;
 
-  text-align:
-    center;
+  text-align: center;
 
-  border:
-    1px solid var(--ph-border);
+  border: 1px solid var(--ph-border);
 
-  border-radius:
-    var(--ph-radius-lg);
+  border-radius: var(--ph-radius-lg);
 
-  background:
-    rgba(8, 23, 37, 0.76);
+  background: rgba(8, 23, 37, 0.76);
 }
-
 
 .skill-gap-loading svg {
-  color:
-    var(--ph-primary);
+  color: var(--ph-primary);
 
-  animation:
-    skillGapSpin 1s linear infinite;
+  animation: skillGapSpin 1s linear infinite;
 }
-
 
 .skill-gap-loading h1,
 .skill-gap-error-state h1 {
-  margin:
-    16px 0 7px;
+  margin: 16px 0 7px;
 
-  color:
-    var(--ph-text);
+  color: var(--ph-text);
 
-  font-size:
-    23px;
+  font-size: 23px;
 
-  line-height:
-    1.25;
+  line-height: 1.25;
 }
-
 
 .skill-gap-loading p,
 .skill-gap-error-state p {
-  max-width:
-    520px;
+  max-width: 520px;
 
-  margin:
-    0;
+  margin: 0;
 
-  color:
-    var(--ph-text-muted);
+  color: var(--ph-text-muted);
 
-  font-size:
-    13px;
+  font-size: 13px;
 
-  line-height:
-    1.6;
+  line-height: 1.6;
 }
-
 
 .skill-gap-error-icon {
-  width:
-    46px;
+  width: 46px;
 
-  height:
-    46px;
+  height: 46px;
 
-  display:
-    grid;
+  display: grid;
 
-  place-items:
-    center;
+  place-items: center;
 
-  border-radius:
-    13px;
+  border-radius: 13px;
 
-  background:
-    var(--ph-danger-soft);
+  background: var(--ph-danger-soft);
 
-  color:
-    var(--ph-danger);
+  color: var(--ph-danger);
 }
-
 
 .skill-gap-error-state .candidate-section-eyebrow {
-  margin-top:
-    15px;
+  margin-top: 15px;
 }
-
 
 /* =========================================================
    READINESS
    ========================================================= */
 
 .skill-gap-readiness-card {
-  display:
-    flex;
+  display: flex;
 
-  align-items:
-    stretch;
+  align-items: stretch;
 
-  justify-content:
-    space-between;
+  justify-content: space-between;
 
-  gap:
-    25px;
+  gap: 25px;
 
-  margin-bottom:
-    16px;
+  margin-bottom: 16px;
 
-  overflow:
-    hidden;
+  overflow: hidden;
 
-  border:
-    1px solid rgba(45, 184, 255, 0.17);
+  border: 1px solid rgba(45, 184, 255, 0.17);
 
-  border-radius:
-    var(--ph-radius-lg);
+  border-radius: var(--ph-radius-lg);
 
-  background:
-    linear-gradient(
-      118deg,
-      rgba(10, 37, 58, 0.98),
-      rgba(7, 20, 33, 0.97)
-    );
+  background: linear-gradient(
+    118deg,
+    rgba(10, 37, 58, 0.98),
+    rgba(7, 20, 33, 0.97)
+  );
 
-  box-shadow:
-    var(--ph-shadow-sm);
+  box-shadow: var(--ph-shadow-sm);
 }
-
 
 .skill-gap-readiness-copy {
-  min-width:
-    0;
+  min-width: 0;
 
-  display:
-    flex;
+  display: flex;
 
-  align-items:
-    flex-start;
+  align-items: flex-start;
 
-  gap:
-    17px;
+  gap: 17px;
 
-  padding:
-    25px;
+  padding: 25px;
 }
-
 
 .skill-gap-readiness-icon {
-  width:
-    50px;
+  width: 50px;
 
-  height:
-    50px;
+  height: 50px;
 
-  display:
-    grid;
+  display: grid;
 
-  place-items:
-    center;
+  place-items: center;
 
-  flex-shrink:
-    0;
+  flex-shrink: 0;
 
-  border-radius:
-    var(--ph-radius-md);
+  border-radius: var(--ph-radius-md);
 
-  background:
-    var(--ph-primary-soft);
+  background: var(--ph-primary-soft);
 
-  color:
-    var(--ph-primary);
+  color: var(--ph-primary);
 }
-
 
 .skill-gap-readiness-copy h2 {
-  margin:
-    7px 0 6px;
+  margin: 7px 0 6px;
 
-  color:
-    var(--ph-text);
+  color: var(--ph-text);
 
-  font-size:
-    21px;
+  font-size: 21px;
 
-  line-height:
-    1.28;
+  line-height: 1.28;
 
-  letter-spacing:
-    -0.02em;
+  letter-spacing: -0.02em;
 }
-
 
 .skill-gap-readiness-copy p {
-  max-width:
-    700px;
+  max-width: 700px;
 
-  margin:
-    0;
+  margin: 0;
 
-  color:
-    var(--ph-text-muted);
+  color: var(--ph-text-muted);
 
-  font-size:
-    12px;
+  font-size: 12px;
 
-  line-height:
-    1.6;
+  line-height: 1.6;
 }
-
 
 .skill-gap-readiness-bar-row {
-  max-width:
-    700px;
+  max-width: 700px;
 
-  display:
-    flex;
+  display: flex;
 
-  align-items:
-    center;
+  align-items: center;
 
-  gap:
-    10px;
+  gap: 10px;
 
-  margin-top:
-    15px;
+  margin-top: 15px;
 }
-
 
 .skill-gap-readiness-bar {
-  height:
-    8px;
+  height: 8px;
 
-  flex:
-    1;
+  flex: 1;
 
-  overflow:
-    hidden;
+  overflow: hidden;
 
-  border-radius:
-    999px;
+  border-radius: 999px;
 
-  background:
-    rgba(148, 163, 184, 0.13);
+  background: rgba(148, 163, 184, 0.13);
 }
-
 
 .skill-gap-readiness-fill {
-  height:
-    100%;
+  height: 100%;
 
-  border-radius:
-    inherit;
+  border-radius: inherit;
 
-  background:
-    linear-gradient(
-      90deg,
-      var(--ph-primary-strong),
-      #56cffd
-    );
+  background: linear-gradient(90deg, var(--ph-primary-strong), #56cffd);
 
-  transition:
-    width 400ms ease;
+  transition: width 400ms ease;
 }
-
 
 .skill-gap-readiness-bar-row > strong {
-  min-width:
-    40px;
+  min-width: 40px;
 
-  color:
-    var(--ph-primary);
+  color: var(--ph-primary);
 
-  text-align:
-    right;
+  text-align: right;
 
-  font-size:
-    13px;
+  font-size: 13px;
 }
-
 
 .skill-gap-readiness-stats {
-  min-width:
-    205px;
+  min-width: 205px;
 
-  display:
-    grid;
+  display: grid;
 
-  grid-template-columns:
-    repeat(2, 1fr);
+  grid-template-columns: repeat(2, 1fr);
 
-  border-left:
-    1px solid rgba(148, 163, 184, 0.09);
+  border-left: 1px solid rgba(148, 163, 184, 0.09);
 }
-
 
 .skill-gap-readiness-stats > div {
-  display:
-    flex;
+  display: flex;
 
-  flex-direction:
-    column;
+  flex-direction: column;
 
-  justify-content:
-    center;
+  justify-content: center;
 
-  padding:
-    20px;
+  padding: 20px;
 }
-
 
 .skill-gap-readiness-stats > div + div {
-  border-left:
-    1px solid rgba(148, 163, 184, 0.09);
+  border-left: 1px solid rgba(148, 163, 184, 0.09);
 }
-
 
 .skill-gap-readiness-stats span {
-  color:
-    var(--ph-text-subtle);
+  color: var(--ph-text-subtle);
 
-  font-size:
-    9px;
+  font-size: 9px;
 
-  font-weight:
-    800;
+  font-weight: 800;
 
-  letter-spacing:
-    0.1em;
+  letter-spacing: 0.1em;
 }
-
 
 .skill-gap-readiness-stats strong {
-  margin-top:
-    5px;
+  margin-top: 5px;
 
-  color:
-    var(--ph-text);
+  color: var(--ph-text);
 
-  font-size:
-    24px;
+  font-size: 24px;
 
-  line-height:
-    1.05;
+  line-height: 1.05;
 }
-
 
 .skill-gap-readiness-stats small {
-  margin-top:
-    4px;
+  margin-top: 4px;
 
-  color:
-    var(--ph-text-muted);
+  color: var(--ph-text-muted);
 
-  font-size:
-    9px;
+  font-size: 9px;
 
-  line-height:
-    1.45;
+  line-height: 1.45;
 }
-
 
 /* =========================================================
    METRICS
    ========================================================= */
 
 .skill-gap-metrics {
-  display:
-    grid;
+  display: grid;
 
-  grid-template-columns:
-    repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 
-  gap:
-    13px;
+  gap: 13px;
 
-  margin-bottom:
-    16px;
+  margin-bottom: 16px;
 }
-
 
 .skill-gap-metric {
-  min-width:
-    0;
+  min-width: 0;
 
-  display:
-    flex;
+  display: flex;
 
-  align-items:
-    center;
+  align-items: center;
 
-  gap:
-    12px;
+  gap: 12px;
 
-  padding:
-    17px;
+  padding: 17px;
 
-  border:
-    1px solid var(--ph-border);
+  border: 1px solid var(--ph-border);
 
-  border-radius:
-    var(--ph-radius-md);
+  border-radius: var(--ph-radius-md);
 
-  background:
-    rgba(8, 23, 37, 0.76);
+  background: rgba(8, 23, 37, 0.76);
 }
-
 
 .skill-gap-metric-icon {
-  width:
-    39px;
+  width: 39px;
 
-  height:
-    39px;
+  height: 39px;
 
-  display:
-    grid;
+  display: grid;
 
-  place-items:
-    center;
+  place-items: center;
 
-  flex-shrink:
-    0;
+  flex-shrink: 0;
 
-  border-radius:
-    10px;
+  border-radius: 10px;
 
-  background:
-    var(--ph-primary-soft);
+  background: var(--ph-primary-soft);
 
-  color:
-    var(--ph-primary);
+  color: var(--ph-primary);
 }
-
 
 .skill-gap-metric span,
 .skill-gap-metric small {
-  display:
-    block;
+  display: block;
 }
-
 
 .skill-gap-metric span {
-  color:
-    var(--ph-text-subtle);
+  color: var(--ph-text-subtle);
 
-  font-size:
-    9px;
+  font-size: 9px;
 
-  font-weight:
-    800;
+  font-weight: 800;
 
-  letter-spacing:
-    0.1em;
+  letter-spacing: 0.1em;
 }
-
 
 .skill-gap-metric strong {
-  display:
-    block;
+  display: block;
 
-  margin-top:
-    3px;
+  margin-top: 3px;
 
-  color:
-    var(--ph-text);
+  color: var(--ph-text);
 
-  font-size:
-    25px;
+  font-size: 25px;
 
-  line-height:
-    1.05;
+  line-height: 1.05;
 }
-
 
 .skill-gap-metric small {
-  margin-top:
-    3px;
+  margin-top: 3px;
 
-  color:
-    var(--ph-text-muted);
+  color: var(--ph-text-muted);
 
-  font-size:
-    10px;
+  font-size: 10px;
 
-  line-height:
-    1.45;
+  line-height: 1.45;
 }
-
 
 /* =========================================================
    PANELS
    ========================================================= */
 
 .skill-gap-main-grid {
-  display:
-    grid;
+  display: grid;
 
-  grid-template-columns:
-    repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 
-  gap:
-    16px;
+  gap: 16px;
 
-  margin-bottom:
-    16px;
+  margin-bottom: 16px;
 }
-
 
 .skill-gap-panel {
-  min-width:
-    0;
+  min-width: 0;
 
-  padding:
-    22px;
+  padding: 22px;
 
-  border:
-    1px solid var(--ph-border);
+  border: 1px solid var(--ph-border);
 
-  border-radius:
-    var(--ph-radius-lg);
+  border-radius: var(--ph-radius-lg);
 
-  background:
-    rgba(8, 23, 37, 0.76);
+  background: rgba(8, 23, 37, 0.76);
 
-  box-shadow:
-    var(--ph-shadow-sm);
+  box-shadow: var(--ph-shadow-sm);
 }
-
 
 .skill-gap-panel-heading {
-  display:
-    flex;
+  display: flex;
 
-  align-items:
-    flex-start;
+  align-items: flex-start;
 
-  justify-content:
-    space-between;
+  justify-content: space-between;
 
-  gap:
-    16px;
+  gap: 16px;
 
-  margin-bottom:
-    20px;
+  margin-bottom: 20px;
 }
-
 
 .skill-gap-panel-heading h2 {
-  margin:
-    7px 0 5px;
+  margin: 7px 0 5px;
 
-  color:
-    var(--ph-text);
+  color: var(--ph-text);
 
-  font-size:
-    18px;
+  font-size: 18px;
 
-  line-height:
-    1.3;
+  line-height: 1.3;
 
-  letter-spacing:
-    -0.02em;
+  letter-spacing: -0.02em;
 }
-
 
 .skill-gap-panel-heading p {
-  max-width:
-    680px;
+  max-width: 680px;
 
-  margin:
-    0;
+  margin: 0;
 
-  color:
-    var(--ph-text-muted);
+  color: var(--ph-text-muted);
 
-  font-size:
-    11px;
+  font-size: 11px;
 
-  line-height:
-    1.55;
+  line-height: 1.55;
 }
-
 
 .skill-gap-panel-icon {
-  flex-shrink:
-    0;
+  flex-shrink: 0;
 
-  color:
-    var(--ph-primary);
+  color: var(--ph-primary);
 }
-
 
 .skill-gap-panel-link,
 .skill-gap-primary-link {
-  display:
-    inline-flex;
+  display: inline-flex;
 
-  align-items:
-    center;
+  align-items: center;
 
-  gap:
-    5px;
+  gap: 5px;
 
-  margin-top:
-    15px;
+  margin-top: 15px;
 
-  color:
-    var(--ph-primary);
+  color: var(--ph-primary);
 
-  text-decoration:
-    none;
+  text-decoration: none;
 
-  font-size:
-    11px;
+  font-size: 11px;
 
-  font-weight:
-    750;
+  font-weight: 750;
 }
-
 
 /* =========================================================
    PRIORITY GAPS
    ========================================================= */
 
 .skill-gap-priority-list {
-  display:
-    flex;
+  display: flex;
 
-  flex-direction:
-    column;
+  flex-direction: column;
 }
-
 
 .skill-gap-priority-row {
-  min-height:
-    70px;
+  min-height: 70px;
 
-  display:
-    grid;
+  display: grid;
 
-  grid-template-columns:
-    38px minmax(0, 1fr) auto;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
 
-  align-items:
-    center;
+  align-items: center;
 
-  gap:
-    11px;
+  gap: 11px;
 
-  padding:
-    10px 0;
+  padding: 10px 0;
 
-  border-bottom:
-    1px solid rgba(148, 163, 184, 0.07);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.07);
 }
-
 
 .skill-gap-priority-row:last-child {
-  border-bottom:
-    0;
+  border-bottom: 0;
 }
-
 
 .skill-gap-priority-icon {
-  width:
-    34px;
+  width: 34px;
 
-  height:
-    34px;
+  height: 34px;
 
-  display:
-    grid;
+  display: grid;
 
-  place-items:
-    center;
+  place-items: center;
 
-  border-radius:
-    9px;
+  border-radius: 9px;
 }
-
 
 .skill-gap-priority-icon.high {
-  background:
-    var(--ph-danger-soft);
+  background: var(--ph-danger-soft);
 
-  color:
-    var(--ph-danger);
+  color: var(--ph-danger);
 }
-
 
 .skill-gap-priority-icon.medium {
-  background:
-    var(--ph-warning-soft);
+  background: var(--ph-warning-soft);
 
-  color:
-    var(--ph-warning);
+  color: var(--ph-warning);
 }
-
 
 .skill-gap-priority-icon.low {
-  background:
-    var(--ph-primary-soft);
+  background: var(--ph-primary-soft);
 
-  color:
-    var(--ph-primary);
+  color: var(--ph-primary);
 }
-
 
 .skill-gap-priority-content {
-  min-width:
-    0;
+  min-width: 0;
 }
-
 
 .skill-gap-priority-title {
-  display:
-    flex;
+  display: flex;
 
-  align-items:
-    center;
+  align-items: center;
 
-  flex-wrap:
-    wrap;
+  flex-wrap: wrap;
 
-  gap:
-    7px;
+  gap: 7px;
 }
-
 
 .skill-gap-priority-title strong {
-  color:
-    var(--ph-text-soft);
+  color: var(--ph-text-soft);
 
-  font-size:
-    13px;
+  font-size: 13px;
 }
-
 
 .skill-gap-priority-content p {
-  margin:
-    3px 0 0;
+  margin: 3px 0 0;
 
-  color:
-    var(--ph-text-muted);
+  color: var(--ph-text-muted);
 
-  font-size:
-    10px;
+  font-size: 10px;
 
-  line-height:
-    1.45;
+  line-height: 1.45;
 }
-
 
 .skill-gap-priority-content p strong {
-  color:
-    var(--ph-text-soft);
+  color: var(--ph-text-soft);
 }
-
 
 .skill-gap-priority-badge {
-  display:
-    inline-flex;
+  display: inline-flex;
 
-  align-items:
-    center;
+  align-items: center;
 
-  padding:
-    4px 7px;
+  padding: 4px 7px;
 
-  border-radius:
-    999px;
+  border-radius: 999px;
 
-  font-size:
-    8px;
+  font-size: 8px;
 
-  font-weight:
-    800;
+  font-weight: 800;
 
-  letter-spacing:
-    0.04em;
+  letter-spacing: 0.04em;
 
-  text-transform:
-    uppercase;
+  text-transform: uppercase;
 }
-
 
 .skill-gap-priority-badge.high {
-  background:
-    var(--ph-danger-soft);
+  background: var(--ph-danger-soft);
 
-  color:
-    var(--ph-danger);
+  color: var(--ph-danger);
 }
-
 
 .skill-gap-priority-badge.medium {
-  background:
-    var(--ph-warning-soft);
+  background: var(--ph-warning-soft);
 
-  color:
-    var(--ph-warning);
+  color: var(--ph-warning);
 }
-
 
 .skill-gap-priority-badge.low {
-  background:
-    var(--ph-primary-soft);
+  background: var(--ph-primary-soft);
 
-  color:
-    var(--ph-primary);
+  color: var(--ph-primary);
 }
-
 
 .skill-gap-priority-percentage {
-  min-width:
-    60px;
+  min-width: 60px;
 
-  text-align:
-    right;
+  text-align: right;
 }
-
 
 .skill-gap-priority-percentage strong {
-  display:
-    block;
+  display: block;
 
-  color:
-    var(--ph-text);
+  color: var(--ph-text);
 
-  font-size:
-    16px;
+  font-size: 16px;
 
-  line-height:
-    1.1;
+  line-height: 1.1;
 }
-
 
 .skill-gap-priority-percentage span {
-  display:
-    block;
+  display: block;
 
-  margin-top:
-    3px;
+  margin-top: 3px;
 
-  color:
-    var(--ph-text-subtle);
+  color: var(--ph-text-subtle);
 
-  font-size:
-    8px;
+  font-size: 8px;
 }
-
 
 /* =========================================================
    COVERAGE
    ========================================================= */
 
 .skill-gap-coverage-summary {
-  display:
-    grid;
+  display: grid;
 
-  grid-template-columns:
-    repeat(3, 1fr);
+  grid-template-columns: repeat(3, 1fr);
 
-  gap:
-    9px;
+  gap: 9px;
 
-  margin-bottom:
-    13px;
+  margin-bottom: 13px;
 }
-
 
 .skill-gap-coverage-summary > div {
-  padding:
-    13px;
+  padding: 13px;
 
-  border:
-    1px solid rgba(148, 163, 184, 0.08);
+  border: 1px solid rgba(148, 163, 184, 0.08);
 
-  border-radius:
-    9px;
+  border-radius: 9px;
 
-  background:
-    rgba(5, 17, 29, 0.45);
+  background: rgba(5, 17, 29, 0.45);
 }
-
 
 .skill-gap-coverage-summary strong {
-  display:
-    block;
+  display: block;
 
-  color:
-    var(--ph-text);
+  color: var(--ph-text);
 
-  font-size:
-    20px;
+  font-size: 20px;
 
-  line-height:
-    1.1;
+  line-height: 1.1;
 }
-
 
 .skill-gap-coverage-summary span {
-  display:
-    block;
+  display: block;
 
-  margin-top:
-    3px;
+  margin-top: 3px;
 
-  color:
-    var(--ph-text-muted);
+  color: var(--ph-text-muted);
 
-  font-size:
-    9px;
+  font-size: 9px;
 
-  line-height:
-    1.4;
+  line-height: 1.4;
 }
-
 
 .skill-gap-capability-list {
-  display:
-    flex;
+  display: flex;
 
-  flex-direction:
-    column;
+  flex-direction: column;
 }
-
 
 .skill-gap-capability-row {
-  min-height:
-    40px;
+  min-height: 40px;
 
-  display:
-    flex;
+  display: flex;
 
-  align-items:
-    center;
+  align-items: center;
 
-  justify-content:
-    space-between;
+  justify-content: space-between;
 
-  gap:
-    12px;
+  gap: 12px;
 
-  border-bottom:
-    1px solid rgba(148, 163, 184, 0.06);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.06);
 
-  font-size:
-    11px;
+  font-size: 11px;
 }
-
 
 .skill-gap-capability-row:last-child {
-  border-bottom:
-    0;
+  border-bottom: 0;
 }
-
 
 .skill-gap-capability-row > div {
-  min-width:
-    0;
+  min-width: 0;
 
-  display:
-    flex;
+  display: flex;
 
-  align-items:
-    center;
+  align-items: center;
 
-  gap:
-    7px;
+  gap: 7px;
 }
-
 
 .skill-gap-capability-row > div svg {
-  flex-shrink:
-    0;
+  flex-shrink: 0;
 }
 
-
-.skill-gap-capability-row.verified
-> div svg {
-  color:
-    var(--ph-success);
+.skill-gap-capability-row.verified > div svg {
+  color: var(--ph-success);
 }
 
-
-.skill-gap-capability-row.unverified
-> div svg {
-  color:
-    var(--ph-warning);
+.skill-gap-capability-row.unverified > div svg {
+  color: var(--ph-warning);
 }
-
 
 .skill-gap-capability-row > div span {
-  overflow:
-    hidden;
+  overflow: hidden;
 
-  color:
-    var(--ph-text-soft);
+  color: var(--ph-text-soft);
 
-  text-overflow:
-    ellipsis;
+  text-overflow: ellipsis;
 
-  white-space:
-    nowrap;
+  white-space: nowrap;
 }
-
 
 .skill-gap-capability-row > span {
-  flex-shrink:
-    0;
+  flex-shrink: 0;
 
-  color:
-    var(--ph-text-subtle);
+  color: var(--ph-text-subtle);
 
-  font-size:
-    9px;
+  font-size: 9px;
 }
 
-
-.skill-gap-capability-row.verified
-> span {
-  color:
-    var(--ph-success);
+.skill-gap-capability-row.verified > span {
+  color: var(--ph-success);
 }
-
 
 /* =========================================================
    LEARNING
    ========================================================= */
 
 .skill-gap-learning-list {
-  display:
-    flex;
+  display: flex;
 
-  flex-direction:
-    column;
+  flex-direction: column;
 }
-
 
 .skill-gap-learning-row {
-  min-height:
-    71px;
+  min-height: 71px;
 
-  display:
-    flex;
+  display: flex;
 
-  align-items:
-    center;
+  align-items: center;
 
-  gap:
-    11px;
+  gap: 11px;
 
-  border-bottom:
-    1px solid rgba(148, 163, 184, 0.07);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.07);
 
-  color:
-    inherit;
+  color: inherit;
 
-  text-decoration:
-    none;
+  text-decoration: none;
 }
-
 
 .skill-gap-learning-row:last-child {
-  border-bottom:
-    0;
+  border-bottom: 0;
 }
 
-
-.skill-gap-learning-row:hover
-.skill-gap-learning-copy strong {
-  color:
-    var(--ph-primary);
+.skill-gap-learning-row:hover .skill-gap-learning-copy strong {
+  color: var(--ph-primary);
 }
-
 
 .skill-gap-learning-icon {
-  width:
-    36px;
+  width: 36px;
 
-  height:
-    36px;
+  height: 36px;
 
-  display:
-    grid;
+  display: grid;
 
-  place-items:
-    center;
+  place-items: center;
 
-  flex-shrink:
-    0;
+  flex-shrink: 0;
 
-  border-radius:
-    9px;
+  border-radius: 9px;
 
-  background:
-    var(--ph-primary-soft);
+  background: var(--ph-primary-soft);
 
-  color:
-    var(--ph-primary);
+  color: var(--ph-primary);
 }
-
 
 .skill-gap-learning-copy {
-  min-width:
-    0;
+  min-width: 0;
 
-  flex:
-    1;
+  flex: 1;
 }
-
 
 .skill-gap-learning-copy > div {
-  display:
-    flex;
+  display: flex;
 
-  align-items:
-    center;
+  align-items: center;
 
-  flex-wrap:
-    wrap;
+  flex-wrap: wrap;
 
-  gap:
-    7px;
+  gap: 7px;
 }
-
 
 .skill-gap-learning-copy strong {
-  color:
-    var(--ph-text-soft);
+  color: var(--ph-text-soft);
 
-  font-size:
-    12px;
+  font-size: 12px;
 }
-
 
 .skill-gap-learning-copy p {
-  overflow:
-    hidden;
+  overflow: hidden;
 
-  margin:
-    3px 0;
+  margin: 3px 0;
 
-  color:
-    var(--ph-text-muted);
+  color: var(--ph-text-muted);
 
-  font-size:
-    10px;
+  font-size: 10px;
 
-  line-height:
-    1.45;
+  line-height: 1.45;
 
-  text-overflow:
-    ellipsis;
+  text-overflow: ellipsis;
 
-  white-space:
-    nowrap;
+  white-space: nowrap;
 }
-
 
 .skill-gap-learning-copy small {
-  color:
-    var(--ph-text-subtle);
+  color: var(--ph-text-subtle);
 
-  font-size:
-    9px;
+  font-size: 9px;
 }
-
 
 .skill-gap-row-arrow {
-  flex-shrink:
-    0;
+  flex-shrink: 0;
 
-  color:
-    var(--ph-text-subtle);
+  color: var(--ph-text-subtle);
 }
-
 
 /* =========================================================
    EMPTY
    ========================================================= */
 
 .skill-gap-empty {
-  min-height:
-    110px;
+  min-height: 110px;
 
-  display:
-    flex;
+  display: flex;
 
-  align-items:
-    center;
+  align-items: center;
 
-  gap:
-    11px;
+  gap: 11px;
 
-  padding:
-    15px;
+  padding: 15px;
 
-  border:
-    1px dashed rgba(148, 163, 184, 0.12);
+  border: 1px dashed rgba(148, 163, 184, 0.12);
 
-  border-radius:
-    10px;
+  border-radius: 10px;
 
-  color:
-    var(--ph-text-muted);
+  color: var(--ph-text-muted);
 }
-
 
 .skill-gap-empty > svg {
-  flex-shrink:
-    0;
+  flex-shrink: 0;
 
-  color:
-    var(--ph-primary);
+  color: var(--ph-primary);
 }
-
 
 .skill-gap-empty strong,
 .skill-gap-empty span {
-  display:
-    block;
+  display: block;
 }
-
 
 .skill-gap-empty strong {
-  color:
-    var(--ph-text);
+  color: var(--ph-text);
 
-  font-size:
-    12px;
+  font-size: 12px;
 }
-
 
 .skill-gap-empty span {
-  margin-top:
-    4px;
+  margin-top: 4px;
 
-  color:
-    var(--ph-text-muted);
+  color: var(--ph-text-muted);
 
-  font-size:
-    10px;
+  font-size: 10px;
 
-  line-height:
-    1.55;
+  line-height: 1.55;
 }
-
 
 /* =========================================================
    ROLE ANALYSIS
    ========================================================= */
 
 .skill-gap-role-panel {
-  margin-bottom:
-    16px;
+  margin-bottom: 16px;
 }
-
 
 .skill-gap-role-count {
-  flex-shrink:
-    0;
+  flex-shrink: 0;
 
-  padding:
-    5px 8px;
+  padding: 5px 8px;
 
-  border-radius:
-    999px;
+  border-radius: 999px;
 
-  background:
-    rgba(148, 163, 184, 0.07);
+  background: rgba(148, 163, 184, 0.07);
 
-  color:
-    var(--ph-text-muted);
+  color: var(--ph-text-muted);
 
-  font-size:
-    9px;
+  font-size: 9px;
 
-  font-weight:
-    750;
+  font-weight: 750;
 }
-
 
 .skill-gap-role-list {
-  display:
-    flex;
+  display: flex;
 
-  flex-direction:
-    column;
+  flex-direction: column;
 
-  gap:
-    9px;
+  gap: 9px;
 }
-
 
 .skill-gap-role-card {
-  overflow:
-    hidden;
+  overflow: hidden;
 
-  border:
-    1px solid rgba(148, 163, 184, 0.08);
+  border: 1px solid rgba(148, 163, 184, 0.08);
 
-  border-radius:
-    11px;
+  border-radius: 11px;
 
-  background:
-    rgba(5, 17, 29, 0.44);
+  background: rgba(5, 17, 29, 0.44);
 }
-
 
 .skill-gap-role-card.expanded {
-  border-color:
-    rgba(45, 184, 255, 0.17);
+  border-color: rgba(45, 184, 255, 0.17);
 
-  background:
-    rgba(7, 22, 35, 0.70);
+  background: rgba(7, 22, 35, 0.7);
 }
-
 
 .skill-gap-role-summary {
-  width:
-    100%;
+  width: 100%;
 
-  min-height:
-    78px;
+  min-height: 78px;
 
-  display:
-    grid;
+  display: grid;
 
-  grid-template-columns:
-    40px minmax(0, 1fr) auto 120px 30px;
+  grid-template-columns: 40px minmax(0, 1fr) auto 120px 30px;
 
-  align-items:
-    center;
+  align-items: center;
 
-  gap:
-    12px;
+  gap: 12px;
 
-  padding:
-    13px 14px;
+  padding: 13px 14px;
 
-  border:
-    0;
+  border: 0;
 
-  background:
-    transparent;
+  background: transparent;
 
-  color:
-    inherit;
+  color: inherit;
 
-  font-family:
-    inherit;
+  font-family: inherit;
 
-  text-align:
-    left;
+  text-align: left;
 
-  cursor:
-    pointer;
+  cursor: pointer;
 }
-
 
 .skill-gap-company-avatar {
-  width:
-    40px;
+  width: 40px;
 
-  height:
-    40px;
+  height: 40px;
 
-  display:
-    grid;
+  display: grid;
 
-  place-items:
-    center;
+  place-items: center;
 
-  overflow:
-    hidden;
+  overflow: hidden;
 
-  border:
-    1px solid rgba(45, 184, 255, 0.12);
+  border: 1px solid rgba(45, 184, 255, 0.12);
 
-  border-radius:
-    10px;
+  border-radius: 10px;
 
-  background:
-    #0c2940;
+  background: #0c2940;
 
-  color:
-    #7bcff5;
+  color: #7bcff5;
 
-  font-size:
-    12px;
+  font-size: 12px;
 
-  font-weight:
-    800;
+  font-weight: 800;
 }
-
 
 .skill-gap-company-avatar img {
-  width:
-    100%;
+  width: 100%;
 
-  height:
-    100%;
+  height: 100%;
 
-  object-fit:
-    contain;
+  object-fit: contain;
 
-  background:
-    #ffffff;
+  background: #ffffff;
 }
-
 
 .skill-gap-role-main {
-  min-width:
-    0;
+  min-width: 0;
 }
-
 
 .skill-gap-role-title-line {
-  display:
-    flex;
+  display: flex;
 
-  align-items:
-    center;
+  align-items: center;
 
-  flex-wrap:
-    wrap;
+  flex-wrap: wrap;
 
-  gap:
-    8px;
+  gap: 8px;
 }
-
 
 .skill-gap-role-title-line h3 {
-  margin:
-    0;
+  margin: 0;
 
-  color:
-    var(--ph-text);
+  color: var(--ph-text);
 
-  font-size:
-    13px;
+  font-size: 13px;
 
-  line-height:
-    1.4;
+  line-height: 1.4;
 }
-
 
 .skill-gap-role-title-line span {
-  color:
-    var(--ph-text-muted);
+  color: var(--ph-text-muted);
 
-  font-size:
-    10px;
+  font-size: 10px;
 }
-
 
 .skill-gap-role-meta {
-  display:
-    flex;
+  display: flex;
 
-  align-items:
-    center;
+  align-items: center;
 
-  flex-wrap:
-    wrap;
+  flex-wrap: wrap;
 
-  gap:
-    10px;
+  gap: 10px;
 
-  margin-top:
-    5px;
+  margin-top: 5px;
 }
-
 
 .skill-gap-role-meta span {
-  display:
-    inline-flex;
+  display: inline-flex;
 
-  align-items:
-    center;
+  align-items: center;
 
-  gap:
-    4px;
+  gap: 4px;
 
-  color:
-    var(--ph-text-subtle);
+  color: var(--ph-text-subtle);
 
-  font-size:
-    9px;
+  font-size: 9px;
 }
-
 
 .skill-gap-role-meta svg {
-  flex-shrink:
-    0;
+  flex-shrink: 0;
 
-  color:
-    var(--ph-primary);
+  color: var(--ph-primary);
 }
-
 
 .skill-gap-match {
-  min-width:
-    45px;
+  min-width: 45px;
 
-  text-align:
-    right;
+  text-align: right;
 }
-
 
 .skill-gap-match strong {
-  display:
-    block;
+  display: block;
 
-  color:
-    var(--ph-primary);
+  color: var(--ph-primary);
 
-  font-size:
-    17px;
+  font-size: 17px;
 
-  line-height:
-    1.05;
+  line-height: 1.05;
 }
-
 
 .skill-gap-match span {
-  display:
-    block;
+  display: block;
 
-  margin-top:
-    3px;
+  margin-top: 3px;
 
-  color:
-    var(--ph-text-subtle);
+  color: var(--ph-text-subtle);
 
-  font-size:
-    8px;
+  font-size: 8px;
 }
-
 
 .skill-gap-match-bar {
-  height:
-    6px;
+  height: 6px;
 
-  overflow:
-    hidden;
+  overflow: hidden;
 
-  border-radius:
-    999px;
+  border-radius: 999px;
 
-  background:
-    rgba(148, 163, 184, 0.11);
+  background: rgba(148, 163, 184, 0.11);
 }
-
 
 .skill-gap-match-bar > div {
-  height:
-    100%;
+  height: 100%;
 
-  border-radius:
-    inherit;
+  border-radius: inherit;
 
-  background:
-    linear-gradient(
-      90deg,
-      var(--ph-primary-strong),
-      #56cffd
-    );
+  background: linear-gradient(90deg, var(--ph-primary-strong), #56cffd);
 }
-
 
 .skill-gap-expand-icon {
-  width:
-    30px;
+  width: 30px;
 
-  height:
-    30px;
+  height: 30px;
 
-  display:
-    grid;
+  display: grid;
 
-  place-items:
-    center;
+  place-items: center;
 
-  border-radius:
-    8px;
+  border-radius: 8px;
 
-  color:
-    var(--ph-text-subtle);
+  color: var(--ph-text-subtle);
 }
 
+.skill-gap-role-summary:hover .skill-gap-expand-icon {
+  color: var(--ph-primary);
 
-.skill-gap-role-summary:hover
-.skill-gap-expand-icon {
-  color:
-    var(--ph-primary);
-
-  background:
-    rgba(45, 184, 255, 0.06);
+  background: rgba(45, 184, 255, 0.06);
 }
-
 
 /* =========================================================
    ROLE DETAILS
    ========================================================= */
 
 .skill-gap-role-details {
-  padding:
-    0 14px 15px 66px;
+  padding: 0 14px 15px 66px;
 }
-
 
 .skill-gap-role-description {
-  padding:
-    13px 0;
+  padding: 13px 0;
 
-  border-top:
-    1px solid rgba(148, 163, 184, 0.07);
+  border-top: 1px solid rgba(148, 163, 184, 0.07);
 }
-
 
 .skill-gap-role-description > span {
-  display:
-    block;
+  display: block;
 
-  color:
-    var(--ph-text-subtle);
+  color: var(--ph-text-subtle);
 
-  font-size:
-    8px;
+  font-size: 8px;
 
-  font-weight:
-    800;
+  font-weight: 800;
 
-  letter-spacing:
-    0.10em;
+  letter-spacing: 0.1em;
 }
-
 
 .skill-gap-role-description p {
-  max-width:
-    900px;
+  max-width: 900px;
 
-  margin:
-    5px 0 0;
+  margin: 5px 0 0;
 
-  color:
-    var(--ph-text-muted);
+  color: var(--ph-text-muted);
 
-  font-size:
-    10px;
+  font-size: 10px;
 
-  line-height:
-    1.55;
+  line-height: 1.55;
 }
-
 
 .skill-gap-skill-columns {
-  display:
-    grid;
+  display: grid;
 
-  grid-template-columns:
-    repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 
-  gap:
-    14px;
+  gap: 14px;
 
-  padding-top:
-    7px;
+  padding-top: 7px;
 }
-
 
 .skill-gap-detail-heading {
-  display:
-    flex;
+  display: flex;
 
-  align-items:
-    center;
+  align-items: center;
 
-  gap:
-    6px;
+  gap: 6px;
 
-  color:
-    var(--ph-success);
+  color: var(--ph-success);
 
-  font-size:
-    11px;
+  font-size: 11px;
 }
-
 
 .skill-gap-detail-heading.gap {
-  color:
-    var(--ph-danger);
+  color: var(--ph-danger);
 }
-
 
 .skill-gap-detail-skills {
-  display:
-    flex;
+  display: flex;
 
-  flex-wrap:
-    wrap;
+  flex-wrap: wrap;
 
-  gap:
-    7px;
+  gap: 7px;
 
-  margin-top:
-    9px;
+  margin-top: 9px;
 }
-
 
 .skill-gap-detail-skill {
-  min-height:
-    29px;
+  min-height: 29px;
 
-  display:
-    inline-flex;
+  display: inline-flex;
 
-  align-items:
-    center;
+  align-items: center;
 
-  gap:
-    5px;
+  gap: 5px;
 
-  padding:
-    0 8px;
+  padding: 0 8px;
 
-  border-radius:
-    7px;
+  border-radius: 7px;
 
-  font-size:
-    9px;
+  font-size: 9px;
 
-  font-weight:
-    650;
+  font-weight: 650;
 }
-
 
 .skill-gap-detail-skill.matched {
-  border:
-    1px solid rgba(74, 222, 128, 0.11);
+  border: 1px solid rgba(74, 222, 128, 0.11);
 
-  background:
-    var(--ph-success-soft);
+  background: var(--ph-success-soft);
 
-  color:
-    #b7f7cb;
+  color: #b7f7cb;
 }
-
 
 .skill-gap-detail-skill.missing {
-  border:
-    1px solid rgba(248, 113, 113, 0.11);
+  border: 1px solid rgba(248, 113, 113, 0.11);
 
-  background:
-    var(--ph-danger-soft);
+  background: var(--ph-danger-soft);
 
-  color:
-    #fca5a5;
+  color: #fca5a5;
 }
-
 
 .skill-gap-detail-empty {
-  margin:
-    9px 0 0;
+  margin: 9px 0 0;
 
-  color:
-    var(--ph-text-subtle);
+  color: var(--ph-text-subtle);
 
-  font-size:
-    9px;
+  font-size: 9px;
 
-  line-height:
-    1.5;
+  line-height: 1.5;
 }
-
 
 .skill-gap-detail-empty.success {
-  color:
-    var(--ph-success);
+  color: var(--ph-success);
 }
-
 
 .skill-gap-role-footer {
-  display:
-    flex;
+  display: flex;
 
-  align-items:
-    center;
+  align-items: center;
 
-  justify-content:
-    space-between;
+  justify-content: space-between;
 
-  gap:
-    12px;
+  gap: 12px;
 
-  margin-top:
-    14px;
+  margin-top: 14px;
 
-  padding-top:
-    12px;
+  padding-top: 12px;
 
-  border-top:
-    1px solid rgba(148, 163, 184, 0.07);
+  border-top: 1px solid rgba(148, 163, 184, 0.07);
 }
-
 
 .skill-gap-role-footer > span {
-  display:
-    inline-flex;
+  display: inline-flex;
 
-  align-items:
-    center;
+  align-items: center;
 
-  gap:
-    5px;
+  gap: 5px;
 
-  color:
-    var(--ph-text-subtle);
+  color: var(--ph-text-subtle);
 
-  font-size:
-    9px;
+  font-size: 9px;
 }
-
 
 .skill-gap-role-footer > span svg {
-  color:
-    var(--ph-primary);
+  color: var(--ph-primary);
 }
-
 
 .skill-gap-role-link {
-  display:
-    inline-flex;
+  display: inline-flex;
 
-  align-items:
-    center;
+  align-items: center;
 
-  gap:
-    5px;
+  gap: 5px;
 
-  color:
-    var(--ph-primary);
+  color: var(--ph-primary);
 
-  text-decoration:
-    none;
+  text-decoration: none;
 
-  font-size:
-    10px;
+  font-size: 10px;
 
-  font-weight:
-    750;
+  font-weight: 750;
 }
-
 
 .skill-gap-role-empty {
-  min-height:
-    130px;
+  min-height: 130px;
 
-  display:
-    flex;
+  display: flex;
 
-  align-items:
-    center;
+  align-items: center;
 
-  gap:
-    12px;
+  gap: 12px;
 
-  padding:
-    17px;
+  padding: 17px;
 
-  border:
-    1px dashed rgba(148, 163, 184, 0.12);
+  border: 1px dashed rgba(148, 163, 184, 0.12);
 
-  border-radius:
-    10px;
+  border-radius: 10px;
 
-  color:
-    var(--ph-text-muted);
+  color: var(--ph-text-muted);
 }
-
 
 .skill-gap-role-empty > svg {
-  flex-shrink:
-    0;
+  flex-shrink: 0;
 
-  color:
-    var(--ph-primary);
+  color: var(--ph-primary);
 }
-
 
 .skill-gap-role-empty strong,
 .skill-gap-role-empty span {
-  display:
-    block;
+  display: block;
 }
-
 
 .skill-gap-role-empty strong {
-  color:
-    var(--ph-text);
+  color: var(--ph-text);
 
-  font-size:
-    12px;
+  font-size: 12px;
 }
-
 
 .skill-gap-role-empty span {
-  margin-top:
-    3px;
+  margin-top: 3px;
 
-  color:
-    var(--ph-text-muted);
+  color: var(--ph-text-muted);
 
-  font-size:
-    10px;
+  font-size: 10px;
 
-  line-height:
-    1.5;
+  line-height: 1.5;
 }
-
 
 /* =========================================================
    PRINCIPLE
    ========================================================= */
 
 .skill-gap-principle {
-  display:
-    flex;
+  display: flex;
 
-  align-items:
-    flex-start;
+  align-items: flex-start;
 
-  gap:
-    15px;
+  gap: 15px;
 
-  padding:
-    21px 22px;
+  padding: 21px 22px;
 
-  border:
-    1px solid rgba(45, 184, 255, 0.12);
+  border: 1px solid rgba(45, 184, 255, 0.12);
 
-  border-radius:
-    var(--ph-radius-lg);
+  border-radius: var(--ph-radius-lg);
 
-  background:
-    linear-gradient(
-      115deg,
-      rgba(11, 28, 45, 0.96),
-      rgba(7, 20, 33, 0.92)
-    );
+  background: linear-gradient(
+    115deg,
+    rgba(11, 28, 45, 0.96),
+    rgba(7, 20, 33, 0.92)
+  );
 }
-
 
 .skill-gap-principle-icon {
-  width:
-    42px;
+  width: 42px;
 
-  height:
-    42px;
+  height: 42px;
 
-  display:
-    grid;
+  display: grid;
 
-  place-items:
-    center;
+  place-items: center;
 
-  flex-shrink:
-    0;
+  flex-shrink: 0;
 
-  border-radius:
-    10px;
+  border-radius: 10px;
 
-  background:
-    var(--ph-primary-soft);
+  background: var(--ph-primary-soft);
 
-  color:
-    var(--ph-primary);
+  color: var(--ph-primary);
 }
-
 
 .skill-gap-principle h2 {
-  margin:
-    6px 0 7px;
+  margin: 6px 0 7px;
 
-  color:
-    var(--ph-text);
+  color: var(--ph-text);
 
-  font-size:
-    18px;
+  font-size: 18px;
 
-  line-height:
-    1.35;
+  line-height: 1.35;
 
-  letter-spacing:
-    -0.02em;
+  letter-spacing: -0.02em;
 }
-
 
 .skill-gap-principle p {
-  max-width:
-    930px;
+  max-width: 930px;
 
-  margin:
-    0;
+  margin: 0;
 
-  color:
-    var(--ph-text-muted);
+  color: var(--ph-text-muted);
 
-  font-size:
-    11px;
+  font-size: 11px;
 
-  line-height:
-    1.6;
+  line-height: 1.6;
 }
-
 
 /* =========================================================
    RESPONSIVE
    ========================================================= */
 
 @media (max-width: 1100px) {
-
   .skill-gap-metrics {
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-
 }
-
 
 @media (max-width: 900px) {
-
   .skill-gap-header {
-    align-items:
-      flex-start;
+    align-items: flex-start;
 
-    flex-direction:
-      column;
+    flex-direction: column;
   }
-
 
   .skill-gap-header-action {
-    width:
-      100%;
+    width: 100%;
   }
-
 
   .skill-gap-readiness-card {
-    flex-direction:
-      column;
+    flex-direction: column;
   }
-
 
   .skill-gap-readiness-stats {
-    min-width:
-      0;
+    min-width: 0;
 
-    border-top:
-      1px solid rgba(148, 163, 184, 0.09);
+    border-top: 1px solid rgba(148, 163, 184, 0.09);
 
-    border-left:
-      0;
+    border-left: 0;
   }
-
 
   .skill-gap-readiness-stats > div + div {
-    border-left:
-      1px solid rgba(148, 163, 184, 0.09);
+    border-left: 1px solid rgba(148, 163, 184, 0.09);
   }
-
 
   .skill-gap-main-grid {
-    grid-template-columns:
-      1fr;
+    grid-template-columns: 1fr;
   }
-
 }
-
 
 @media (max-width: 760px) {
-
   .skill-gap-metrics {
-    grid-template-columns:
-      1fr;
+    grid-template-columns: 1fr;
   }
-
 
   .skill-gap-role-summary {
-    grid-template-columns:
-      40px minmax(0, 1fr) auto 30px;
+    grid-template-columns: 40px minmax(0, 1fr) auto 30px;
   }
-
 
   .skill-gap-match-bar {
-    display:
-      none;
+    display: none;
   }
-
 
   .skill-gap-role-meta {
-    gap:
-      7px;
+    gap: 7px;
   }
-
 
   .skill-gap-role-details {
-    padding-left:
-      14px;
+    padding-left: 14px;
   }
-
 
   .skill-gap-skill-columns {
-    grid-template-columns:
-      1fr;
+    grid-template-columns: 1fr;
   }
-
 
   .skill-gap-no-roles {
-    align-items:
-      flex-start;
+    align-items: flex-start;
 
-    flex-direction:
-      column;
+    flex-direction: column;
   }
-
 
   .skill-gap-secondary-button {
-    width:
-      100%;
+    width: 100%;
   }
-
 
   .skill-gap-principle {
-    flex-direction:
-      column;
+    flex-direction: column;
   }
-
 }
-
 
 @media (max-width: 520px) {
-
   .skill-gap-readiness-copy {
-    padding:
-      19px;
+    padding: 19px;
 
-    flex-direction:
-      column;
+    flex-direction: column;
   }
-
 
   .skill-gap-readiness-copy h2 {
-    font-size:
-      19px;
+    font-size: 19px;
   }
-
 
   .skill-gap-readiness-stats {
-    grid-template-columns:
-      1fr 1fr;
+    grid-template-columns: 1fr 1fr;
   }
-
 
   .skill-gap-readiness-stats > div {
-    padding:
-      17px;
+    padding: 17px;
   }
-
 
   .skill-gap-panel {
-    padding:
-      18px;
+    padding: 18px;
   }
-
 
   .skill-gap-coverage-summary {
-    grid-template-columns:
-      1fr;
+    grid-template-columns: 1fr;
   }
-
 
   .skill-gap-priority-row {
-    grid-template-columns:
-      34px minmax(0, 1fr);
+    grid-template-columns: 34px minmax(0, 1fr);
   }
-
 
   .skill-gap-priority-percentage {
-    grid-column:
-      2;
+    grid-column: 2;
 
-    text-align:
-      left;
+    text-align: left;
   }
 
-
-  .skill-gap-priority-percentage
-  strong {
-    display:
-      inline;
+  .skill-gap-priority-percentage strong {
+    display: inline;
   }
 
+  .skill-gap-priority-percentage span {
+    display: inline;
 
-  .skill-gap-priority-percentage
-  span {
-    display:
-      inline;
-
-    margin-left:
-      5px;
+    margin-left: 5px;
   }
-
 
   .skill-gap-role-summary {
-    grid-template-columns:
-      36px minmax(0, 1fr) 28px;
+    grid-template-columns: 36px minmax(0, 1fr) 28px;
 
-    gap:
-      9px;
+    gap: 9px;
 
-    padding:
-      12px;
+    padding: 12px;
   }
-
 
   .skill-gap-company-avatar {
-    width:
-      36px;
+    width: 36px;
 
-    height:
-      36px;
+    height: 36px;
   }
-
 
   .skill-gap-match {
-    grid-column:
-      2;
+    grid-column: 2;
 
-    justify-self:
-      start;
+    justify-self: start;
 
-    text-align:
-      left;
+    text-align: left;
   }
-
 
   .skill-gap-role-title-line h3 {
-    font-size:
-      12px;
+    font-size: 12px;
   }
-
 
   .skill-gap-role-title-line span {
-    width:
-      100%;
+    width: 100%;
   }
-
 
   .skill-gap-role-footer {
-    align-items:
-      flex-start;
+    align-items: flex-start;
 
-    flex-direction:
-      column;
+    flex-direction: column;
   }
-
 
   .skill-gap-role-link {
-    width:
-      100%;
+    width: 100%;
 
-    justify-content:
-      center;
+    justify-content: center;
   }
-
 }
 
-
 @keyframes skillGapSpin {
-
   from {
-    transform:
-      rotate(0deg);
+    transform: rotate(0deg);
   }
 
   to {
-    transform:
-      rotate(360deg);
+    transform: rotate(360deg);
   }
-
 }

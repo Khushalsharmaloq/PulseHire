@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 
-
 /*
 |--------------------------------------------------------------------------
 | APPLICATION SCHEMA
@@ -23,117 +22,107 @@ import mongoose from "mongoose";
 |--------------------------------------------------------------------------
 */
 
-
 const applicationSchema = new mongoose.Schema(
-    {
-        /* =================================================
+  {
+    /* =================================================
            JOB
         ================================================= */
 
-        job: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Job",
-            required: true,
-            index: true
-        },
+    job: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Job",
+      required: true,
+      index: true,
+    },
 
-
-        /* =================================================
+    /* =================================================
            CANDIDATE
         ================================================= */
 
-        candidate: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-            required: true,
-            index: true
-        },
+    candidate: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
 
-
-        /* =================================================
+    /* =================================================
            RECRUITER
         ================================================= */
 
-        recruiter: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-            required: true,
-            index: true
-        },
+    recruiter: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
 
-
-        /* =================================================
+    /* =================================================
            CANDIDATE INTENT
         ================================================= */
 
-        intentResponse: {
-            type: String,
-            required: true,
-            trim: true,
-            minlength: 20,
-            maxlength: 1000
-        },
+    intentResponse: {
+      type: String,
+      required: true,
+      trim: true,
+      minlength: 20,
+      maxlength: 1000,
+    },
 
-
-        /* =================================================
+    /* =================================================
            STATUS
         ================================================= */
 
-        status: {
-            type: String,
+    status: {
+      type: String,
 
-            enum: [
-                "applied",
-                "reviewing",
-                "shortlisted",
-                "interview",
-                "rejected",
-                "hired"
-            ],
+      enum: [
+        "applied",
+        "reviewing",
+        "shortlisted",
+        "interview",
+        "rejected",
+        "hired",
+      ],
 
-            default: "applied",
-            required: true,
-            index: true
-        },
+      default: "applied",
+      required: true,
+      index: true,
+    },
 
-
-        /* =================================================
+    /* =================================================
            APPLICATION TIME
         ================================================= */
 
-        appliedAt: {
-            type: Date,
-            default: Date.now,
-            index: true
-        },
+    appliedAt: {
+      type: Date,
+      default: Date.now,
+      index: true,
+    },
 
-
-        /* =================================================
+    /* =================================================
            FIRST RECRUITER RESPONSE
         ================================================= */
 
-        recruiterRespondedAt: {
-            type: Date,
-            default: null
-        },
+    recruiterRespondedAt: {
+      type: Date,
+      default: null,
+    },
 
-
-        /* =================================================
+    /* =================================================
            LAST STATUS CHANGE
         ================================================= */
 
-        lastStatusChangedAt: {
-            type: Date,
-            default: Date.now
-        }
+    lastStatusChangedAt: {
+      type: Date,
+      default: Date.now,
     },
+  },
 
-
-    {
-        timestamps: true
-    }
+  {
+    timestamps: true,
+  },
 );
-
 
 /*
 |--------------------------------------------------------------------------
@@ -146,15 +135,14 @@ const applicationSchema = new mongoose.Schema(
 */
 
 applicationSchema.index(
-    {
-        job: 1,
-        candidate: 1
-    },
-    {
-        unique: true
-    }
+  {
+    job: 1,
+    candidate: 1,
+  },
+  {
+    unique: true,
+  },
 );
-
 
 /*
 |--------------------------------------------------------------------------
@@ -172,11 +160,10 @@ applicationSchema.index(
 */
 
 applicationSchema.index({
-    recruiter: 1,
-    status: 1,
-    appliedAt: -1
+  recruiter: 1,
+  status: 1,
+  appliedAt: -1,
 });
-
 
 /*
 |--------------------------------------------------------------------------
@@ -185,11 +172,10 @@ applicationSchema.index({
 */
 
 applicationSchema.index({
-    job: 1,
-    status: 1,
-    appliedAt: -1
+  job: 1,
+  status: 1,
+  appliedAt: -1,
 });
-
 
 /*
 |--------------------------------------------------------------------------
@@ -198,11 +184,10 @@ applicationSchema.index({
 */
 
 applicationSchema.index({
-    candidate: 1,
-    status: 1,
-    appliedAt: -1
+  candidate: 1,
+  status: 1,
+  appliedAt: -1,
 });
-
 
 /*
 |--------------------------------------------------------------------------
@@ -210,7 +195,4 @@ applicationSchema.index({
 |--------------------------------------------------------------------------
 */
 
-export const Application = mongoose.model(
-    "Application",
-    applicationSchema
-);
+export const Application = mongoose.model("Application", applicationSchema);

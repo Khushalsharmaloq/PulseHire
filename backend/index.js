@@ -8,23 +8,17 @@ import connectDB from "./config/db.js";
 const PORT = process.env.PORT || 8000;
 
 const startServer = async () => {
-    try {
-        await connectDB();
+  try {
+    await connectDB();
 
-        app.listen(PORT, () => {
-            console.log(
-                `🚀 PulseHire server running on port ${PORT}`
-            );
-        });
+    app.listen(PORT, () => {
+      console.log(`🚀 PulseHire server running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error("❌ Failed to start PulseHire:", error.message);
 
-    } catch (error) {
-        console.error(
-            "❌ Failed to start PulseHire:",
-            error.message
-        );
-
-        process.exit(1);
-    }
+    process.exit(1);
+  }
 };
 
 startServer();

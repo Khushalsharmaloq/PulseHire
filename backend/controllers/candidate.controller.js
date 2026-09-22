@@ -5,27 +5,21 @@ import { Job } from "../models/job.model.js";
 import { Application } from "../models/application.model.js";
 import { SkillProof } from "../models/skillProof.model.js";
 
-import {
-    calculateJobMatch,
-    uniqueSkills
-} from "../utils/match.util.js";
-
+import { calculateJobMatch, uniqueSkills } from "../utils/match.util.js";
 
 /* =====================================================
    HELPERS
 ===================================================== */
 
 const isValidObjectId = (id) => {
-    return mongoose.Types.ObjectId.isValid(id);
+  return mongoose.Types.ObjectId.isValid(id);
 };
-
 
 const normalizeSkill = (skill) => {
-    return String(skill || "")
-        .trim()
-        .toLowerCase();
+  return String(skill || "")
+    .trim()
+    .toLowerCase();
 };
-
 
 /*
 |--------------------------------------------------------------------------
@@ -34,22 +28,13 @@ const normalizeSkill = (skill) => {
 */
 
 const buildVerifiedSkillSet = (proofs = []) => {
-    return new Set(
-        proofs
-            .filter(
-                (proof) =>
-                    proof.status === "approved"
-            )
-            .map(
-                (proof) =>
-                    normalizeSkill(
-                        proof.skill
-                    )
-            )
-            .filter(Boolean)
-    );
+  return new Set(
+    proofs
+      .filter((proof) => proof.status === "approved")
+      .map((proof) => normalizeSkill(proof.skill))
+      .filter(Boolean),
+  );
 };
-
 
 /*
 |--------------------------------------------------------------------------
@@ -68,943 +53,551 @@ const buildVerifiedSkillSet = (proofs = []) => {
 |--------------------------------------------------------------------------
 */
 
-export const getRecruiterCandidates = async (
-    req,
-    res
-) => {
-    try {
+export const getRecruiterCandidates = async (req, res) => {
+  try {
+    const { jobId } = req.query;
 
-        const {
-            jobId
-        } = req.query;
-
-
-        /* =================================================
+    /* =================================================
            1. GET RECRUITER JOBS
         ================================================= */
 
-        const jobFilter = {
-            recruiter:
-                req.userId
-        };
+    const jobFilter = {
+      recruiter: req.userId,
+    };
 
+    if (jobId) {
+      if (!isValidObjectId(jobId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid job ID.",
+        });
+      }
 
-        if (jobId) {
+      jobFilter._id = jobId;
+    }
 
-            if (
-                !isValidObjectId(jobId)
-            ) {
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "Invalid job ID."
-                });
-            }
+    const recruiterJobs = await Job.find(jobFilter)
+      .select("title skills location jobType status company")
+      .populate("company", "name logo location")
+      .lean();
 
-
-            jobFilter._id =
-                jobId;
-        }
-
-
-        const recruiterJobs =
-            await Job.find(
-                jobFilter
-            )
-                .select(
-                    "title skills location jobType status company"
-                )
-                .populate(
-                    "company",
-                    "name logo location"
-                )
-                .lean();
-
-
-        /* =================================================
+    /* =================================================
            2. NO JOBS
         ================================================= */
 
-        if (
-            recruiterJobs.length === 0
-        ) {
-            return res.status(200).json({
-                success: true,
+    if (recruiterJobs.length === 0) {
+      return res.status(200).json({
+        success: true,
 
-                candidates: [],
+        candidates: [],
 
-                summary: {
-                    total: 0,
-                    verifiedCandidates: 0,
-                    strongMatches: 0,
-                    averageMatchRate: 0
-                }
-            });
-        }
+        summary: {
+          total: 0,
+          verifiedCandidates: 0,
+          strongMatches: 0,
+          averageMatchRate: 0,
+        },
+      });
+    }
 
+    const recruiterJobIds = recruiterJobs.map((job) => job._id);
 
-        const recruiterJobIds =
-            recruiterJobs.map(
-                (job) =>
-                    job._id
-            );
-
-
-        /* =================================================
+    /* =================================================
            3. GET APPLICATIONS
         ================================================= */
 
-        const applications =
-            await Application.find({
-                recruiter:
-                    req.userId,
+    const applications = await Application.find({
+      recruiter: req.userId,
 
-                job: {
-                    $in:
-                        recruiterJobIds
-                }
-            })
-                .select(
-                    "job candidate status intentResponse appliedAt recruiterRespondedAt lastStatusChangedAt"
-                )
-                .populate(
-                    "candidate",
-                    "fullname email phoneNumber profile"
-                )
-                .sort({
-                    appliedAt: -1
-                })
-                .lean();
+      job: {
+        $in: recruiterJobIds,
+      },
+    })
+      .select(
+        "job candidate status intentResponse appliedAt recruiterRespondedAt lastStatusChangedAt",
+      )
+      .populate("candidate", "fullname email phoneNumber profile")
+      .sort({
+        appliedAt: -1,
+      })
+      .lean();
 
-
-        /* =================================================
+    /* =================================================
            4. NO APPLICANTS
         ================================================= */
 
-        if (
-            applications.length === 0
-        ) {
-            return res.status(200).json({
-                success: true,
+    if (applications.length === 0) {
+      return res.status(200).json({
+        success: true,
 
-                candidates: [],
+        candidates: [],
 
-                summary: {
-                    total: 0,
-                    verifiedCandidates: 0,
-                    strongMatches: 0,
-                    averageMatchRate: 0
-                }
-            });
-        }
+        summary: {
+          total: 0,
+          verifiedCandidates: 0,
+          strongMatches: 0,
+          averageMatchRate: 0,
+        },
+      });
+    }
 
-
-        /* =================================================
+    /* =================================================
            5. UNIQUE CANDIDATE IDS
         ================================================= */
 
-        const candidateIds = [
-            ...new Set(
-                applications
-                    .map(
-                        (application) =>
-                            application.candidate?._id
-                    )
-                    .filter(Boolean)
-                    .map(String)
-            )
-        ];
+    const candidateIds = [
+      ...new Set(
+        applications
+          .map((application) => application.candidate?._id)
+          .filter(Boolean)
+          .map(String),
+      ),
+    ];
 
-
-        /* =================================================
+    /* =================================================
            6. GET ALL PROOFS
         ================================================= */
 
-        const proofs =
-            await SkillProof.find({
-                candidate: {
-                    $in:
-                        candidateIds
-                }
-            })
-                .select(
-                    "candidate skill title proofType proofUrl status recruiterComment reviewedBy reviewedAt createdAt"
-                )
-                .populate(
-                    "reviewedBy",
-                    "fullname email"
-                )
-                .sort({
-                    createdAt: -1
-                })
-                .lean();
+    const proofs = await SkillProof.find({
+      candidate: {
+        $in: candidateIds,
+      },
+    })
+      .select(
+        "candidate skill title proofType proofUrl status recruiterComment reviewedBy reviewedAt createdAt",
+      )
+      .populate("reviewedBy", "fullname email")
+      .sort({
+        createdAt: -1,
+      })
+      .lean();
 
-
-        /* =================================================
+    /* =================================================
            7. GROUP PROOFS BY CANDIDATE
         ================================================= */
 
-        const proofsByCandidate =
-            new Map();
+    const proofsByCandidate = new Map();
 
+    for (const proof of proofs) {
+      const candidateKey = String(proof.candidate);
 
-        for (
-            const proof
-            of proofs
-        ) {
+      if (!proofsByCandidate.has(candidateKey)) {
+        proofsByCandidate.set(candidateKey, []);
+      }
 
-            const candidateKey =
-                String(
-                    proof.candidate
-                );
+      proofsByCandidate.get(candidateKey).push(proof);
+    }
 
-
-            if (
-                !proofsByCandidate.has(
-                    candidateKey
-                )
-            ) {
-                proofsByCandidate.set(
-                    candidateKey,
-                    []
-                );
-            }
-
-
-            proofsByCandidate
-                .get(candidateKey)
-                .push(proof);
-        }
-
-
-        /* =================================================
+    /* =================================================
            8. JOB MAP
         ================================================= */
 
-        const jobMap =
-            new Map(
-                recruiterJobs.map(
-                    (job) => [
-                        String(job._id),
-                        job
-                    ]
-                )
-            );
+    const jobMap = new Map(recruiterJobs.map((job) => [String(job._id), job]));
 
-
-        /* =================================================
+    /* =================================================
            9. BUILD CANDIDATE MAP
         ================================================= */
 
-        const candidateMap =
-            new Map();
+    const candidateMap = new Map();
 
+    for (const application of applications) {
+      const candidate = application.candidate;
 
-        for (
-            const application
-            of applications
-        ) {
+      if (!candidate) {
+        continue;
+      }
 
-            const candidate =
-                application.candidate;
+      const candidateId = String(candidate._id);
 
+      if (!candidateMap.has(candidateId)) {
+        const candidateProofs = proofsByCandidate.get(candidateId) || [];
 
-            if (!candidate) {
-                continue;
-            }
+        const verifiedProofs = candidateProofs.filter(
+          (proof) => proof.status === "approved",
+        );
 
+        const verifiedSkills = uniqueSkills(
+          verifiedProofs.map((proof) => proof.skill),
+        );
 
-            const candidateId =
-                String(
-                    candidate._id
-                );
+        const claimedSkills = uniqueSkills(candidate.profile?.skills || []);
 
+        const verifiedSkillSet = buildVerifiedSkillSet(candidateProofs);
 
-            if (
-                !candidateMap.has(
-                    candidateId
-                )
-            ) {
+        const unverifiedClaimedSkills = claimedSkills.filter(
+          (skill) => !verifiedSkillSet.has(normalizeSkill(skill)),
+        );
 
-                const candidateProofs =
-                    proofsByCandidate.get(
-                        candidateId
-                    ) || [];
+        candidateMap.set(candidateId, {
+          candidateId,
+          fullname: candidate.fullname,
 
+          email: candidate.email,
 
-                const verifiedProofs =
-                    candidateProofs.filter(
-                        (proof) =>
-                            proof.status ===
-                            "approved"
-                    );
+          phoneNumber: candidate.phoneNumber,
 
+          profile: {
+            bio: candidate.profile?.bio || "",
 
-                const verifiedSkills =
-                    uniqueSkills(
-                        verifiedProofs.map(
-                            (proof) =>
-                                proof.skill
-                        )
-                    );
+            profilePhoto: candidate.profile?.profilePhoto || "",
 
+            resume: candidate.profile?.resume || "",
 
-                const claimedSkills =
-                    uniqueSkills(
-                        candidate.profile?.skills ||
-                        []
-                    );
+            resumeOriginalName: candidate.profile?.resumeOriginalName || "",
+          },
 
+          claimedSkills,
 
-                const verifiedSkillSet =
-                    buildVerifiedSkillSet(
-                        candidateProofs
-                    );
+          verifiedSkills,
 
+          unverifiedClaimedSkills,
 
-                const unverifiedClaimedSkills =
-                    claimedSkills.filter(
-                        (skill) =>
-                            !verifiedSkillSet.has(
-                                normalizeSkill(
-                                    skill
-                                )
-                            )
-                    );
+          proofs: candidateProofs,
 
+          proofSummary: {
+            total: candidateProofs.length,
 
-                candidateMap.set(
-                    candidateId,
-                    {
-                        candidateId,
-                        fullname:
-                            candidate.fullname,
+            pending: candidateProofs.filter(
+              (proof) => proof.status === "pending",
+            ).length,
 
-                        email:
-                            candidate.email,
+            approved: candidateProofs.filter(
+              (proof) => proof.status === "approved",
+            ).length,
 
-                        phoneNumber:
-                            candidate.phoneNumber,
+            rejected: candidateProofs.filter(
+              (proof) => proof.status === "rejected",
+            ).length,
+          },
 
-                        profile: {
-                            bio:
-                                candidate.profile?.bio ||
-                                "",
+          applications: [],
 
-                            profilePhoto:
-                                candidate.profile?.profilePhoto ||
-                                "",
+          matchScores: [],
+        });
+      }
 
-                            resume:
-                                candidate.profile?.resume ||
-                                "",
+      const candidateData = candidateMap.get(candidateId);
 
-                            resumeOriginalName:
-                                candidate.profile?.resumeOriginalName ||
-                                ""
-                        },
+      const job = jobMap.get(String(application.job));
 
-                        claimedSkills,
+      if (!job) {
+        continue;
+      }
 
-                        verifiedSkills,
+      const candidateProofs = proofsByCandidate.get(candidateId) || [];
 
-                        unverifiedClaimedSkills,
+      const verifiedSkills = uniqueSkills(
+        candidateProofs
+          .filter((proof) => proof.status === "approved")
+          .map((proof) => proof.skill),
+      );
 
-                        proofs:
-                            candidateProofs,
+      const match = calculateJobMatch(job.skills || [], verifiedSkills);
 
-                        proofSummary: {
-                            total:
-                                candidateProofs.length,
+      candidateData.applications.push({
+        applicationId: application._id,
 
-                            pending:
-                                candidateProofs.filter(
-                                    (proof) =>
-                                        proof.status ===
-                                        "pending"
-                                ).length,
+        status: application.status,
 
-                            approved:
-                                candidateProofs.filter(
-                                    (proof) =>
-                                        proof.status ===
-                                        "approved"
-                                ).length,
+        intentResponse: application.intentResponse,
 
-                            rejected:
-                                candidateProofs.filter(
-                                    (proof) =>
-                                        proof.status ===
-                                        "rejected"
-                                ).length
-                        },
+        appliedAt: application.appliedAt,
 
-                        applications: [],
+        recruiterRespondedAt: application.recruiterRespondedAt,
 
-                        matchScores: []
-                    }
-                );
-            }
+        lastStatusChangedAt: application.lastStatusChangedAt,
 
+        job: {
+          id: job._id,
 
-            const candidateData =
-                candidateMap.get(
-                    candidateId
-                );
+          title: job.title,
 
+          location: job.location,
 
-            const job =
-                jobMap.get(
-                    String(
-                        application.job
-                    )
-                );
+          jobType: job.jobType,
 
+          status: job.status,
 
-            if (!job) {
-                continue;
-            }
+          company: job.company
+            ? {
+                id: job.company._id,
 
+                name: job.company.name,
 
-            const candidateProofs =
-                proofsByCandidate.get(
-                    candidateId
-                ) || [];
+                logo: job.company.logo || "",
+              }
+            : null,
+        },
 
+        match: {
+          score: match.score,
 
-            const verifiedSkills =
-                uniqueSkills(
-                    candidateProofs
-                        .filter(
-                            (proof) =>
-                                proof.status ===
-                                "approved"
-                        )
-                        .map(
-                            (proof) =>
-                                proof.skill
-                        )
-                );
+          strength: match.strength,
 
+          matchedSkills: match.matchedSkills,
 
-            const match =
-                calculateJobMatch(
-                    job.skills || [],
-                    verifiedSkills
-                );
+          missingSkills: match.missingSkills,
 
+          verificationCoverage: match.verificationCoverage,
+        },
+      });
 
-            candidateData.applications.push({
-                applicationId:
-                    application._id,
+      candidateData.matchScores.push(match.score);
+    }
 
-                status:
-                    application.status,
-
-                intentResponse:
-                    application.intentResponse,
-
-                appliedAt:
-                    application.appliedAt,
-
-                recruiterRespondedAt:
-                    application.recruiterRespondedAt,
-
-                lastStatusChangedAt:
-                    application.lastStatusChangedAt,
-
-                job: {
-                    id:
-                        job._id,
-
-                    title:
-                        job.title,
-
-                    location:
-                        job.location,
-
-                    jobType:
-                        job.jobType,
-
-                    status:
-                        job.status,
-
-                    company:
-                        job.company
-                            ? {
-                                id:
-                                    job.company._id,
-
-                                name:
-                                    job.company.name,
-
-                                logo:
-                                    job.company.logo ||
-                                    ""
-                            }
-                            : null
-                },
-
-                match: {
-                    score:
-                        match.score,
-
-                    strength:
-                        match.strength,
-
-                    matchedSkills:
-                        match.matchedSkills,
-
-                    missingSkills:
-                        match.missingSkills,
-
-                    verificationCoverage:
-                        match.verificationCoverage
-                }
-            });
-
-
-            candidateData.matchScores.push(
-                match.score
-            );
-        }
-
-
-        /* =================================================
+    /* =================================================
            10. FINAL CANDIDATE METRICS
         ================================================= */
 
-        const candidates =
-            [...candidateMap.values()]
-                .map(
-                    (candidate) => {
+    const candidates = [...candidateMap.values()]
+      .map((candidate) => {
+        const scores = candidate.matchScores;
 
-                        const scores =
-                            candidate.matchScores;
+        const averageMatchRate =
+          scores.length === 0
+            ? 0
+            : Math.round(
+                scores.reduce((total, score) => total + score, 0) /
+                  scores.length,
+              );
 
+        const strongestMatch = scores.length === 0 ? 0 : Math.max(...scores);
 
-                        const averageMatchRate =
-                            scores.length === 0
-                                ? 0
-                                : Math.round(
-                                    scores.reduce(
-                                        (
-                                            total,
-                                            score
-                                        ) =>
-                                            total +
-                                            score,
-                                        0
-                                    ) /
-                                    scores.length
-                                );
+        return {
+          ...candidate,
 
+          averageMatchRate,
 
-                        const strongestMatch =
-                            scores.length === 0
-                                ? 0
-                                : Math.max(
-                                    ...scores
-                                );
+          strongestMatch,
 
+          isStrongMatch: strongestMatch >= 80,
+        };
+      })
+      .sort((a, b) => b.strongestMatch - a.strongestMatch);
 
-                        return {
-                            ...candidate,
-
-                            averageMatchRate,
-
-                            strongestMatch,
-
-                            isStrongMatch:
-                                strongestMatch >=
-                                80
-                        };
-                    }
-                )
-                .sort(
-                    (a, b) =>
-                        b.strongestMatch -
-                        a.strongestMatch
-                );
-
-
-        /* =================================================
+    /* =================================================
            11. SUMMARY
         ================================================= */
 
-        const summary = {
-            total:
-                candidates.length,
+    const summary = {
+      total: candidates.length,
 
-            verifiedCandidates:
-                candidates.filter(
-                    (candidate) =>
-                        candidate.verifiedSkills.length >
-                        0
-                ).length,
+      verifiedCandidates: candidates.filter(
+        (candidate) => candidate.verifiedSkills.length > 0,
+      ).length,
 
-            strongMatches:
-                candidates.filter(
-                    (candidate) =>
-                        candidate.isStrongMatch
-                ).length,
+      strongMatches: candidates.filter((candidate) => candidate.isStrongMatch)
+        .length,
 
-            averageMatchRate:
-                candidates.length === 0
-                    ? 0
-                    : Math.round(
-                        candidates.reduce(
-                            (
-                                total,
-                                candidate
-                            ) =>
-                                total +
-                                candidate.averageMatchRate,
-                            0
-                        ) /
-                        candidates.length
-                    )
-        };
+      averageMatchRate:
+        candidates.length === 0
+          ? 0
+          : Math.round(
+              candidates.reduce(
+                (total, candidate) => total + candidate.averageMatchRate,
+                0,
+              ) / candidates.length,
+            ),
+    };
 
+    return res.status(200).json({
+      success: true,
 
-        return res.status(200).json({
-            success: true,
+      candidates,
 
-            candidates,
+      summary,
+    });
+  } catch (error) {
+    console.error("Get recruiter candidates error:", error);
 
-            summary
-        });
-
-    } catch (error) {
-
-        console.error(
-            "Get recruiter candidates error:",
-            error
-        );
-
-
-        return res.status(500).json({
-            success: false,
-            message:
-                "Unable to fetch recruiter candidates."
-        });
-    }
+    return res.status(500).json({
+      success: false,
+      message: "Unable to fetch recruiter candidates.",
+    });
+  }
 };
-
 
 /* =====================================================
    GET ONE CANDIDATE FOR RECRUITER
 ===================================================== */
 
-export const getRecruiterCandidateById = async (
-    req,
-    res
-) => {
-    try {
+export const getRecruiterCandidateById = async (req, res) => {
+  try {
+    const { candidateId } = req.params;
 
-        const {
-            candidateId
-        } = req.params;
+    if (!isValidObjectId(candidateId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid candidate ID.",
+      });
+    }
 
-
-        if (
-            !isValidObjectId(
-                candidateId
-            )
-        ) {
-            return res.status(400).json({
-                success: false,
-                message:
-                    "Invalid candidate ID."
-            });
-        }
-
-
-        /* =================================================
+    /* =================================================
            1. FIND RECRUITER'S APPLICATIONS
         ================================================= */
 
-        const applications =
-            await Application.find({
-                recruiter:
-                    req.userId,
+    const applications = await Application.find({
+      recruiter: req.userId,
 
-                candidate:
-                    candidateId
-            })
-                .populate(
-                    "job",
-                    "title skills requirements location jobType status company"
-                )
-                .sort({
-                    appliedAt: -1
-                })
-                .lean();
+      candidate: candidateId,
+    })
+      .populate(
+        "job",
+        "title skills requirements location jobType status company",
+      )
+      .sort({
+        appliedAt: -1,
+      })
+      .lean();
 
+    if (applications.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Candidate not found in your applicant pool.",
+      });
+    }
 
-        if (
-            applications.length === 0
-        ) {
-            return res.status(404).json({
-                success: false,
-                message:
-                    "Candidate not found in your applicant pool."
-            });
-        }
-
-
-        /* =================================================
+    /* =================================================
            2. CANDIDATE
         ================================================= */
 
-        const candidate =
-            await User.findById(
-                candidateId
-            )
-                .select(
-                    "fullname email phoneNumber role profile createdAt"
-                )
-                .lean();
+    const candidate = await User.findById(candidateId)
+      .select("fullname email phoneNumber role profile createdAt")
+      .lean();
 
+    if (!candidate) {
+      return res.status(404).json({
+        success: false,
+        message: "Candidate account not found.",
+      });
+    }
 
-        if (!candidate) {
-            return res.status(404).json({
-                success: false,
-                message:
-                    "Candidate account not found."
-            });
-        }
+    if (candidate.role !== "candidate") {
+      return res.status(409).json({
+        success: false,
+        message: "Selected account is not a candidate.",
+      });
+    }
 
-
-        if (
-            candidate.role !==
-            "candidate"
-        ) {
-            return res.status(409).json({
-                success: false,
-                message:
-                    "Selected account is not a candidate."
-            });
-        }
-
-
-        /* =================================================
+    /* =================================================
            3. ALL PROOFS
         ================================================= */
 
-        const proofs =
-            await SkillProof.find({
-                candidate:
-                    candidateId
-            })
-                .populate(
-                    "reviewedBy",
-                    "fullname email"
-                )
-                .sort({
-                    createdAt: -1
-                })
-                .lean();
+    const proofs = await SkillProof.find({
+      candidate: candidateId,
+    })
+      .populate("reviewedBy", "fullname email")
+      .sort({
+        createdAt: -1,
+      })
+      .lean();
 
+    const approvedSkills = uniqueSkills(
+      proofs
+        .filter((proof) => proof.status === "approved")
+        .map((proof) => proof.skill),
+    );
 
-        const approvedSkills =
-            uniqueSkills(
-                proofs
-                    .filter(
-                        (proof) =>
-                            proof.status ===
-                            "approved"
-                    )
-                    .map(
-                        (proof) =>
-                            proof.skill
-                    )
-            );
+    const claimedSkills = uniqueSkills(candidate.profile?.skills || []);
 
+    const verifiedSkillSet = buildVerifiedSkillSet(proofs);
 
-        const claimedSkills =
-            uniqueSkills(
-                candidate.profile?.skills ||
-                []
-            );
+    const unverifiedClaimedSkills = claimedSkills.filter(
+      (skill) => !verifiedSkillSet.has(normalizeSkill(skill)),
+    );
 
-
-        const verifiedSkillSet =
-            buildVerifiedSkillSet(
-                proofs
-            );
-
-
-        const unverifiedClaimedSkills =
-            claimedSkills.filter(
-                (skill) =>
-                    !verifiedSkillSet.has(
-                        normalizeSkill(
-                            skill
-                        )
-                    )
-            );
-
-
-        /* =================================================
+    /* =================================================
            4. APPLICATION INTELLIGENCE
         ================================================= */
 
-        const enrichedApplications =
-            applications.map(
-                (application) => {
+    const enrichedApplications = applications.map((application) => {
+      const job = application.job;
 
-                    const job =
-                        application.job;
+      const requiredSkills = uniqueSkills(job?.skills || []);
 
+      const match = calculateJobMatch(requiredSkills, approvedSkills);
 
-                    const requiredSkills =
-                        uniqueSkills(
-                            job?.skills || []
-                        );
+      return {
+        ...application,
 
+        match: {
+          score: match.score,
 
-                    const match =
-                        calculateJobMatch(
-                            requiredSkills,
-                            approvedSkills
-                        );
+          strength: match.strength,
 
+          matchedSkills: match.matchedSkills,
 
-                    return {
-                        ...application,
+          missingSkills: match.missingSkills,
 
-                        match: {
-                            score:
-                                match.score,
+          verificationCoverage: match.verificationCoverage,
+        },
+      };
+    });
 
-                            strength:
-                                match.strength,
+    const scores = enrichedApplications.map(
+      (application) => application.match.score,
+    );
 
-                            matchedSkills:
-                                match.matchedSkills,
+    const averageMatchRate =
+      scores.length === 0
+        ? 0
+        : Math.round(
+            scores.reduce((total, score) => total + score, 0) / scores.length,
+          );
 
-                            missingSkills:
-                                match.missingSkills,
-
-                            verificationCoverage:
-                                match.verificationCoverage
-                        }
-                    };
-                }
-            );
-
-
-        const scores =
-            enrichedApplications.map(
-                (application) =>
-                    application.match.score
-            );
-
-
-        const averageMatchRate =
-            scores.length === 0
-                ? 0
-                : Math.round(
-                    scores.reduce(
-                        (
-                            total,
-                            score
-                        ) =>
-                            total + score,
-                        0
-                    ) /
-                    scores.length
-                );
-
-
-        /* =================================================
+    /* =================================================
            5. RESPONSE
         ================================================= */
 
-        return res.status(200).json({
-            success: true,
+    return res.status(200).json({
+      success: true,
 
-            candidate: {
-                id:
-                    candidate._id,
+      candidate: {
+        id: candidate._id,
 
-                fullname:
-                    candidate.fullname,
+        fullname: candidate.fullname,
 
-                email:
-                    candidate.email,
+        email: candidate.email,
 
-                phoneNumber:
-                    candidate.phoneNumber,
+        phoneNumber: candidate.phoneNumber,
 
-                profile:
-                    candidate.profile,
+        profile: candidate.profile,
 
-                createdAt:
-                    candidate.createdAt,
+        createdAt: candidate.createdAt,
 
-                claimedSkills,
+        claimedSkills,
 
-                verifiedSkills:
-                    approvedSkills,
+        verifiedSkills: approvedSkills,
 
-                unverifiedClaimedSkills,
+        unverifiedClaimedSkills,
 
-                proofs,
+        proofs,
 
-                proofSummary: {
-                    total:
-                        proofs.length,
+        proofSummary: {
+          total: proofs.length,
 
-                    pending:
-                        proofs.filter(
-                            (proof) =>
-                                proof.status ===
-                                "pending"
-                        ).length,
+          pending: proofs.filter((proof) => proof.status === "pending").length,
 
-                    approved:
-                        proofs.filter(
-                            (proof) =>
-                                proof.status ===
-                                "approved"
-                        ).length,
+          approved: proofs.filter((proof) => proof.status === "approved")
+            .length,
 
-                    rejected:
-                        proofs.filter(
-                            (proof) =>
-                                proof.status ===
-                                "rejected"
-                        ).length
-                },
+          rejected: proofs.filter((proof) => proof.status === "rejected")
+            .length,
+        },
 
-                applications:
-                    enrichedApplications,
+        applications: enrichedApplications,
 
-                averageMatchRate,
+        averageMatchRate,
 
-                strongestMatch:
-                    scores.length === 0
-                        ? 0
-                        : Math.max(
-                            ...scores
-                        )
-            }
-        });
+        strongestMatch: scores.length === 0 ? 0 : Math.max(...scores),
+      },
+    });
+  } catch (error) {
+    console.error("Get recruiter candidate error:", error);
 
-    } catch (error) {
-
-        console.error(
-            "Get recruiter candidate error:",
-            error
-        );
-
-
-        return res.status(500).json({
-            success: false,
-            message:
-                "Unable to fetch candidate intelligence."
-        });
-    }
+    return res.status(500).json({
+      success: false,
+      message: "Unable to fetch candidate intelligence.",
+    });
+  }
 };

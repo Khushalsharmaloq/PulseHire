@@ -6,7 +6,6 @@
   width: 100%;
 }
 
-
 /* =========================================================
    HEADER
    ========================================================= */
@@ -20,7 +19,6 @@
 
   margin-bottom: 20px;
 }
-
 
 .recruiter-applications-back {
   display: inline-flex;
@@ -36,11 +34,9 @@
   font-weight: 700;
 }
 
-
 .recruiter-applications-back:hover {
   color: var(--ph-primary);
 }
-
 
 .recruiter-applications-eyebrow {
   display: block;
@@ -52,7 +48,6 @@
 
   letter-spacing: 0.1em;
 }
-
 
 .recruiter-applications-header h1 {
   margin: 6px 0 5px;
@@ -66,7 +61,6 @@
   letter-spacing: -0.04em;
 }
 
-
 .recruiter-applications-header p {
   margin: 0;
 
@@ -74,7 +68,6 @@
 
   font-size: 11px;
 }
-
 
 .recruiter-applications-refresh {
   min-height: 38px;
@@ -104,19 +97,16 @@
   cursor: pointer;
 }
 
-
 .recruiter-applications-refresh:hover:not(:disabled) {
   border-color: var(--ph-border-strong);
 
   color: var(--ph-text-soft);
 }
 
-
 .recruiter-applications-refresh:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
-
 
 /* =========================================================
    ALERTS
@@ -136,7 +126,6 @@
   font-size: 9px;
 }
 
-
 .recruiter-applications-alert.error {
   border: 1px solid rgba(248, 113, 113, 0.14);
 
@@ -145,7 +134,6 @@
   color: #fca5a5;
 }
 
-
 .recruiter-applications-alert.success {
   border: 1px solid rgba(74, 222, 128, 0.12);
 
@@ -153,7 +141,6 @@
 
   color: var(--ph-success);
 }
-
 
 /* =========================================================
    JOB SUMMARY
@@ -174,14 +161,12 @@
 
   border-radius: var(--ph-radius-lg);
 
-  background:
-    linear-gradient(
-      115deg,
-      rgba(10, 35, 54, 0.96),
-      rgba(7, 20, 33, 0.93)
-    );
+  background: linear-gradient(
+    115deg,
+    rgba(10, 35, 54, 0.96),
+    rgba(7, 20, 33, 0.93)
+  );
 }
-
 
 .recruiter-applications-job-summary-main {
   min-width: 0;
@@ -191,7 +176,6 @@
 
   gap: 11px;
 }
-
 
 .recruiter-applications-job-icon {
   width: 42px;
@@ -209,7 +193,6 @@
   color: var(--ph-primary);
 }
 
-
 .recruiter-applications-job-summary h2 {
   margin: 5px 0 5px;
 
@@ -220,7 +203,6 @@
   line-height: 1.25;
 }
 
-
 .recruiter-applications-job-meta {
   display: flex;
   align-items: center;
@@ -228,7 +210,6 @@
 
   gap: 8px;
 }
-
 
 .recruiter-applications-job-meta span {
   display: inline-flex;
@@ -240,11 +221,9 @@
   font-size: 8px;
 }
 
-
 .recruiter-applications-job-meta svg {
   color: var(--ph-primary);
 }
-
 
 .recruiter-applications-job-stats {
   display: flex;
@@ -252,19 +231,16 @@
   border-left: 1px solid rgba(148, 163, 184, 0.08);
 }
 
-
 .recruiter-applications-job-stats div {
   min-width: 76px;
 
   padding-left: 14px;
 }
 
-
 .recruiter-applications-job-stats span,
 .recruiter-applications-job-stats strong {
   display: block;
 }
-
 
 .recruiter-applications-job-stats span {
   color: var(--ph-text-subtle);
@@ -274,7 +250,6 @@
 
   letter-spacing: 0.08em;
 }
-
 
 .recruiter-applications-job-stats strong {
   margin-top: 3px;
@@ -286,7 +261,6 @@
   line-height: 1;
 }
 
-
 /* =========================================================
    METRICS
    ========================================================= */
@@ -294,14 +268,12 @@
 .recruiter-applications-metrics {
   display: grid;
 
-  grid-template-columns:
-    repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 
   gap: 9px;
 
   margin-bottom: 19px;
 }
-
 
 .recruiter-applications-metric {
   padding: 13px;
@@ -313,12 +285,10 @@
   background: rgba(8, 23, 37, 0.72);
 }
 
-
 .recruiter-applications-metric span,
 .recruiter-applications-metric small {
   display: block;
 }
-
 
 .recruiter-applications-metric span {
   color: var(--ph-text-subtle);
@@ -328,7 +298,6 @@
 
   letter-spacing: 0.08em;
 }
-
 
 .recruiter-applications-metric strong {
   display: block;
@@ -342,7 +311,6 @@
   line-height: 1;
 }
 
-
 .recruiter-applications-metric small {
   color: var(--ph-text-muted);
 
@@ -351,7 +319,6 @@
   line-height: 1.4;
 }
 
-
 /* =========================================================
    SECTION
    ========================================================= */
@@ -359,7 +326,6 @@
 .recruiter-applications-section {
   margin-bottom: 17px;
 }
-
 
 .recruiter-applications-section-header {
   display: flex;
@@ -372,7 +338,6 @@
   margin-bottom: 11px;
 }
 
-
 .recruiter-applications-section-header h2 {
   margin: 6px 0 4px;
 
@@ -383,7 +348,6 @@
   line-height: 1.3;
 }
 
-
 .recruiter-applications-section-header p {
   margin: 0;
 
@@ -391,7 +355,6 @@
 
   font-size: 9px;
 }
-
 
 .recruiter-applications-count {
   flex-shrink: 0;
@@ -401,7 +364,6 @@
   font-size: 8px;
   font-weight: 700;
 }
-
 
 /* =========================================================
    LIST
@@ -413,7 +375,6 @@
 
   gap: 9px;
 }
-
 
 /* =========================================================
    CANDIDATE CARD
@@ -431,11 +392,9 @@
   box-shadow: var(--ph-shadow-sm);
 }
 
-
 .recruiter-application-card:hover {
   border-color: rgba(45, 184, 255, 0.13);
 }
-
 
 /* =========================================================
    HEADER
@@ -454,7 +413,6 @@
   border-bottom: 1px solid rgba(148, 163, 184, 0.06);
 }
 
-
 .recruiter-application-identity {
   min-width: 0;
 
@@ -463,7 +421,6 @@
 
   gap: 10px;
 }
-
 
 .recruiter-application-avatar,
 .recruiter-application-avatar-fallback {
@@ -475,13 +432,11 @@
   border-radius: 10px;
 }
 
-
 .recruiter-application-avatar {
   object-fit: cover;
 
   border: 1px solid rgba(45, 184, 255, 0.12);
 }
-
 
 .recruiter-application-avatar-fallback {
   display: grid;
@@ -497,7 +452,6 @@
   font-weight: 850;
 }
 
-
 .recruiter-application-identity h3 {
   margin: 0;
 
@@ -505,7 +459,6 @@
 
   font-size: 13px;
 }
-
 
 .recruiter-application-identity span {
   display: block;
@@ -516,7 +469,6 @@
 
   font-size: 8px;
 }
-
 
 .recruiter-application-status {
   display: inline-flex;
@@ -534,20 +486,17 @@
   font-weight: 800;
 }
 
-
 .recruiter-application-status.applied {
   background: var(--ph-primary-soft);
 
   color: var(--ph-primary);
 }
 
-
 .recruiter-application-status.reviewing {
   background: var(--ph-warning-soft);
 
   color: var(--ph-warning);
 }
-
 
 .recruiter-application-status.shortlisted,
 .recruiter-application-status.interview {
@@ -556,20 +505,17 @@
   color: #76d6fb;
 }
 
-
 .recruiter-application-status.hired {
   background: var(--ph-success-soft);
 
   color: var(--ph-success);
 }
 
-
 .recruiter-application-status.rejected {
   background: var(--ph-danger-soft);
 
   color: var(--ph-danger);
 }
-
 
 /* =========================================================
    CONTACT
@@ -578,14 +524,12 @@
 .recruiter-application-contact-grid {
   display: grid;
 
-  grid-template-columns:
-    repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 
   gap: 10px;
 
   padding: 13px 15px;
 }
-
 
 .recruiter-application-contact {
   min-width: 0;
@@ -596,7 +540,6 @@
   gap: 7px;
 }
 
-
 .recruiter-application-contact > svg {
   flex-shrink: 0;
 
@@ -605,18 +548,15 @@
   color: var(--ph-text-subtle);
 }
 
-
 .recruiter-application-contact > div {
   min-width: 0;
 }
-
 
 .recruiter-application-contact span,
 .recruiter-application-contact strong,
 .recruiter-application-contact a {
   display: block;
 }
-
 
 .recruiter-application-contact span {
   margin-bottom: 3px;
@@ -628,7 +568,6 @@
 
   letter-spacing: 0.08em;
 }
-
 
 .recruiter-application-contact strong,
 .recruiter-application-contact a {
@@ -645,13 +584,11 @@
   white-space: nowrap;
 }
 
-
 .recruiter-application-contact a {
   color: var(--ph-primary);
 
   text-decoration: none;
 }
-
 
 /* =========================================================
    CONTENT BLOCK
@@ -660,7 +597,6 @@
 .recruiter-application-content-block {
   padding: 0 15px 13px;
 }
-
 
 .recruiter-application-content-block > span {
   display: block;
@@ -676,7 +612,6 @@
   letter-spacing: 0.08em;
 }
 
-
 .recruiter-application-content-block p {
   margin: 0;
 
@@ -689,7 +624,6 @@
   white-space: pre-line;
 }
 
-
 /* =========================================================
    SKILLS
    ========================================================= */
@@ -701,7 +635,6 @@
 
   gap: 5px;
 }
-
 
 .recruiter-application-skill-list span {
   min-height: 24px;
@@ -722,7 +655,6 @@
   font-size: 7px;
 }
 
-
 /* =========================================================
    INTENT
    ========================================================= */
@@ -739,7 +671,6 @@
   background: rgba(45, 184, 255, 0.025);
 }
 
-
 .recruiter-application-intent > div {
   display: flex;
 
@@ -752,7 +683,6 @@
   color: var(--ph-primary);
 }
 
-
 .recruiter-application-intent > div span {
   color: var(--ph-text-subtle);
 
@@ -762,7 +692,6 @@
 
   letter-spacing: 0.08em;
 }
-
 
 .recruiter-application-intent p {
   margin: 0;
@@ -775,7 +704,6 @@
 
   white-space: pre-line;
 }
-
 
 /* =========================================================
    RESPONSE SIGNAL
@@ -794,7 +722,6 @@
 
   font-size: 8px;
 }
-
 
 /* =========================================================
    FOOTER
@@ -816,12 +743,10 @@
   background: rgba(5, 17, 29, 0.35);
 }
 
-
 .recruiter-application-current span,
 .recruiter-application-current strong {
   display: block;
 }
-
 
 .recruiter-application-current span {
   margin-bottom: 3px;
@@ -835,13 +760,11 @@
   letter-spacing: 0.08em;
 }
 
-
 .recruiter-application-current strong {
   color: var(--ph-text-soft);
 
   font-size: 9px;
 }
-
 
 .recruiter-application-actions {
   display: flex;
@@ -854,7 +777,6 @@
 
   gap: 6px;
 }
-
 
 .recruiter-application-action {
   min-height: 32px;
@@ -886,13 +808,11 @@
   cursor: pointer;
 }
 
-
 .recruiter-application-action:hover:not(:disabled) {
   border-color: var(--ph-border-strong);
 
   transform: translateY(-1px);
 }
-
 
 .recruiter-application-action.reject {
   border-color: rgba(248, 113, 113, 0.14);
@@ -902,13 +822,11 @@
   color: #fca5a5;
 }
 
-
 .recruiter-application-action:disabled {
   opacity: 0.55;
 
   cursor: not-allowed;
 }
-
 
 .recruiter-application-terminal {
   color: var(--ph-text-subtle);
@@ -917,7 +835,6 @@
 
   font-weight: 700;
 }
-
 
 /* =========================================================
    EMPTY
@@ -944,7 +861,6 @@
   background: rgba(8, 23, 37, 0.48);
 }
 
-
 .recruiter-applications-empty-icon {
   width: 45px;
   height: 45px;
@@ -961,7 +877,6 @@
   color: var(--ph-primary);
 }
 
-
 .recruiter-applications-empty h3 {
   margin: 6px 0 5px;
 
@@ -969,7 +884,6 @@
 
   font-size: 15px;
 }
-
 
 .recruiter-applications-empty p {
   max-width: 430px;
@@ -982,7 +896,6 @@
 
   line-height: 1.55;
 }
-
 
 /* =========================================================
    WORKFLOW NOTE
@@ -1003,14 +916,12 @@
 
   border-radius: var(--ph-radius-lg);
 
-  background:
-    linear-gradient(
-      115deg,
-      rgba(11, 28, 45, 0.95),
-      rgba(7, 20, 33, 0.91)
-    );
+  background: linear-gradient(
+    115deg,
+    rgba(11, 28, 45, 0.95),
+    rgba(7, 20, 33, 0.91)
+  );
 }
-
 
 .recruiter-applications-workflow-icon {
   width: 39px;
@@ -1028,7 +939,6 @@
   color: var(--ph-primary);
 }
 
-
 .recruiter-applications-workflow-note h2 {
   margin: 5px 0 6px;
 
@@ -1036,7 +946,6 @@
 
   font-size: 16px;
 }
-
 
 .recruiter-applications-workflow-note p {
   max-width: 880px;
@@ -1049,7 +958,6 @@
 
   line-height: 1.6;
 }
-
 
 /* =========================================================
    LOADING / ERROR
@@ -1078,11 +986,9 @@
   background: rgba(8, 23, 37, 0.75);
 }
 
-
 .recruiter-applications-loading > svg {
   color: var(--ph-primary);
 }
-
 
 .recruiter-applications-loading h1,
 .recruiter-applications-error-state h1 {
@@ -1092,7 +998,6 @@
 
   font-size: 21px;
 }
-
 
 .recruiter-applications-loading p,
 .recruiter-applications-error-state p {
@@ -1107,11 +1012,9 @@
   line-height: 1.6;
 }
 
-
 .recruiter-applications-error-state > svg {
   color: var(--ph-danger);
 }
-
 
 .recruiter-applications-primary-button {
   min-height: 37px;
@@ -1124,12 +1027,7 @@
 
   border-radius: 8px;
 
-  background:
-    linear-gradient(
-      135deg,
-      var(--ph-primary-strong),
-      #27b7ef
-    );
+  background: linear-gradient(135deg, var(--ph-primary-strong), #27b7ef);
 
   color: #ffffff;
 
@@ -1142,22 +1040,15 @@
   cursor: pointer;
 }
 
-
 /* =========================================================
    SPINNER
    ========================================================= */
 
 .recruiter-applications-spin {
-  animation:
-    recruiterApplicationsSpin
-    0.8s
-    linear
-    infinite;
+  animation: recruiterApplicationsSpin 0.8s linear infinite;
 }
 
-
 @keyframes recruiterApplicationsSpin {
-
   from {
     transform: rotate(0deg);
   }
@@ -1165,50 +1056,38 @@
   to {
     transform: rotate(360deg);
   }
-
 }
-
 
 /* =========================================================
    RESPONSIVE
    ========================================================= */
 
 @media (max-width: 1050px) {
-
   .recruiter-applications-metrics {
-    grid-template-columns:
-      repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-
 
   .recruiter-application-contact-grid {
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-
 }
 
-
 @media (max-width: 800px) {
-
   .recruiter-applications-header {
     align-items: flex-start;
 
     flex-direction: column;
   }
 
-
   .recruiter-applications-refresh {
     width: 100%;
   }
-
 
   .recruiter-applications-job-summary {
     align-items: flex-start;
 
     flex-direction: column;
   }
-
 
   .recruiter-applications-job-stats {
     width: 100%;
@@ -1220,19 +1099,15 @@
     padding-top: 11px;
   }
 
-
   .recruiter-applications-job-stats div {
     padding-left: 0;
 
     padding-right: 20px;
   }
 
-
   .recruiter-applications-metrics {
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-
 
   .recruiter-application-footer {
     align-items: flex-start;
@@ -1240,22 +1115,17 @@
     flex-direction: column;
   }
 
-
   .recruiter-application-actions {
     width: 100%;
 
     justify-content: flex-start;
   }
-
 }
 
-
 @media (max-width: 560px) {
-
   .recruiter-applications-metrics {
     grid-template-columns: 1fr;
   }
-
 
   .recruiter-application-header {
     align-items: flex-start;
@@ -1263,16 +1133,13 @@
     flex-direction: column;
   }
 
-
   .recruiter-application-contact-grid {
     grid-template-columns: 1fr;
   }
 
-
   .recruiter-application-status {
     margin-left: 52px;
   }
-
 
   .recruiter-application-actions {
     align-items: stretch;
@@ -1280,14 +1147,11 @@
     flex-direction: column;
   }
 
-
   .recruiter-application-action {
     width: 100%;
   }
 
-
   .recruiter-applications-workflow-note {
     flex-direction: column;
   }
-
 }
