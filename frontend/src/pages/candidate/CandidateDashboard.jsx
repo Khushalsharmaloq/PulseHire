@@ -115,11 +115,7 @@ const getCompanyInitials = (value) => {
 };
 
 const getMatchScore = (job, verifiedSkills) => {
-  const required = uniqueSkills([
-    ...(Array.isArray(job?.skills) ? job.skills : []),
-
-    ...(Array.isArray(job?.requirements) ? job.requirements : []),
-  ]);
+  const required = uniqueSkills(Array.isArray(job?.skills) ? job.skills : []);
 
   if (required.length === 0) {
     return 0;

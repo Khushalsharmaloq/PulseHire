@@ -1,0 +1,329 @@
+.admin-recruiter-page {
+  min-height: 100vh;
+  padding: 36px;
+  background: var(--ph-bg);
+  color: var(--ph-text);
+}
+
+.admin-recruiter-header,
+.admin-recruiter-panel {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.admin-recruiter-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.admin-recruiter-eyebrow {
+  color: var(--ph-primary);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.admin-recruiter-header h1 {
+  margin: 8px 0 8px;
+  font-size: clamp(30px, 5vw, 46px);
+}
+
+.admin-recruiter-header p {
+  max-width: 690px;
+  margin: 0;
+  color: var(--ph-text-muted);
+  line-height: 1.65;
+}
+
+.admin-recruiter-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.admin-recruiter-header-actions > span {
+  color: var(--ph-text-muted);
+  font-size: 12px;
+}
+
+.admin-recruiter-header-actions button,
+.admin-recruiter-tabs button,
+.admin-review-actions button {
+  border: 1px solid var(--ph-border);
+  border-radius: var(--ph-radius-md);
+  background: var(--ph-surface);
+  color: var(--ph-text);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-recruiter-header-actions button {
+  min-height: 38px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.admin-recruiter-panel {
+  border: 1px solid var(--ph-border);
+  border-radius: var(--ph-radius-xl);
+  background: var(--ph-surface);
+  box-shadow: var(--ph-shadow-sm);
+  overflow: hidden;
+}
+
+.admin-recruiter-tabs {
+  padding: 14px;
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--ph-border);
+}
+
+.admin-recruiter-tabs button {
+  padding: 9px 14px;
+}
+
+.admin-recruiter-tabs button.active {
+  border-color: var(--ph-primary);
+  background: var(--ph-primary);
+  color: white;
+}
+
+.admin-recruiter-error {
+  margin: 16px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--ph-danger) 28%, transparent);
+  border-radius: var(--ph-radius-md);
+  color: var(--ph-danger);
+  background: color-mix(in srgb, var(--ph-danger) 7%, transparent);
+}
+
+.admin-recruiter-state {
+  min-height: 240px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  color: var(--ph-text-muted);
+}
+
+.admin-recruiter-list {
+  padding: 18px;
+  display: grid;
+  gap: 16px;
+}
+
+.admin-recruiter-card {
+  padding: 20px;
+  border: 1px solid var(--ph-border);
+  border-radius: var(--ph-radius-lg);
+  background: var(--ph-surface);
+}
+
+.admin-recruiter-card-head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 14px;
+  align-items: center;
+}
+
+.admin-recruiter-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: var(--ph-surface-soft);
+  color: var(--ph-primary);
+  font-weight: 800;
+}
+
+.admin-recruiter-card-head h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.admin-recruiter-card-head span,
+.admin-recruiter-card-head small {
+  display: block;
+  margin-top: 3px;
+  color: var(--ph-text-muted);
+}
+
+.admin-status-chip {
+  padding: 7px 10px;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  background: var(--ph-surface-soft);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.admin-status-chip.verified {
+  color: var(--ph-success);
+}
+
+.admin-status-chip.rejected {
+  color: var(--ph-danger);
+}
+
+.admin-recruiter-meta {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.admin-recruiter-meta > div {
+  padding: 12px;
+  border-radius: var(--ph-radius-md);
+  background: var(--ph-surface-soft);
+}
+
+.admin-recruiter-meta span,
+.admin-review-note span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--ph-text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.admin-company-section {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--ph-border);
+}
+
+.admin-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.admin-company-list {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-company-item {
+  padding: 13px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 16px;
+  border: 1px solid var(--ph-border);
+  border-radius: var(--ph-radius-md);
+}
+
+.admin-company-item span,
+.admin-company-item p,
+.admin-company-empty {
+  color: var(--ph-text-muted);
+}
+
+.admin-company-item p {
+  grid-column: 1 / -1;
+  margin: 0;
+  line-height: 1.55;
+}
+
+.admin-company-item a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ph-primary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.admin-review-note {
+  margin-top: 18px;
+  display: block;
+}
+
+.admin-review-note textarea {
+  width: 100%;
+  padding: 12px;
+  resize: vertical;
+  border: 1px solid var(--ph-border);
+  border-radius: var(--ph-radius-md);
+  background: var(--ph-bg);
+  color: var(--ph-text);
+  font: inherit;
+}
+
+.admin-review-actions {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-review-actions button {
+  min-height: 39px;
+  padding: 0 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.admin-review-actions .approve {
+  border-color: var(--ph-primary);
+  background: var(--ph-primary);
+  color: white;
+}
+
+.admin-review-actions .reject {
+  color: var(--ph-danger);
+}
+
+.admin-recruiter-pagination {
+  padding: 14px 18px;
+  border-top: 1px solid var(--ph-border);
+  color: var(--ph-text-muted);
+  font-size: 12px;
+}
+
+@media (max-width: 760px) {
+  .admin-recruiter-page {
+    padding: 22px 14px;
+  }
+
+  .admin-recruiter-header {
+    flex-direction: column;
+  }
+
+  .admin-recruiter-header-actions {
+    justify-content: flex-start;
+  }
+
+  .admin-recruiter-card-head {
+    grid-template-columns: auto 1fr;
+  }
+
+  .admin-status-chip {
+    grid-column: 1 / -1;
+    width: max-content;
+  }
+
+  .admin-recruiter-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-company-item {
+    grid-template-columns: 1fr;
+  }
+}

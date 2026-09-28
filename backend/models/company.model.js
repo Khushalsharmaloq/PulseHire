@@ -42,4 +42,6 @@ const companySchema = new mongoose.Schema(
   },
 );
 
+companySchema.index({ owner: 1, createdAt: -1 });
+
 export const Company = mongoose.model("Company", companySchema);

@@ -17,7 +17,7 @@ const fileFilter = (req, file, cb) => {
   const isValidMimeType = allowedImageTypes.has(file.mimetype);
   const isValidExtension = allowedExtensions.has(fileExtension);
 
-  if (isValidMimeType || isValidExtension) {
+  if (isValidMimeType && isValidExtension) {
     cb(null, true);
     return;
   }

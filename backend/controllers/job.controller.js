@@ -4,8 +4,10 @@ import { Job } from "../models/job.model.js";
 import { Company } from "../models/company.model.js";
 import { Application } from "../models/application.model.js";
 import { SkillProof } from "../models/skillProof.model.js";
+import { User } from "../models/user.model.js";
 
 import { calculateJobMatch, uniqueSkills } from "../utils/match.util.js";
+import { escapeRegex, parsePositiveInteger } from "../utils/request.util.js";
 
 /* =====================================================
    HELPERS
@@ -151,6 +153,29 @@ export const createJob = async (req, res) => {
 
     const normalizedSalaryMax = parseNullableNumber(salaryMax);
 
+    const salaryMinProvided = salaryMin !== null && salaryMin !== undefined && salaryMin !== "";
+    const salaryMaxProvided = salaryMax !== null && salaryMax !== undefined && salaryMax !== "";
+
+    if (
+      (salaryMinProvided && normalizedSalaryMin === null) ||
+      (salaryMaxProvided && normalizedSalaryMax === null)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Salary values must be valid numbers.",
+      });
+    }
+
+    if (
+      (normalizedSalaryMin !== null && normalizedSalaryMin < 0) ||
+      (normalizedSalaryMax !== null && normalizedSalaryMax < 0)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Salary values cannot be negative.",
+      });
+    }
+
     if (
       normalizedSalaryMin !== null &&
       normalizedSalaryMax !== null &&
@@ -184,9 +209,14 @@ export const createJob = async (req, res) => {
 
     /* ==================== STATUS ==================== */
 
-    const normalizedStatus = allowedStatuses.includes(status)
-      ? status
-      : "active";
+    if (status !== undefined && !allowedStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Status must be draft or active.",
+      });
+    }
+
+    const normalizedStatus = status || "active";
 
     /* ==================== CREATE ==================== */
 
@@ -247,42 +277,55 @@ export const createJob = async (req, res) => {
 export const getAllJobs = async (req, res) => {
   try {
     const { keyword, location, jobType } = req.query;
+    const page = parsePositiveInteger(req.query.page, { defaultValue: 1, min: 1 });
+    const limit = parsePositiveInteger(req.query.limit, {
+      defaultValue: 50,
+      min: 1,
+      max: 100,
+    });
+
+    const verifiedRecruiterIds = await User.find({
+      role: "recruiter",
+      accountStatus: "active",
+      "recruiterVerification.status": "verified",
+    }).distinct("_id");
 
     const query = {
       status: "active",
+      recruiter: { $in: verifiedRecruiterIds },
     };
 
-    /* ==================== KEYWORD ==================== */
-
     if (typeof keyword === "string" && keyword.trim()) {
-      const regex = new RegExp(keyword.trim(), "i");
+      const normalizedKeyword = keyword.trim();
 
+      if (normalizedKeyword.length > 100) {
+        return res.status(400).json({
+          success: false,
+          message: "Search keyword cannot exceed 100 characters.",
+        });
+      }
+
+      const regex = new RegExp(escapeRegex(normalizedKeyword), "i");
       query.$or = [
-        {
-          title: regex,
-        },
-
-        {
-          description: regex,
-        },
-
-        {
-          skills: regex,
-        },
-
-        {
-          requirements: regex,
-        },
+        { title: regex },
+        { description: regex },
+        { skills: regex },
+        { requirements: regex },
       ];
     }
 
-    /* ==================== LOCATION ==================== */
-
     if (typeof location === "string" && location.trim()) {
-      query.location = new RegExp(location.trim(), "i");
-    }
+      const normalizedLocation = location.trim();
 
-    /* ==================== JOB TYPE ==================== */
+      if (normalizedLocation.length > 100) {
+        return res.status(400).json({
+          success: false,
+          message: "Location search cannot exceed 100 characters.",
+        });
+      }
+
+      query.location = new RegExp(escapeRegex(normalizedLocation), "i");
+    }
 
     if (typeof jobType === "string" && jobType.trim()) {
       const allowedJobTypes = [
@@ -302,21 +345,24 @@ export const getAllJobs = async (req, res) => {
       query.jobType = jobType;
     }
 
-    /* ==================== QUERY ==================== */
-
-    const jobs = await Job.find(query)
-      .populate("company", "name logo location description website")
-      .populate("recruiter", "fullname")
-      .sort({
-        createdAt: -1,
-      })
-      .lean();
+    const [jobs, total] = await Promise.all([
+      Job.find(query)
+        .populate("company", "name logo location description website")
+        .populate("recruiter", "fullname")
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean(),
+      Job.countDocuments(query),
+    ]);
 
     return res.status(200).json({
       success: true,
-
       count: jobs.length,
-
+      total,
+      page,
+      limit,
+      pages: Math.max(1, Math.ceil(total / limit)),
       jobs,
     });
   } catch (error) {
@@ -511,11 +557,7 @@ export const getMyJobs = async (req, res) => {
         stats.verifiedApplicants += 1;
       }
 
-      const requiredSkills = uniqueSkills([
-        ...(job.skills || []),
-
-        ...(job.requirements || []),
-      ]);
+      const requiredSkills = uniqueSkills(job.skills || []);
 
       if (requiredSkills.length > 0) {
         const match = calculateJobMatch(requiredSkills, candidateSkills);
@@ -679,6 +721,20 @@ export const getJobById = async (req, res) => {
       });
     }
 
+    const recruiterIsVerified = await User.exists({
+      _id: job.recruiter?._id || job.recruiter,
+      role: "recruiter",
+      accountStatus: "active",
+      "recruiterVerification.status": "verified",
+    });
+
+    if (!recruiterIsVerified) {
+      return res.status(404).json({
+        success: false,
+        message: "This job is not currently available.",
+      });
+    }
+
     /* ==================== EXISTING APPLICATION ==================== */
 
     const existingApplication = await Application.findOne({
@@ -703,11 +759,7 @@ export const getJobById = async (req, res) => {
 
     /* ==================== MATCH ==================== */
 
-    const requiredSkills = uniqueSkills([
-      ...(job.skills || []),
-
-      ...(job.requirements || []),
-    ]);
+    const requiredSkills = uniqueSkills(job.skills || []);
 
     const match = calculateJobMatch(requiredSkills, approvedSkills);
 
@@ -859,11 +911,43 @@ export const updateJob = async (req, res) => {
     }
 
     if (salaryMin !== undefined) {
-      job.salaryMin = parseNullableNumber(salaryMin);
+      const parsedSalaryMin = parseNullableNumber(salaryMin);
+
+      if (salaryMin !== "" && parsedSalaryMin === null) {
+        return res.status(400).json({
+          success: false,
+          message: "Minimum salary must be a valid number.",
+        });
+      }
+
+      if (parsedSalaryMin !== null && parsedSalaryMin < 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Minimum salary cannot be negative.",
+        });
+      }
+
+      job.salaryMin = parsedSalaryMin;
     }
 
     if (salaryMax !== undefined) {
-      job.salaryMax = parseNullableNumber(salaryMax);
+      const parsedSalaryMax = parseNullableNumber(salaryMax);
+
+      if (salaryMax !== "" && parsedSalaryMax === null) {
+        return res.status(400).json({
+          success: false,
+          message: "Maximum salary must be a valid number.",
+        });
+      }
+
+      if (parsedSalaryMax !== null && parsedSalaryMax < 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Maximum salary cannot be negative.",
+        });
+      }
+
+      job.salaryMax = parsedSalaryMax;
     }
 
     if (

@@ -992,7 +992,7 @@ const PostJob = () => {
                 <strong>PulseHire match intelligence</strong>
 
                 <span>
-                  Candidate matching will use the requirements and skills you
+                  Candidate matching uses the structured skills you
                   define.
                 </span>
               </div>

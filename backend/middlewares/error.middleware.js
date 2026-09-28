@@ -58,10 +58,13 @@ export const errorHandler = (error, req, res, next) => {
     });
   }
 
-  if (error?.message === "Only image files are allowed.") {
+  if (
+    error?.message ===
+    "Only JPG, JPEG, PNG, and WEBP image files are allowed."
+  ) {
     return res.status(400).json({
       success: false,
-      message: "Only image files are allowed.",
+      message: "Only JPG, JPEG, PNG, and WEBP image files are allowed.",
     });
   }
 

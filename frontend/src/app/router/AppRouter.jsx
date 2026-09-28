@@ -23,6 +23,9 @@ import PostJob from "../../pages/recruiter/PostJob";
 import AppShell from "../../components/layout/AppShell";
 import ProtectedRoute from "./ProtectedRoute";
 import PublicOnlyRoute from "./PublicOnlyRoute";
+import VerifiedRecruiterRoute from "./VerifiedRecruiterRoute";
+import RecruiterAccountVerification from "../../pages/recruiter/RecruiterAccountVerification";
+import AdminRecruiterVerification from "../../pages/admin/AdminRecruiterVerification";
 
 /* =========================================================
    PLACEHOLDER PAGE
@@ -136,6 +139,10 @@ const AppRouter = () => {
 
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
+      <Route element={<ProtectedRoute requiredRole="admin" />}>
+        <Route path="/admin/recruiters" element={<AdminRecruiterVerification />} />
+      </Route>
+
       {/* =====================================================
           CANDIDATE
           ===================================================== */}
@@ -166,37 +173,44 @@ const AppRouter = () => {
 
       <Route element={<ProtectedRoute requiredRole="recruiter" />}>
         <Route element={<AppShell role="recruiter" />}>
-          <Route path="/recruiter/dashboard" element={<RecruiterDashboard />} />
+          <Route
+            path="/recruiter/account-verification"
+            element={<RecruiterAccountVerification />}
+          />
 
           <Route path="/recruiter/company" element={<RecruiterCompany />} />
 
-          <Route path="/recruiter/jobs/new" element={<PostJob />} />
-
-          <Route path="/recruiter/jobs" element={<RecruiterJobs />} />
-
-          <Route
-            path="/recruiter/candidates"
-            element={<RecruiterCandidates />}
-          />
-
-          <Route
-            path="/recruiter/applications"
-            element={<RecruiterApplicationsOverview />}
-          />
-
-          <Route
-            path="/recruiter/applications/:jobId"
-            element={<RecruiterApplications />}
-          />
-
-          <Route path="/recruiter/analytics" element={<RecruiterAnalytics />} />
-
           <Route path="/recruiter/settings" element={<RecruiterSettings />} />
 
-          <Route
-            path="/recruiter/verification"
-            element={<SkillVerification />}
-          />
+          <Route element={<VerifiedRecruiterRoute />}>
+            <Route path="/recruiter/dashboard" element={<RecruiterDashboard />} />
+
+            <Route path="/recruiter/jobs/new" element={<PostJob />} />
+
+            <Route path="/recruiter/jobs" element={<RecruiterJobs />} />
+
+            <Route
+              path="/recruiter/candidates"
+              element={<RecruiterCandidates />}
+            />
+
+            <Route
+              path="/recruiter/applications"
+              element={<RecruiterApplicationsOverview />}
+            />
+
+            <Route
+              path="/recruiter/applications/:jobId"
+              element={<RecruiterApplications />}
+            />
+
+            <Route path="/recruiter/analytics" element={<RecruiterAnalytics />} />
+
+            <Route
+              path="/recruiter/verification"
+              element={<SkillVerification />}
+            />
+          </Route>
         </Route>
       </Route>
 

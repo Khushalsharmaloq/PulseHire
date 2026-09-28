@@ -6,6 +6,7 @@ import { Application } from "../models/application.model.js";
 import { SkillProof } from "../models/skillProof.model.js";
 
 import { calculateJobMatch, uniqueSkills } from "../utils/match.util.js";
+import { createPrivateResumeDownloadUrl } from "../utils/cloudinary.util.js";
 
 /* =====================================================
    HELPERS
@@ -598,6 +599,81 @@ export const getRecruiterCandidateById = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Unable to fetch candidate intelligence.",
+    });
+  }
+};
+
+
+/* =====================================================
+   DOWNLOAD CANDIDATE RESUME FOR AUTHORIZED RECRUITER
+===================================================== */
+
+export const downloadRecruiterCandidateResume = async (req, res) => {
+  try {
+    const { candidateId } = req.params;
+
+    if (!isValidObjectId(candidateId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid candidate ID.",
+      });
+    }
+
+    const hasApplicationRelationship = await Application.exists({
+      recruiter: req.userId,
+      candidate: candidateId,
+    });
+
+    if (!hasApplicationRelationship) {
+      return res.status(404).json({
+        success: false,
+        message: "Candidate not found in your applicant pool.",
+      });
+    }
+
+    const candidate = await User.findOne({
+      _id: candidateId,
+      role: "candidate",
+    }).select(
+      "profile.resume profile.resumeOriginalName +profile.resumePublicId +profile.resumeResourceType +profile.resumeDeliveryType +profile.resumeFormat",
+    );
+
+    if (!candidate) {
+      return res.status(404).json({
+        success: false,
+        message: "Candidate account not found.",
+      });
+    }
+
+    let downloadUrl = null;
+
+    if (candidate.profile?.resumePublicId) {
+      downloadUrl = createPrivateResumeDownloadUrl({
+        publicId: candidate.profile.resumePublicId,
+        format: candidate.profile.resumeFormat || "pdf",
+        resourceType: candidate.profile.resumeResourceType || "raw",
+        deliveryType: candidate.profile.resumeDeliveryType || "authenticated",
+      });
+    } else if (/^https?:\/\//i.test(candidate.profile?.resume || "")) {
+      // Legacy public resume uploaded before private storage was introduced.
+      downloadUrl = candidate.profile.resume;
+    }
+
+    if (!downloadUrl) {
+      return res.status(404).json({
+        success: false,
+        message: "This candidate has not uploaded a resume.",
+      });
+    }
+
+    res.setHeader("Cache-Control", "no-store");
+    return res.redirect(302, downloadUrl);
+  } catch (error) {
+    console.error("Candidate resume download error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to open candidate resume.",
     });
   }
 };

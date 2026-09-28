@@ -26,6 +26,8 @@ import "./styles/recruiter-dashboard.css";
 import "./styles/recruiter-analytics.css";
 import "./styles/recruiter-settings.css";
 import "./styles/recruiter-applications-overview.css";
+import "./styles/recruiter-account-verification.css";
+import "./styles/admin-recruiters.css";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>

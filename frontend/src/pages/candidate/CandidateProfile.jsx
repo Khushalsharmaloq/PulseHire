@@ -24,6 +24,7 @@ import useAuth from "../../hooks/useAuth";
 import { getCurrentUser } from "../../services/auth.api";
 
 import { getSkillGap } from "../../services/skills.api";
+import { getOwnResumeUrl } from "../../services/resume.api";
 
 import {
   updateProfile,
@@ -975,7 +976,7 @@ const CandidateProfile = () => {
                 </div>
 
                 <a
-                  href={profileUser.profile.resume}
+                  href={getOwnResumeUrl()}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="profile-document-link"

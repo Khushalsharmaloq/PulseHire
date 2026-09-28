@@ -21,6 +21,7 @@ import {
   getRecruiterJobApplications,
   updateRecruiterApplicationStatus,
 } from "../../services/recruiterApplications";
+import { getCandidateResumeUrl } from "../../services/resume.api";
 
 /* =========================================================
    STATUS CONFIG
@@ -764,7 +765,7 @@ const RecruiterApplications = () => {
 
                         {profile?.resume ? (
                           <a
-                            href={profile.resume}
+                            href={getCandidateResumeUrl(candidate?._id || candidate?.id)}
                             target="_blank"
                             rel="noopener noreferrer"
                           >

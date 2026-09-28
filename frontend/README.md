@@ -1,16 +1,35 @@
-# React + Vite
+# PulseHire Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React/Vite client for PulseHire candidate, recruiter, and administrator workflows.
 
-Currently, two official plugins are available:
+## Setup
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+cp .env.example .env
+npm ci
+npm run dev
+```
 
-## React Compiler
+Configure:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```env
+VITE_API_BASE_URL=http://localhost:8000/api/v1
+```
 
-## Expanding the ESLint configuration
+Use the URL for your actual backend deployment outside local development.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Quality checks
+
+```bash
+npm run lint
+npm run build
+```
+
+## Account routing
+
+- Candidates enter the candidate workspace.
+- Recruiters in `pending` or `rejected` verification state are routed to `/recruiter/account-verification` and can maintain onboarding/company information.
+- Verified recruiters can access the full recruiter workspace.
+- Administrators use `/admin/recruiters` to review recruiter verification status.
+
+Resume links intentionally target authenticated backend download endpoints instead of exposing raw storage URLs in the UI.

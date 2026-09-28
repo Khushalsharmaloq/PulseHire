@@ -8,6 +8,7 @@ import {
   uniqueSkills,
   calculateSkillGap,
 } from "../utils/skillGap.util.js";
+import { parsePositiveInteger } from "../utils/request.util.js";
 
 /*
 |--------------------------------------------------------------------------
@@ -102,20 +103,35 @@ export const getSkillGapIntelligence = async (req, res) => {
           );
 
     /* =================================================
-           6. ACTIVE JOBS
+           6. VERIFIED ACTIVE JOBS
         ================================================= */
 
-    const jobs = await Job.find({
+    const analysisLimit = parsePositiveInteger(req.query.limit, {
+      defaultValue: 100,
+      min: 1,
+      max: 200,
+    });
+
+    const verifiedRecruiterIds = await User.distinct("_id", {
+      role: "recruiter",
+      accountStatus: "active",
+      "recruiterVerification.status": "verified",
+    });
+
+    const jobFilter = {
       status: "active",
-    })
-      .select(
-        "title description skills requirements location jobType company recruiter",
-      )
-      .populate("company", "name logo location")
-      .sort({
-        createdAt: -1,
-      })
-      .lean();
+      recruiter: { $in: verifiedRecruiterIds },
+    };
+
+    const [jobs, totalAvailableRoles] = await Promise.all([
+      Job.find(jobFilter)
+        .select("title description skills location jobType company recruiter")
+        .populate("company", "name logo location")
+        .sort({ createdAt: -1 })
+        .limit(analysisLimit)
+        .lean(),
+      Job.countDocuments(jobFilter),
+    ]);
 
     /* =================================================
            7. NO ACTIVE JOBS
@@ -147,7 +163,13 @@ export const getSkillGapIntelligence = async (req, res) => {
 
         rolesAnalysed: 0,
 
-        message: "No active roles are available for skill gap analysis yet.",
+        analysisScope: {
+          totalAvailableRoles,
+          limit: analysisLimit,
+          truncated: false,
+        },
+
+        message: "No verified active roles are available for skill gap analysis yet.",
       });
     }
 
@@ -157,13 +179,9 @@ export const getSkillGapIntelligence = async (req, res) => {
 
     const roleAnalysis = jobs
       .map((job) => {
-        const combinedRequirements = [
-          ...(Array.isArray(job.requirements) ? job.requirements : []),
-
-          ...(Array.isArray(job.skills) ? job.skills : []),
-        ];
-
-        const requiredSkills = uniqueSkills(combinedRequirements);
+        const requiredSkills = uniqueSkills(
+          Array.isArray(job.skills) ? job.skills : [],
+        );
 
         /*
          * IMPORTANT:
@@ -430,6 +448,12 @@ export const getSkillGapIntelligence = async (req, res) => {
       roleAnalysis,
 
       rolesAnalysed: roleAnalysis.length,
+
+      analysisScope: {
+        totalAvailableRoles,
+        limit: analysisLimit,
+        truncated: totalAvailableRoles > jobs.length,
+      },
     });
   } catch (error) {
     console.error("Get skill gap intelligence error:", error);

@@ -21,6 +21,7 @@ import {
   uploadRecruiterProfilePhoto,
   uploadRecruiterResume,
 } from "../../services/recruiterSettings";
+import { getOwnResumeUrl } from "../../services/resume.api";
 
 /* =========================================================
    INITIAL FORM
@@ -675,7 +676,7 @@ const RecruiterSettings = () => {
 
             {user?.profile?.resume && (
               <a
-                href={user.profile.resume}
+                href={getOwnResumeUrl()}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="recruiter-settings-view-document"
