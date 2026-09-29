@@ -3,9 +3,16 @@ import mongoose from "mongoose";
 import { Application } from "../models/application.model.js";
 import { Job } from "../models/job.model.js";
 import { User } from "../models/user.model.js";
+import { SkillProof } from "../models/skillProof.model.js";
 
 import { getJobFreshness } from "../utils/freshness.util.js";
 import { calculateResponseDebt } from "../utils/responseDebt.util.js";
+import {
+  RECRUITER_SETTABLE_APPLICATION_STATUSES,
+  canTransitionApplication,
+  isTerminalApplicationStatus,
+} from "../utils/applicationWorkflow.util.js";
+import { calculateJobMatch, uniqueSkills } from "../utils/match.util.js";
 
 /* =====================================================
    HELPER
@@ -91,6 +98,20 @@ export const applyToJob = async (req, res) => {
       });
     }
 
+    const recruiterIsVerified = await User.exists({
+      _id: job.recruiter,
+      role: "recruiter",
+      accountStatus: "active",
+      "recruiterVerification.status": "verified",
+    });
+
+    if (!recruiterIsVerified) {
+      return res.status(400).json({
+        message: "This job is not currently accepting applications.",
+        success: false,
+      });
+    }
+
     /* ==================== DUPLICATE CHECK ==================== */
 
     const existingApplication = await Application.findOne({
@@ -115,6 +136,14 @@ export const applyToJob = async (req, res) => {
       status: "applied",
       appliedAt: new Date(),
       lastStatusChangedAt: new Date(),
+      statusHistory: [
+        {
+          status: "applied",
+          changedBy: req.userId,
+          actorRole: "candidate",
+          changedAt: new Date(),
+        },
+      ],
     });
 
     /* ==================== RESPONSE ==================== */
@@ -202,6 +231,106 @@ export const getMyApplications = async (req, res) => {
     return res.status(500).json({
       message: "Unable to fetch your applications.",
       success: false,
+    });
+  }
+};
+
+/* =====================================================
+   GET ALL APPLICATIONS FOR RECRUITER
+===================================================== */
+
+export const getRecruiterApplications = async (req, res) => {
+  try {
+    const applications = await Application.find({
+      recruiter: req.userId,
+    })
+      .populate("candidate", ["fullname", "email", "phoneNumber", "profile"])
+      .populate({
+        path: "job",
+        select: "title skills location status company",
+        populate: {
+          path: "company",
+          select: "name logo location",
+        },
+      })
+      .sort({ appliedAt: -1 });
+
+    const candidateIds = [
+      ...new Set(
+        applications
+          .map((application) => application.candidate?._id)
+          .filter(Boolean)
+          .map(String),
+      ),
+    ];
+
+    const approvedProofs =
+      candidateIds.length === 0
+        ? []
+        : await SkillProof.find({
+            candidate: { $in: candidateIds },
+            status: "approved",
+          })
+            .select("candidate skill")
+            .lean();
+
+    const approvedSkillsByCandidate = new Map();
+
+    for (const proof of approvedProofs) {
+      const candidateId = String(proof.candidate);
+
+      if (!approvedSkillsByCandidate.has(candidateId)) {
+        approvedSkillsByCandidate.set(candidateId, []);
+      }
+
+      approvedSkillsByCandidate.get(candidateId).push(proof.skill);
+    }
+
+    const applicationsWithMetrics = applications.map((application) => {
+      const candidateId = String(application.candidate?._id || "");
+      const approvedSkills = uniqueSkills(
+        approvedSkillsByCandidate.get(candidateId) || [],
+      );
+      const requiredSkills = uniqueSkills(application.job?.skills || []);
+      const match = calculateJobMatch(requiredSkills, approvedSkills);
+      const responseDebt = application.recruiterRespondedAt
+        ? null
+        : calculateResponseDebt(application.appliedAt);
+
+      return {
+        ...application.toObject(),
+        responseDebt,
+        match,
+      };
+    });
+
+    const summary = {
+      total: applications.length,
+      applied: 0,
+      reviewing: 0,
+      shortlisted: 0,
+      interview: 0,
+      rejected: 0,
+      hired: 0,
+    };
+
+    for (const application of applications) {
+      if (Object.prototype.hasOwnProperty.call(summary, application.status)) {
+        summary[application.status] += 1;
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      applications: applicationsWithMetrics,
+      summary,
+    });
+  } catch (error) {
+    console.error("Get recruiter applications error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to fetch recruiter applications.",
     });
   }
 };
@@ -326,15 +455,10 @@ export const updateApplicationStatus = async (req, res) => {
 
     /* ==================== ALLOWED STATUS ==================== */
 
-    const allowedStatuses = [
-      "reviewing",
-      "shortlisted",
-      "interview",
-      "rejected",
-      "hired",
-    ];
-
-    if (!status || !allowedStatuses.includes(status)) {
+    if (
+      !status ||
+      !RECRUITER_SETTABLE_APPLICATION_STATUSES.includes(status)
+    ) {
       return res.status(400).json({
         message: "Invalid application status.",
         success: false,
@@ -368,9 +492,7 @@ export const updateApplicationStatus = async (req, res) => {
 
     /* ==================== TERMINAL STATUS ==================== */
 
-    const terminalStatuses = ["rejected", "hired"];
-
-    if (terminalStatuses.includes(application.status)) {
+    if (isTerminalApplicationStatus(application.status)) {
       return res.status(409).json({
         message: `This application is already ${application.status}.`,
         success: false,
@@ -379,19 +501,9 @@ export const updateApplicationStatus = async (req, res) => {
 
     /* ==================== STATE TRANSITIONS ==================== */
 
-    const allowedTransitions = {
-      applied: ["reviewing", "rejected"],
-
-      reviewing: ["shortlisted", "rejected"],
-
-      shortlisted: ["interview", "rejected"],
-
-      interview: ["hired", "rejected"],
-    };
-
     const currentStatus = application.status;
 
-    if (!allowedTransitions[currentStatus]?.includes(status)) {
+    if (!canTransitionApplication(currentStatus, status)) {
       return res.status(409).json({
         message: `Cannot change application from ${currentStatus} to ${status}.`,
         success: false,
@@ -405,6 +517,13 @@ export const updateApplicationStatus = async (req, res) => {
     application.status = status;
 
     application.lastStatusChangedAt = now;
+
+    application.statusHistory.push({
+      status,
+      changedBy: req.userId,
+      actorRole: "recruiter",
+      changedAt: now,
+    });
 
     /*
         The first recruiter status change

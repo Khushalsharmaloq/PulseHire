@@ -243,11 +243,7 @@ export const getRecruiterAnalytics = async (req, res) => {
 
       let verifiedApplicants = 0;
 
-      const requiredSkills = uniqueSkills([
-        ...(job.skills || []),
-
-        ...(job.requirements || []),
-      ]);
+      const requiredSkills = uniqueSkills(job.skills || []);
 
       for (const application of jobApplications) {
         const candidateId = String(application.candidate?._id);
@@ -322,11 +318,7 @@ export const getRecruiterAnalytics = async (req, res) => {
     const skillFrequency = new Map();
 
     for (const job of jobs) {
-      const requiredSkills = uniqueSkills([
-        ...(job.skills || []),
-
-        ...(job.requirements || []),
-      ]);
+      const requiredSkills = uniqueSkills(job.skills || []);
 
       for (const skill of requiredSkills) {
         const normalized = String(skill).trim().toLowerCase();

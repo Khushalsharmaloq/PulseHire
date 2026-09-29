@@ -72,7 +72,23 @@ const Login = () => {
       }
 
       if (data.user?.role === "recruiter") {
-        navigate("/recruiter/dashboard", {
+        const verificationStatus =
+          data.user?.recruiterVerification?.status ||
+          data.user?.recruiterVerificationStatus ||
+          "pending";
+
+        navigate(
+          verificationStatus === "verified"
+            ? "/recruiter/dashboard"
+            : "/recruiter/account-verification",
+          { replace: true },
+        );
+
+        return;
+      }
+
+      if (data.user?.role === "admin") {
+        navigate("/admin/recruiters", {
           replace: true,
         });
 

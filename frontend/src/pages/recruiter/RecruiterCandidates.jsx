@@ -28,6 +28,7 @@ import {
 } from "../../services/recruiterCandidates";
 
 import { getRecruiterJobs } from "../../services/recruiterJobs";
+import { getCandidateResumeUrl } from "../../services/resume.api";
 
 /* =========================================================
    STATUS LABELS
@@ -1001,7 +1002,7 @@ const RecruiterCandidates = () => {
 
                   {selectedCandidate?.profile?.resume ? (
                     <a
-                      href={selectedCandidate.profile.resume}
+                      href={getCandidateResumeUrl(selectedCandidate?.id || selectedCandidate?.candidateId)}
                       target="_blank"
                       rel="noopener noreferrer"
                     >

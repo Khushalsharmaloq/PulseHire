@@ -261,14 +261,10 @@ const JobDetails = () => {
 
     const loadJobDetails = async () => {
       try {
-        const [jobsResult, skillGapResult, applicationsResult] =
-          await Promise.allSettled([
-            api.get("/job/all"),
-
-            api.get("/skill-gap"),
-
-            api.get("/application/my"),
-          ]);
+        const [jobResult, skillGapResult] = await Promise.allSettled([
+          api.get(`/job/${jobId}`),
+          api.get("/skill-gap"),
+        ]);
 
         if (cancelled) {
           return;
@@ -283,25 +279,33 @@ const JobDetails = () => {
         }
 
         /* ================================================
-             JOB
+             JOB + CURRENT APPLICATION
              ================================================ */
 
-        if (jobsResult.status === "fulfilled") {
-          const payload = jobsResult.value?.data;
+        if (jobResult.status === "fulfilled") {
+          const payload = jobResult.value?.data;
 
-          const jobs = Array.isArray(payload?.jobs) ? payload.jobs : [];
+          if (payload?.success && payload?.job) {
+            setJob(payload.job);
 
-          const selectedJob = jobs.find(
-            (item) => String(item?._id) === String(jobId),
-          );
-
-          if (selectedJob) {
-            setJob(selectedJob);
+            setApplications(
+              payload.job.application
+                ? [
+                    {
+                      ...payload.job.application,
+                      job: payload.job._id,
+                    },
+                  ]
+                : [],
+            );
           } else {
             setError("This opportunity could not be found.");
           }
         } else {
-          setError("Unable to load this opportunity.");
+          setError(
+            jobResult.reason?.response?.data?.message ||
+              "Unable to load this opportunity.",
+          );
         }
 
         /* ================================================
@@ -313,20 +317,6 @@ const JobDetails = () => {
 
           if (payload?.success) {
             setSkillGapData(payload);
-          }
-        }
-
-        /* ================================================
-             APPLICATIONS
-             ================================================ */
-
-        if (applicationsResult.status === "fulfilled") {
-          const payload = applicationsResult.value?.data;
-
-          if (payload?.success) {
-            setApplications(
-              Array.isArray(payload.applications) ? payload.applications : [],
-            );
           }
         }
       } catch (requestError) {
@@ -363,11 +353,9 @@ const JobDetails = () => {
 
   const companyInitials = getCompanyInitials(companyName);
 
-  const requiredSkills = uniqueSkills([
-    ...(Array.isArray(job?.requirements) ? job.requirements : []),
-
-    ...(Array.isArray(job?.skills) ? job.skills : []),
-  ]);
+  const requiredSkills = uniqueSkills(
+    Array.isArray(job?.skills) ? job.skills : [],
+  );
 
   const roleAnalysis = Array.isArray(skillGapData?.roleAnalysis)
     ? skillGapData.roleAnalysis.find(
@@ -376,16 +364,25 @@ const JobDetails = () => {
     : null;
 
   const matchedSkills = uniqueSkills(
-    roleAnalysis?.matchedSkills || roleAnalysis?.verifiedSkills || [],
+    roleAnalysis?.matchedSkills ||
+      roleAnalysis?.verifiedSkills ||
+      job?.match?.matchedSkills ||
+      [],
   );
 
-  const missingSkills = uniqueSkills(roleAnalysis?.skillGaps || []);
+  const missingSkills = uniqueSkills(
+    roleAnalysis?.skillGaps || job?.match?.missingSkills || [],
+  );
 
-  const matchPercentage = clampScore(roleAnalysis?.matchPercentage);
+  const matchPercentage = clampScore(
+    roleAnalysis?.matchPercentage ?? job?.match?.score,
+  );
 
   const readiness = clampScore(skillGapData?.readiness);
 
-  const evidenceCoverage = clampScore(skillGapData?.verifiedCoverage);
+  const evidenceCoverage = clampScore(
+    skillGapData?.verifiedCoverage ?? job?.match?.verificationCoverage,
+  );
 
   const applicationForJob = applications.find(
     (application) =>

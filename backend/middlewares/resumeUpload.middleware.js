@@ -3,14 +3,11 @@ import multer from "multer";
 const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype === "application/pdf") {
-    cb(null, true);
-    return;
-  }
-
   const extension = file.originalname.split(".").pop()?.toLowerCase();
+  const isPdfMimeType = file.mimetype === "application/pdf";
+  const isPdfExtension = extension === "pdf";
 
-  if (extension === "pdf") {
+  if (isPdfMimeType && isPdfExtension) {
     cb(null, true);
     return;
   }

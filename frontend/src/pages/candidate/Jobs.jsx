@@ -61,11 +61,9 @@ const clampScore = (value) => {
 };
 
 const calculateJobMatch = (job, verifiedSkills) => {
-  const requiredSkills = uniqueSkills([
-    ...(Array.isArray(job?.skills) ? job.skills : []),
-
-    ...(Array.isArray(job?.requirements) ? job.requirements : []),
-  ]);
+  const requiredSkills = uniqueSkills(
+    Array.isArray(job?.skills) ? job.skills : [],
+  );
 
   const verifiedSkillSet = new Set(verifiedSkills.map(normalizeSkill));
 

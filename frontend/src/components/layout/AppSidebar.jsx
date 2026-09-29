@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Search,
   Settings,
+  ShieldCheck,
   Target,
   User,
   Users,
@@ -106,6 +107,19 @@ const recruiterNavigation = [
   },
 ];
 
+const pendingRecruiterNavigation = [
+  {
+    label: "Verification",
+    path: "/recruiter/account-verification",
+    icon: ShieldCheck,
+  },
+  {
+    label: "Company",
+    path: "/recruiter/company",
+    icon: BriefcaseBusiness,
+  },
+];
+
 /* =========================================================
    APP SIDEBAR
    ========================================================= */
@@ -113,8 +127,17 @@ const recruiterNavigation = [
 const AppSidebar = ({ role, onNavigate }) => {
   const { user } = useAuth();
 
+  const recruiterVerificationStatus =
+    user?.recruiterVerification?.status ||
+    user?.recruiterVerificationStatus ||
+    "pending";
+
   const navigation =
-    role === "recruiter" ? recruiterNavigation : candidateNavigation;
+    role === "recruiter"
+      ? recruiterVerificationStatus === "verified"
+        ? recruiterNavigation
+        : pendingRecruiterNavigation
+      : candidateNavigation;
 
   const workspaceLabel =
     role === "recruiter" ? "RECRUITER WORKSPACE" : "CANDIDATE WORKSPACE";
@@ -157,7 +180,11 @@ const AppSidebar = ({ role, onNavigate }) => {
 
       <NavLink
         to={
-          role === "recruiter" ? "/recruiter/dashboard" : "/candidate/dashboard"
+          role === "recruiter"
+            ? recruiterVerificationStatus === "verified"
+              ? "/recruiter/dashboard"
+              : "/recruiter/account-verification"
+            : "/candidate/dashboard"
         }
         className="app-brand"
         onClick={handleNavigation}

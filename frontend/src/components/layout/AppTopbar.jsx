@@ -18,7 +18,19 @@ const AppTopbar = ({ role, onMenuClick }) => {
   const profilePath =
     role === "recruiter" ? "/recruiter/company" : "/candidate/profile";
 
-  const jobsPath = role === "recruiter" ? "/recruiter/jobs" : "/candidate/jobs";
+  const recruiterVerificationStatus =
+    user?.recruiterVerification?.status ||
+    user?.recruiterVerificationStatus ||
+    "pending";
+
+  const recruiterIsVerified = recruiterVerificationStatus === "verified";
+
+  const jobsPath =
+    role === "recruiter"
+      ? recruiterIsVerified
+        ? "/recruiter/jobs"
+        : "/recruiter/account-verification"
+      : "/candidate/jobs";
 
   const getInitials = (name = "") => {
     const parts = String(name).trim().split(/\s+/).filter(Boolean);
@@ -78,7 +90,11 @@ const AppTopbar = ({ role, onMenuClick }) => {
           <Search size={17} aria-hidden="true" />
 
           <span>
-            {role === "recruiter" ? "Manage jobs" : "Find opportunities"}
+            {role === "recruiter"
+              ? recruiterIsVerified
+                ? "Manage jobs"
+                : "Verification status"
+              : "Find opportunities"}
           </span>
         </Link>
 

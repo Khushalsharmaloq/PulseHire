@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "nodemon index.js",
     "start": "node index.js",
-    "create-admin": "node scripts/createAdmin.js"
+    "create-admin": "node scripts/createAdmin.js",
+    "test": "node --test tests/*.test.js",
+    "check": "node --check app.js && node --check index.js"
   },
   "keywords": [],
   "author": "",

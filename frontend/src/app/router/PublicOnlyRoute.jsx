@@ -11,6 +11,10 @@ const getDashboardPath = (role) => {
     return "/recruiter/dashboard";
   }
 
+  if (role === "admin") {
+    return "/admin/recruiters";
+  }
+
   return "/";
 };
 

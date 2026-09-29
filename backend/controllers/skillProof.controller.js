@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 import { SkillProof } from "../models/skillProof.model.js";
 import { User } from "../models/user.model.js";
+import { Application } from "../models/application.model.js";
 
 /* =====================================================
    HELPERS
@@ -271,40 +272,51 @@ export const getMySkillProofs = async (req, res) => {
 export const getRecruiterSkillProofs = async (req, res) => {
   try {
     const { status } = req.query;
-
     const allowedStatuses = ["pending", "approved", "rejected"];
 
-    const filter = {};
+    if (status && !allowedStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid skill proof status.",
+      });
+    }
 
-    if (status && allowedStatuses.includes(status)) {
+    const candidateIds = await Application.distinct("candidate", {
+      recruiter: req.userId,
+    });
+
+    if (candidateIds.length === 0) {
+      return res.status(200).json({
+        success: true,
+        skillProofs: [],
+        summary: { total: 0, pending: 0, approved: 0, rejected: 0 },
+      });
+    }
+
+    const filter = {
+      candidate: { $in: candidateIds },
+    };
+
+    if (status) {
       filter.status = status;
     }
 
     const skillProofs = await SkillProof.find(filter)
       .populate("candidate", "fullname email profile.skills")
       .populate("reviewedBy", "fullname email")
-      .sort({
-        createdAt: -1,
-      })
+      .sort({ createdAt: -1 })
       .lean();
 
     const summary = {
       total: skillProofs.length,
-
       pending: skillProofs.filter((proof) => proof.status === "pending").length,
-
-      approved: skillProofs.filter((proof) => proof.status === "approved")
-        .length,
-
-      rejected: skillProofs.filter((proof) => proof.status === "rejected")
-        .length,
+      approved: skillProofs.filter((proof) => proof.status === "approved").length,
+      rejected: skillProofs.filter((proof) => proof.status === "rejected").length,
     };
 
     return res.status(200).json({
       success: true,
-
       skillProofs,
-
       summary,
     });
   } catch (error) {
@@ -403,6 +415,19 @@ export const reviewSkillProof = async (req, res) => {
       return res.status(409).json({
         success: false,
         message: "Skill proof belongs to an invalid candidate account.",
+      });
+    }
+
+    const recruiterHasCandidate = await Application.exists({
+      recruiter: req.userId,
+      candidate: candidate._id,
+    });
+
+    if (!recruiterHasCandidate) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "You can only review skill proofs for candidates who applied to one of your jobs.",
       });
     }
 

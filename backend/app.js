@@ -13,30 +13,42 @@ import skillGapAdminRoute from "./routes/skillGapAdmin.route.js";
 import candidateRoute from "./routes/candidate.route.js";
 import analyticsRoute from "./routes/analytics.route.js";
 
+import { getAllowedOrigins } from "./config/env.js";
+import { securityHeaders } from "./middlewares/securityHeaders.middleware.js";
 import {
   notFoundHandler,
   errorHandler,
 } from "./middlewares/error.middleware.js";
 
 const app = express();
+const allowedOrigins = new Set(getAllowedOrigins());
+
+if (process.env.TRUST_PROXY === "true") {
+  app.set("trust proxy", 1);
+}
 
 /* ==================== MIDDLEWARE ==================== */
 
+app.use(securityHeaders);
+
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.has(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      const error = new Error("Origin is not allowed by CORS policy.");
+      error.statusCode = 403;
+      callback(error);
+    },
     credentials: true,
   }),
 );
 
-app.use(express.json());
-
-app.use(
-  express.urlencoded({
-    extended: true,
-  }),
-);
-
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 app.use(cookieParser());
 
 /* ==================== HEALTH ROUTE ==================== */
@@ -51,37 +63,17 @@ app.get("/", (req, res) => {
 /* ==================== API ROUTES ==================== */
 
 app.use("/api/v1/user", userRoute);
-
 app.use("/api/v1/company", companyRoute);
-
 app.use("/api/v1/job", jobRoute);
-
 app.use("/api/v1/application", applicationRoute);
-
 app.use("/api/v1/skill-proof", skillProofRoute);
-
 app.use("/api/v1/skill-gap", skillGapRoute);
-
 app.use("/api/v1/skill-gap-admin", skillGapAdminRoute);
-
 app.use("/api/v1/learning", learningRoute);
-
 app.use("/api/v1/candidate", candidateRoute);
-
 app.use("/api/v1/analytics", analyticsRoute);
 
-/*
-|--------------------------------------------------------------------------
-| 404 + GLOBAL ERROR HANDLING
-|--------------------------------------------------------------------------
-|
-| IMPORTANT:
-| These handlers MUST come AFTER every API route.
-|
-*/
-
 app.use(notFoundHandler);
-
 app.use(errorHandler);
 
 export default app;

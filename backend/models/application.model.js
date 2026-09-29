@@ -1,5 +1,39 @@
 import mongoose from "mongoose";
 
+const applicationStatusHistorySchema = new mongoose.Schema(
+  {
+    status: {
+      type: String,
+      enum: [
+        "applied",
+        "reviewing",
+        "shortlisted",
+        "interview",
+        "rejected",
+        "hired",
+      ],
+      required: true,
+    },
+    changedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    actorRole: {
+      type: String,
+      enum: ["candidate", "recruiter", "admin"],
+      required: true,
+    },
+    changedAt: {
+      type: Date,
+      default: Date.now,
+      required: true,
+    },
+  },
+  { _id: false },
+);
+
+
 /*
 |--------------------------------------------------------------------------
 | APPLICATION SCHEMA
@@ -116,6 +150,15 @@ const applicationSchema = new mongoose.Schema(
     lastStatusChangedAt: {
       type: Date,
       default: Date.now,
+    },
+
+    /* =================================================
+           AUDITABLE STATUS HISTORY
+        ================================================= */
+
+    statusHistory: {
+      type: [applicationStatusHistorySchema],
+      default: [],
     },
   },
 
